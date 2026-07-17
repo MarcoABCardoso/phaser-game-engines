@@ -88,3 +88,53 @@ import { lifecycleEvent } from '@phaser-game-engines/core';
 const stop = scene.lifecycle.on(lifecycleEvent.tick, ({ delta }) => mechanic.update(delta));
 scene.lifecycle.once(lifecycleEvent.shutdown, stop);
 ```
+
+## Headless traversal controllers
+
+Movement decisions are available without Phaser from
+`@phaser-game-engines/platformer/controllers`. `createTraversalController()`
+composes locomotion, jump resolution, dash, wall traversal, ledge traversal,
+and landing detection. The individual factories are exported for games that
+want only one ability or use another physics runtime.
+
+```js
+import { createTraversalController } from '@phaser-game-engines/platformer/controllers';
+
+const traversal = createTraversalController();
+traversal.reset(120);
+const result = traversal.step({
+  time: 1000,
+  delta: 16,
+  intent,
+  body: {
+    x: 40, y: 120,
+    top: 100, bottom: 140, left: 27, right: 53,
+    halfWidth: 13, halfHeight: 20,
+    velocityX: 0, velocityY: 0,
+    onGround: true, blockedLeft: false, blockedRight: false,
+  },
+  onOneWay: false,
+  solids: [],
+  config: {
+    maxSpeed: 160, accel: 900, groundDragX: 1400, airDragX: 0,
+    jumpVelocity: -420, airJumpCount: 0,
+    coyoteMs: 0, jumpBufferMs: 0, fastFallGravity: 0,
+    stunUntil: 0, dash: null, wall: null, ledge: null,
+  },
+});
+```
+
+`result.motion` is a declarative body patch containing fields such as
+`accelerationX`, `velocityX`, `velocityY`, `dragX`, `gravityY`,
+`maxVelocityX`, `allowGravity`, and `reset`. `result.events` reports facts such
+as jumps, dashes, sprints, ledge grabs, mantles, and landings. The scene facade
+applies the patch to its Arcade body and maps events to the existing hooks.
+
+Landing events contain `{ drop, impactVelocity }`; the controller never assigns
+damage or health semantics. The compatibility scene preserves its old fall rule
+by default; return `false` from `landingConsequencesEnabled()` to omit it. A
+game can then implement `onLanding(fact)` or observe the scene lifecycle's
+`landing` event from a composable mechanic without carrying HP state.
+
+`createAreaTransitionController()` separately provides a deterministic
+`begin`/`complete`/`cancel` guard for asynchronous area changes.

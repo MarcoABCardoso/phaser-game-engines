@@ -5,6 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.js",
+    "./controllers": "./src/controllers/index.js",
+    "./controllers/*.js": "./src/controllers/*.js",
     "./entities/*.js": "./src/entities/*.js",
     "./scenes/*.js": "./src/scenes/*.js",
     "./systems/*.js": "./src/systems/*.js"

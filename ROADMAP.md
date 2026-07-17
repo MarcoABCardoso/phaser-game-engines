@@ -59,13 +59,15 @@ Acceptance criteria:
 
 ## Milestone 2 — Platformer controller decomposition
 
-- Extract locomotion, jump resolution, dash, wall traversal, ledge traversal,
+Status: complete.
+
+- [x] Extract locomotion, jump resolution, dash, wall traversal, ledge traversal,
   landing detection, and area transitions from the scene update loop.
-- Keep controller inputs and outputs Phaser-free; let the scene adapt Arcade
+- [x] Keep controller inputs and outputs Phaser-free; let the scene adapt Arcade
   Physics bodies to them.
-- Report landing facts such as drop distance and impact velocity instead of
+- [x] Report landing facts such as drop distance and impact velocity instead of
   applying an HP rule in the movement kernel.
-- Preserve `PlatformerScene` as a compatibility facade while introducing the
+- [x] Preserve `PlatformerScene` as a compatibility facade while introducing the
   composable API.
 
 Acceptance criteria:

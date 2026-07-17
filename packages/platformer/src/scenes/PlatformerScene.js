@@ -9,12 +9,11 @@ import {
   selectContextualAction,
 } from '@phaser-game-engines/core';
 import { fallDamageForDrop } from '../systems/fall.js';
+import { shouldCollideOneWay } from '../systems/movement.js';
 import {
-  shouldCollideOneWay,
-  registerTap,
-  resolveJump,
-  findGrabbableLedge,
-} from '../systems/movement.js';
+  createAreaTransitionController as createHeadlessAreaTransitionController,
+  createTraversalController as createHeadlessTraversalController,
+} from '../controllers/index.js';
 import EntityManager from '../entities/EntityManager.js';
 import { BASE_ENTITY_TYPES } from '../entities/registry.js';
 import { pointInRect } from '../systems/geometry.js';
@@ -26,8 +25,9 @@ import {
   isTyping,
 } from '../systems/dialog.js';
 
-// PlatformerScene — the generic 2D-platformer engine. It owns everything a platformer
-// needs regardless of what game is built on top: a segmented floor + platforms, a player
+// PlatformerScene — the Arcade Physics compatibility facade for the generic platformer
+// controllers. It adapts bodies, collisions, input, and presentation around a segmented
+// floor + platforms, a player
 // body that runs/jumps/falls (with tiered stumble-vs-hurt landings), an attack that
 // dispatches over attackable entities, HP with i-frames/knockback, generic checkpoints
 // (respawn markers you interact with), a world-freezing dialogue system, and the entity
@@ -49,18 +49,7 @@ const FALL_HURT_STUN_MS = 320; // landing-stun on a damaging fall
 const HOLD_MS = 600; // how long a destructive action (rest / abandon) must be held to fire
 const ATTACK_COOLDOWN_MS = 260; // min time between landed hits
 const ATTACK_REACH = 56; // px beyond an attackable's edges a swing still lands
-const JUMP_CUT_MULTIPLIER = 0.45; // upward velocity kept if jump is released while still rising
 const ONE_WAY_GRACE = 8; // px slack for landing on a one-way ("thin") platform's top
-const ONE_WAY_DROP_MS = 220; // how long a down+jump drop-through ignores one-way platforms
-const DASH_DOUBLE_TAP_MS = 260; // max gap between the two taps that trigger a dash
-const DASH_DURATION_MS = 170; // how long a dash's velocity override lasts
-const DASH_COOLDOWN_MS = 480; // idle time after a dash before another can fire
-const WALL_SLIDE_SPEED = 120; // fallback clamped descent speed while wall-sliding
-const WALL_JUMP_PUSH_X = 300; // fallback horizontal launch away from the wall
-const WALL_JUMP_LOCK_MS = 160; // brief input lock after a wall jump so the push-off holds
-const LEDGE_REACH = 12; // fallback px from the wall face a ledge is grabbable
-const LEDGE_BAND = 20; // fallback px around the hands a ledge top must sit within
-const LEDGE_COOLDOWN_MS = 300; // grace after a mantle/release before re-grabbing
 const ATTACK_INDICATOR_H = 50; // height of the attack-range flash rectangle
 const ATTACK_INDICATOR_MS = 140; // how long the attack-range flash stays visible
 const PLAYER_ATTACK_RECOIL_VX = 170; // player's own recoil on a landed hit, for impact weight
@@ -136,6 +125,8 @@ export default class PlatformerScene extends Phaser.Scene {
     // can tear them down.
     this.worldDecor = [];
     this.entities = new EntityManager(this.level.entityTypes || BASE_ENTITY_TYPES);
+    this.traversalController = this.createTraversalController();
+    this.areaTransitionController = this.createAreaTransitionController();
 
     this.attackReach = ATTACK_REACH; // how far a swing reaches; entities read this
     // Checkpoints revealed in the field this run (e.g. by an enemy on death). Cleared each
@@ -192,6 +183,8 @@ export default class PlatformerScene extends Phaser.Scene {
   // Lifecycle
   init() {} // subclass: load save / run state / dialogue tables
   getLevel() { throw new Error('PlatformerScene.getLevel() must be overridden'); }
+  createTraversalController() { return createHeadlessTraversalController(); }
+  createAreaTransitionController() { return createHeadlessAreaTransitionController(); }
   onReady() {} // subclass: launch HUD, install debug hooks
   onEntitiesBuilt() {} // subclass: cache typed entity handles for its HUD
   onResetTransient() {} // subclass: reset its own per-run transient state (and vitals)
@@ -227,6 +220,7 @@ export default class PlatformerScene extends Phaser.Scene {
   isCheckpointLit(cp) { return Boolean(cp && cp.alwaysLit); }
   isCheckpointRevealed(cp) { return !cp || !cp.hiddenUntilFlag; }
   isCheckpointUsable(/* cp */) { return true; }
+  landingConsequencesEnabled() { return true; }
   // Escalation tier for spawners etc. (no danger model in the bare engine).
   currentDangerTier() { return 0; }
   /** Override to supply gamepad, touch, AI, network, or replay input. */
@@ -281,6 +275,7 @@ export default class PlatformerScene extends Phaser.Scene {
   onDash(/* dir */) {}
   onLedgeGrab() {} // caught a ledge and started hanging
   onMantle() { this.onJump(); } // climbed up off a hung ledge
+  onLanding(/* fact */) {}
   onSprint(/* dt */) {}
   onAttackLanded(/* target */) {}
   onAtLitCheckpoint(/* cp */) {}
@@ -436,26 +431,7 @@ export default class PlatformerScene extends Phaser.Scene {
   // --- per-run reset ---------------------------------------------------------
 
   resetTransient() {
-    this.groundY = this.player.y; // y of the surface we're currently standing on
-    this.takeoffY = this.player.y; // y of the surface we last launched from
-    this.wasAirborne = false;
-    this.jumpHeldLastFrame = false;
-    this.facingDir = 1;
-    // Extended-movement transient state (double jump / dash / one-way drop-through, plus
-    // coyote time, jump buffering, wall slide/jump, fast fall, and ledge grab).
-    this.airJumpsUsed = 0;
-    this.airDashesUsed = 0;
-    this.dashUntil = 0;
-    this.dashCooldownUntil = 0;
-    this.dashDir = 1;
-    this.dropThroughUntil = 0;
-    this.coyoteUntil = 0;
-    this.jumpBufferedUntil = 0;
-    this.wallJumpLockUntil = 0;
-    this.wallSliding = false;
-    this.hanging = null; // { dir, top, faceX } while clinging to a ledge, else null
-    this.ledgeCooldownUntil = 0;
-    this._tapState = null; // last direction tap seen, for dash double-tap detection
+    this.syncTraversalState(this.traversalController.reset(this.player.y));
     this._onOneWayContact = false; // set by the one-way collider each physics step
     this.onOneWay = false;
     // A hang may have suspended gravity; make sure a fresh run starts under normal physics.
@@ -542,7 +518,7 @@ export default class PlatformerScene extends Phaser.Scene {
   // player at that area's named `entryId`, fade back in — WITHOUT ending the run. A Portal
   // entity calls this when the player crosses into it.
   enterArea(areaId, entryId) {
-    if (this.transitioning || this.runEnding) return;
+    if (this.runEnding || !this.areaTransitionController.begin(areaId, entryId)) return;
     this.transitioning = true; // update() early-returns while set, so nothing moves mid-fade
     this.player.body.setVelocity(0, 0);
     const cam = this.cameras.main;
@@ -555,6 +531,7 @@ export default class PlatformerScene extends Phaser.Scene {
       this.resetAreaTransient();
       this.onAreaEnter(areaId, entryId);
       cam.fadeIn(180, 6, 8, 12);
+      this.areaTransitionController.complete();
       this.transitioning = false;
     });
   }
@@ -564,13 +541,9 @@ export default class PlatformerScene extends Phaser.Scene {
   resetAreaTransient() {
     this._onOneWayContact = false;
     this.onOneWay = false;
-    this.hanging = false;
-    this.wallSliding = false;
-    this.dashUntil = 0;
-    this.airJumpsUsed = 0;
-    this.airDashesUsed = 0;
-    this.jumpBufferedUntil = 0;
-    this.coyoteUntil = 0;
+    this.syncTraversalState(this.traversalController.reset(this.player.y));
+    this.player.body.setAllowGravity(true);
+    this.player.body.setGravityY(0);
     this.stunUntil = 0;
     this.currentCheckpoint = null;
     this.atLitCheckpoint = false;
@@ -613,7 +586,6 @@ export default class PlatformerScene extends Phaser.Scene {
     this.currentContextualAction = null;
     this.nearReadable = null;
 
-    const dt = delta / 1000;
     const body = this.player.body;
     const onGround = body.blocked.down || body.onFloor();
     // Whether we were resting on a one-way ("thin") platform as of the last physics step
@@ -623,134 +595,8 @@ export default class PlatformerScene extends Phaser.Scene {
     this._onOneWayContact = false;
     this.onOneWay = onOneWay;
     const stunned = time < this.stunUntil;
-
-    const left = this.inputIntent.move.x < 0;
-    const right = this.inputIntent.move.x > 0;
-    const down = actionState(this.inputIntent, 'down').down;
-    const jumpPressed = actionState(this.inputIntent, 'jump').pressed;
-    const jumpHeld = actionState(this.inputIntent, 'jump').down;
     const attackPressed = actionState(this.inputIntent, 'primary').pressed;
-
-    // Back on solid ground: refill the air-jump and air-dash budgets and re-arm the coyote
-    // window (a short grace to still ground-jump just after walking off a ledge).
-    if (onGround) {
-      this.airJumpsUsed = 0;
-      this.airDashesUsed = 0;
-      this.coyoteUntil = time + this.coyoteMs();
-    }
-
-    // A fresh jump press arms a short buffer, so a press just before landing still fires;
-    // a buffered press counts as "queued" until it's consumed or lapses.
-    if (jumpPressed) this.jumpBufferedUntil = time + this.jumpBufferMs();
-    const jumpQueued = jumpPressed || time < (this.jumpBufferedUntil || 0);
-
-    if (this.hanging) {
-      // Clinging to a ledge freezes normal movement — only mantle (jump) or drop (down) act.
-      this.updateHang(time, jumpQueued, down);
-      this.jumpHeldLastFrame = jumpHeld;
-    } else {
-      // Dash is a double-tap of a direction (detected on the key edge). Gated by stun.
-      if (!stunned) this.updateDashInput(time, onGround);
-      const dashing = time < (this.dashUntil || 0);
-      const inputLocked = time < (this.wallJumpLockUntil || 0); // brief hold after a wall jump
-
-      // Facing: dash direction while dashing, else last direction pressed.
-      if (dashing) this.facingDir = this.dashDir;
-      else if (left && !right) this.facingDir = -1;
-      else if (right && !left) this.facingDir = 1;
-
-      // Movement speed/accel come from the game (which may slow a walk, scale a run skill…).
-      const maxSpeed = this.moveMaxSpeed();
-      const accel = this.moveAccel();
-
-      if (dashing) {
-        // A dash overrides normal control: a fixed velocity in the dash direction, momentum
-        // held (drag off) and the speed cap lifted to let it exceed the run's top speed.
-        const speed = this.dashConfig().speed;
-        body.setMaxVelocity(Math.max(maxSpeed, speed), 2000);
-        body.setVelocityX(this.dashDir * speed);
-        body.setAccelerationX(0);
-        body.setDragX(0);
-      } else {
-        body.setMaxVelocity(maxSpeed, 2000);
-        // Drag only on the ground: in the air momentum is kept, so a running jump or a drop
-        // carries its horizontal speed instead of bleeding it off when the key is released.
-        body.setDragX(onGround ? this.groundDragX() : this.airDragX());
-        if (!stunned && !inputLocked && left && !right) body.setAccelerationX(-accel);
-        else if (!stunned && !inputLocked && right && !left) body.setAccelerationX(accel);
-        else body.setAccelerationX(0);
-      }
-
-      // Fast fall: holding down in the air adds gravity so the descent is snappier.
-      const extraG = this.fastFallGravity();
-      body.setGravityY(!dashing && !onGround && down && extraG > 0 ? extraG : 0);
-
-      // Wall slide: pressing into a wall while falling clamps the descent speed.
-      const wallDir = body.blocked.left ? -1 : body.blocked.right ? 1 : 0;
-      const wallCfg = this.wallSlideConfig();
-      const pressingWall = (wallDir === -1 && left) || (wallDir === 1 && right);
-      const sliding = Boolean(wallCfg) && !onGround && wallDir !== 0 && pressingWall && body.velocity.y > 0;
-      if (sliding) {
-        const slideSpeed = wallCfg.slideSpeed ?? WALL_SLIDE_SPEED;
-        if (body.velocity.y > slideSpeed) body.setVelocityY(slideSpeed);
-      }
-      this.wallSliding = sliding;
-
-      // Jump / drop-through / wall-jump / air-jump. Full height only comes from holding the
-      // button; releasing early while still rising cuts the ascent short (jump-cut below).
-      let acted = false;
-      if (!stunned && jumpQueued) {
-        const kind = resolveJump({
-          onGround,
-          coyoteOk: time < (this.coyoteUntil || 0),
-          dropRequested: down,
-          onOneWay,
-          touchingWallDir: wallDir,
-          wallJumpEnabled: Boolean(wallCfg),
-          airJumpsUsed: this.airJumpsUsed,
-          airJumpAllowance: this.airJumpCount(),
-        });
-        if (kind === 'drop') {
-          // Down+jump on a one-way platform: ignore one-way collisions briefly and fall through.
-          this.dropThroughUntil = time + ONE_WAY_DROP_MS;
-          acted = true;
-        } else if (kind === 'ground') {
-          body.setVelocityY(this.jumpVelocity());
-          this.coyoteUntil = 0; // consume — no coyote-jump after already jumping
-          this.onJump();
-          acted = true;
-        } else if (kind === 'wall') {
-          const away = -wallDir;
-          body.setVelocityY(this.jumpVelocity());
-          body.setVelocityX(away * (wallCfg.jumpPushX ?? WALL_JUMP_PUSH_X));
-          this.wallJumpLockUntil = time + (wallCfg.lockMs ?? WALL_JUMP_LOCK_MS);
-          this.airJumpsUsed = 0; // a wall jump refreshes the air-jump budget
-          this.onWallJump();
-          acted = true;
-        } else if (kind === 'air') {
-          body.setVelocityY(this.jumpVelocity());
-          this.airJumpsUsed += 1;
-          this.onAirJump();
-          acted = true;
-        }
-        if (acted) {
-          this.jumpBufferedUntil = 0; // consumed
-          if (dashing) this.dashUntil = time; // dash-cancel into a jump (momentum carries)
-        }
-      }
-      if (!acted && !jumpHeld && this.jumpHeldLastFrame && body.velocity.y < 0) {
-        body.setVelocityY(body.velocity.y * JUMP_CUT_MULTIPLIER);
-      }
-      this.jumpHeldLastFrame = jumpHeld;
-
-      // Sprinting on the ground — the game may grant xp for it (not while dashing).
-      if (!dashing && onGround && Math.abs(body.velocity.x) >= 0.6 * maxSpeed) {
-        this.onSprint(dt);
-      }
-
-      // Ledge grab: airborne and reaching toward a wall's top corner -> catch and hang.
-      if (!dashing && !onGround) this.tryLedgeGrab(time, left, right);
-    }
+    this.updateTraversal(time, delta, onGround, onOneWay);
 
     if (!stunned && !this.hanging && attackPressed) {
       this.showAttackIndicator(time);
@@ -767,7 +613,6 @@ export default class PlatformerScene extends Phaser.Scene {
       return;
     }
 
-    this.updateFallDamage(onGround);
     // One generic pass drives every autonomous/collectible/moving thing.
     this.entities.update(this, time, delta);
     if (this.dialogState) return;
@@ -797,145 +642,121 @@ export default class PlatformerScene extends Phaser.Scene {
     return Math.abs(this.player.body.velocity.x) > RUN_ANIM_MIN_VX;
   }
 
-  // --- dash (double-tap a direction) ----------------------------------------
+  // --- headless traversal adapter -------------------------------------------
 
-  // Watch the two direction keys for a double tap and fire a dash when one lands.
-  updateDashInput(time, onGround) {
-    const cfg = this.dashConfig();
-    if (!cfg || !cfg.enabled) return;
-    const windowMs = cfg.doubleTapMs || DASH_DOUBLE_TAP_MS;
-    const edges = [
-      [-1, actionState(this.inputIntent, 'moveLeft').pressed],
-      [1, actionState(this.inputIntent, 'moveRight').pressed],
-    ];
-    for (const [dir, pressed] of edges) {
-      if (!pressed) continue;
-      const { state, dashed } = registerTap(this._tapState, dir, time, windowMs);
-      this._tapState = state;
-      if (dashed) this.startDash(time, dir, onGround, cfg);
-    }
+  traversalConfig() {
+    return {
+      maxSpeed: this.moveMaxSpeed(),
+      accel: this.moveAccel(),
+      groundDragX: this.groundDragX(),
+      airDragX: this.airDragX(),
+      jumpVelocity: this.jumpVelocity(),
+      airJumpCount: this.airJumpCount(),
+      coyoteMs: this.coyoteMs(),
+      jumpBufferMs: this.jumpBufferMs(),
+      fastFallGravity: this.fastFallGravity(),
+      stunUntil: this.stunUntil,
+      dash: this.dashConfig(),
+      wall: this.wallSlideConfig(),
+      ledge: this.ledgeGrabConfig(),
+    };
   }
 
-  startDash(time, dir, onGround, cfg) {
-    if (time < (this.dashCooldownUntil || 0)) return; // still cooling down
-    if (!onGround) {
-      if (!cfg.airborne) return; // airborne dashing may be disabled
-      const allowance = cfg.airDashes ?? 1; // limited air dashes, refreshed on landing
-      if (this.airDashesUsed >= allowance) return;
-      this.airDashesUsed += 1;
-    }
-    this.dashDir = dir;
-    this.dashUntil = time + (cfg.durationMs || DASH_DURATION_MS);
-    this.dashCooldownUntil = this.dashUntil + (cfg.cooldownMs || DASH_COOLDOWN_MS);
-    if (cfg.iFrames) {
-      const ms = cfg.iFrameMs || cfg.durationMs || DASH_DURATION_MS;
-      this.playerInvincibleUntil = Math.max(this.playerInvincibleUntil || 0, time + ms);
-    }
-    this.onDash(dir);
-  }
-
-  // --- ledge grab / mantle ---------------------------------------------------
-  // Airborne and reaching toward a wall whose top sits near the hands -> catch it and hang
-  // (gravity suspended). Jump mantles up onto the ledge; down releases. Geometry decision is
-  // the pure findGrabbableLedge over the static solids.
-
-  tryLedgeGrab(time, left, right) {
-    const cfg = this.ledgeGrabConfig();
-    if (!cfg) return;
-    if (time < (this.ledgeCooldownUntil || 0)) return;
+  traversalBodyState(onGround) {
     const body = this.player.body;
-    if (body.velocity.y < -20) return; // only while falling or near the apex, not rising fast
-    const dir = right && !left ? 1 : left && !right ? -1 : 0;
-    if (dir === 0) return;
-    const solids = this.solids.getChildren().map((c) => ({
-      x: c.body.left,
-      y: c.body.top,
-      w: c.body.width,
-      h: c.body.height,
+    return {
+      x: this.player.x,
+      y: this.player.y,
+      top: body.top,
+      bottom: body.bottom,
+      left: body.left,
+      right: body.right,
+      halfWidth: body.halfWidth,
+      halfHeight: body.halfHeight,
+      velocityX: body.velocity.x,
+      velocityY: body.velocity.y,
+      onGround,
+      blockedLeft: body.blocked.left,
+      blockedRight: body.blocked.right,
+    };
+  }
+
+  updateTraversal(time, delta, onGround, onOneWay) {
+    const solids = this.solids.getChildren().map((solid) => ({
+      x: solid.body.left,
+      y: solid.body.top,
+      w: solid.body.width,
+      h: solid.body.height,
     }));
-    const ledge = findGrabbableLedge({
-      playerTop: body.top,
-      playerBottom: body.bottom,
-      playerLeft: body.left,
-      playerRight: body.right,
-      dir,
+    const result = this.traversalController.step({
+      time,
+      delta,
+      intent: this.inputIntent,
+      body: this.traversalBodyState(onGround),
+      onOneWay,
       solids,
-      reach: cfg.reach ?? LEDGE_REACH,
-      band: cfg.band ?? LEDGE_BAND,
+      config: this.traversalConfig(),
     });
-    if (!ledge) return;
-    this.hanging = { dir, top: ledge.top, faceX: ledge.faceX };
-    body.setAllowGravity(false);
-    body.setVelocity(0, 0);
-    body.setAcceleration(0, 0);
-    body.setGravityY(0);
-    // Freeze the fall bookkeeping at the grab so the eventual mantle doesn't read as a fall.
-    this.takeoffY = this.player.y;
-    this.groundY = this.player.y;
-    this.wasAirborne = false;
-    this.onLedgeGrab();
+    this.applyTraversalMotion(result.motion);
+    this.syncTraversalState(result.state);
+    for (const event of result.events) this.handleTraversalEvent(event, time);
   }
 
-  updateHang(time, jumpQueued, down) {
+  applyTraversalMotion(motion) {
     const body = this.player.body;
-    const h = this.hanging;
-    body.setVelocity(0, 0);
-    body.setAcceleration(0, 0);
-    body.setAllowGravity(false);
-    this.facingDir = h.dir;
-    if (jumpQueued) {
-      // Mantle: pop up onto the ledge (feet on its top, just past the face) and resume physics.
-      body.setAllowGravity(true);
-      const newX = h.faceX + h.dir * (body.halfWidth + 3);
-      const newY = h.top - body.halfHeight - 1;
-      body.reset(newX, newY);
-      this.releaseHang(time);
-      this.takeoffY = this.player.y;
-      this.groundY = this.player.y;
-      this.wasAirborne = false;
-      this.jumpBufferedUntil = 0;
+    if (motion.allowGravity !== undefined) body.setAllowGravity(motion.allowGravity);
+    if (motion.reset) body.reset(motion.reset.x, motion.reset.y);
+    if (motion.maxVelocityX !== undefined) body.setMaxVelocity(motion.maxVelocityX, 2000);
+    if (motion.velocityX !== undefined) body.setVelocityX(motion.velocityX);
+    if (motion.velocityY !== undefined) body.setVelocityY(motion.velocityY);
+    if (motion.accelerationX !== undefined) body.setAccelerationX(motion.accelerationX);
+    if (motion.dragX !== undefined) body.setDragX(motion.dragX);
+    if (motion.gravityY !== undefined) body.setGravityY(motion.gravityY);
+  }
+
+  syncTraversalState(state = {}) {
+    Object.assign(this, state);
+  }
+
+  handleTraversalEvent(event, time) {
+    if (event.type === 'dash') {
+      if (event.invincibleMs) {
+        this.playerInvincibleUntil = Math.max(this.playerInvincibleUntil || 0, time + event.invincibleMs);
+      }
+      this.onDash(event.dir);
+    } else if (event.type === 'jump') {
+      if (event.kind === 'ground') this.onJump();
+      else if (event.kind === 'wall') this.onWallJump();
+      else if (event.kind === 'air') this.onAirJump();
+    } else if (event.type === 'ledgeGrab') {
+      this.onLedgeGrab();
+    } else if (event.type === 'mantle') {
       this.onMantle();
-    } else if (down) {
-      body.setAllowGravity(true);
-      this.releaseHang(time);
+    } else if (event.type === 'land') {
+      const fact = { drop: event.drop, impactVelocity: event.impactVelocity };
+      this.lifecycle.emit('landing', { scene: this, ...fact });
+      if (this.landingConsequencesEnabled()) this.applyDefaultLandingConsequence(fact);
+      this.onLanding(fact);
+    } else if (event.type === 'sprint') {
+      this.onSprint(event.delta);
     }
   }
 
   releaseHang(time) {
-    this.hanging = null;
-    this.ledgeCooldownUntil = time + LEDGE_COOLDOWN_MS;
+    this.traversalController.ledge.release(time, this.ledgeGrabConfig()?.cooldownMs);
+    this.syncTraversalState(this.traversalController.ledge.snapshot());
   }
 
-  // --- tiered failure: stumble vs bad fall ----------------------------------
-
-  updateFallDamage(onGround) {
-    if (!onGround) {
-      // On the frame we leave the ground, latch the surface we launched from.
-      if (!this.wasAirborne) this.takeoffY = this.groundY;
-      this.wasAirborne = true;
-      return;
+  applyDefaultLandingConsequence({ drop }) {
+    const hp = fallDamageForDrop(drop);
+    if (hp > 0) {
+      this.damage(hp);
+      this.stunUntil = this.time.now + FALL_HURT_STUN_MS;
+      this.playerReact('fall');
+    } else if (drop >= STUMBLE_MIN_DROP) {
+      this.stunUntil = this.time.now + STUMBLE_STUN_MS;
+      this.player.body.setVelocityX(this.player.body.velocity.x * 0.2);
     }
-    if (this.wasAirborne) {
-      // Fall damage is a pure function of how far we landed BELOW the takeoff surface.
-      // Measuring against the takeoff point (not the arc's apex) means a jump's own rise
-      // never counts. Only real descent past the threshold costs HP, scaled by distance.
-      const drop = this.player.y - this.takeoffY;
-      const hp = fallDamageForDrop(drop);
-      if (hp > 0) {
-        this.damage(hp);
-        this.stunUntil = this.time.now + FALL_HURT_STUN_MS;
-        // A crumpled pose reads a hard fall better than a screen flash — no flash here,
-        // just the pose (game-supplied) held through the landing stun.
-        this.playerReact('fall');
-      } else if (drop >= STUMBLE_MIN_DROP) {
-        // Stumble: costs a moment and momentum, no HP — no flash either, since a stumble
-        // isn't damage and flashing on every ordinary short drop reads as too punishing.
-        this.stunUntil = this.time.now + STUMBLE_STUN_MS;
-        this.player.body.setVelocityX(this.player.body.velocity.x * 0.2);
-      }
-    }
-    this.groundY = this.player.y;
-    this.wasAirborne = false;
   }
 
   // --- attackable surfaces ---------------------------------------------------
@@ -1143,7 +964,8 @@ export default class PlatformerScene extends Phaser.Scene {
     this.damage(damage, message);
     // A hit interrupts a dash and knocks the player off a ledge — the knockback below then
     // takes over, instead of the move's own velocity fighting it.
-    this.dashUntil = 0;
+    this.traversalController.dash.cancel(time);
+    this.syncTraversalState(this.traversalController.dash.snapshot());
     if (this.hanging) {
       this.player.body.setAllowGravity(true);
       this.releaseHang(time);
