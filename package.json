@@ -11,7 +11,9 @@
     "dev:sample": "vite samples/basic-platformer --host 127.0.0.1",
     "build:sample": "vite build samples/basic-platformer",
     "dev:top-down-sample": "vite samples/basic-top-down --host 127.0.0.1",
-    "build:top-down-sample": "vite build samples/basic-top-down"
+    "build:top-down-sample": "vite build samples/basic-top-down",
+    "dev:battle-sample": "vite samples/basic-turn-based-battle --host 127.0.0.1",
+    "build:battle-sample": "vite build samples/basic-turn-based-battle"
   },
   "devDependencies": {
     "phaser": "^3.90.0",

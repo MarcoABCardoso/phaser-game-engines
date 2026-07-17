@@ -1,0 +1,14 @@
+{
+  "name": "@phaser-game-engines/turn-based-battle",
+  "version": "0.1.0",
+  "description": "Reusable Phaser 3 turn-based battle engine.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./scenes/*.js": "./src/scenes/*.js",
+    "./systems/*.js": "./src/systems/*.js"
+  },
+  "files": ["src", "README.md"],
+  "peerDependencies": { "phaser": "^3.90.0" },
+  "engines": { "node": ">=22" }
+}
