@@ -17,7 +17,7 @@ function installSurveyHud(scene) {
       }).setScrollFactor(0).setDepth(100);
     }),
     scene.lifecycle.on(lifecycleEvent.tick, () => {
-      progress?.setText(`Field notes: ${scene.save.observations.size}/${SPECIMEN_COUNT}`);
+      progress?.setText(`Field notes: ${scene.observations.size}/${SPECIMEN_COUNT}`);
     }),
   ];
   scene.lifecycle.once(lifecycleEvent.shutdown, () => {
@@ -28,11 +28,9 @@ function installSurveyHud(scene) {
 class BotanicalSurveyScene extends TopDownScene {
   constructor() {
     super({ key: 'botanical-survey' });
+    this.observations = new Set();
     installSurveyHud(this);
   }
-
-  combatEnabled() { return false; }
-  getSave() { return { flags: {}, observations: new Set() }; }
 
   getLevel() {
     return {
@@ -78,10 +76,10 @@ class BotanicalSurveyScene extends TopDownScene {
   }
 
   onInteract(entity) {
-    if (this.save.observations.has(entity.id)) return;
-    this.save.observations.add(entity.id);
+    if (this.observations.has(entity.id)) return;
+    this.observations.add(entity.id);
     entity.sprite?.setStrokeStyle(3, 0xf2ffd8);
-    if (this.save.observations.size === SPECIMEN_COUNT) {
+    if (this.observations.size === SPECIMEN_COUNT) {
       this.showMessage('Survey complete: four distinct adaptations recorded.', 4000);
     }
   }

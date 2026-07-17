@@ -1,6 +1,9 @@
 # @phaser-game-engines/top-down
 
-A reusable Phaser 3 / Arcade Physics top-down engine. Extend `TopDownScene` and provide level data; the engine handles eight-direction movement, solid walls, camera following, entities, interactions, pickups, portals, health, melee combat, and simple chasing enemies.
+A reusable Phaser 3 / Arcade Physics top-down engine. `TopDownScene` handles
+eight-direction movement, solid walls, camera following, generic entities,
+contextual interactions, and portals. Health, inventory, persistence, combat,
+pickups, and enemies are optional policy.
 
 ```js
 import { TopDownScene } from '@phaser-game-engines/top-down';
@@ -11,13 +14,20 @@ class GameScene extends TopDownScene {
       world: { width: 960, height: 540 },
       spawn: { x: 80, y: 80 },
       walls: [{ x: 0, y: 0, w: 960, h: 24 }],
-      entitySpecs: [{ type: 'pickup', id: 'key', item: 'key', x: 220, y: 120 }],
+      entitySpecs: [{
+        type: 'interactable', id: 'switch', x: 220, y: 120,
+        zone: { x: 190, y: 90, w: 60, h: 60 }, label: 'Use switch',
+      }],
     };
   }
 }
 ```
 
-Built-in entity types are `pickup`, `portal`, `interactable`, `sign`, and `enemy`. A `sign` is an interactable and can use `message: '...'` for an out-of-the-box readable prompt. Use `label` for a device-independent action label; the older `prompt` field remains supported. A portal can use `marker: { x, y, label }` to render a visible gateway. Add game-specific types with `level.entityTypes` or the `entityTypes` scene config. Override `onCollect`, `onInteract`, `onAttack`, `onEnemyDefeated`, `onPlayerDefeated`, and `onEnterArea` to connect game rules and UI. Use `panCameraTo(x, y)` for a short reveal before returning camera follow to the player. `getSave()` can return durable `{ flags, inventory }` state.
+Base entity types are `portal`, `interactable`, and its `sign` alias. An
+interactable advertises the `interactable` capability and can use `label` for a
+device-independent action label; the older `prompt` field remains supported.
+Add game-specific types with `level.entityTypes` or the `entityTypes` scene
+config. Use `panCameraTo(x, y)` for a short reveal before camera follow resumes.
 
 ## Input intents
 
@@ -71,10 +81,68 @@ const stop = scene.lifecycle.on(lifecycleEvent.tick, ({ delta }) => mechanic.upd
 scene.lifecycle.once(lifecycleEvent.shutdown, stop);
 ```
 
-## Optional combat
+## Action-adventure recipe
 
-Combat remains enabled by default for compatibility. A non-combat game can
-override `combatEnabled()` to return `false`. The scene then omits health and
-attack-cooldown state, ignores its default primary attack action, and renders no
-HP fallback. Override `statusText()` when the game has a different form of
-progress to show.
+The optional action-adventure recipe restores a small opinionated combination:
+health, melee attacks, pickup inventory, save flags, and chasing enemies. Its
+state lives at `scene.actionAdventure`, never on the base scene.
+
+```js
+import {
+  ACTION_ADVENTURE_ENTITY_TYPES,
+  TopDownScene,
+  createActionAdventureMechanic,
+} from '@phaser-game-engines/top-down';
+
+class ActionScene extends TopDownScene {
+  constructor() {
+    super({
+      entityTypes: ACTION_ADVENTURE_ENTITY_TYPES,
+      mechanics: [createActionAdventureMechanic({ maxHealth: 6 })],
+    });
+  }
+}
+```
+
+Recipe callbacks such as `onAttack`, `onCollect`, `onEnemyDefeated`, and
+`onPlayerDefeated` are supplied in the mechanic options. Removing the mechanic
+unsubscribes its input listener and removes its scene resource.
+
+## Capabilities and mechanics
+
+Every entity has a capability bag. Entity managers expose
+`withCapability(name, predicate)` and `firstWithCapability(...)`. The action
+recipe composes `targetable` with `damageReceiver`; games can advertise their
+own capabilities without editing `TopDownScene`.
+
+Pass mechanics in the scene config or install them later through
+`scene.mechanicHost`. Mechanics are removed automatically on scene shutdown.
+
+## World content and cleanup
+
+`TopDownScene` creates a shared core `worldRuntime` and validates content before
+creating physics or display objects. Levels and entities may declare
+`schemaVersion: 1`; omitted versions are treated as version 1. Common required
+fields are:
+
+```js
+{
+  schemaVersion: 1,
+  world: { width: 960, height: 540 },
+  spawn: { x: 80, y: 80 },
+  walls: [{ x: 0, y: 0, w: 960, h: 24 }],
+  entitySpecs: [{ schemaVersion: 1, type: 'portal', id: 'exit', zone, to: 'grove' }],
+}
+```
+
+Invalid data throws a `ContentValidationError` with paths such as
+`level.walls[0].w` or `level.entitySpecs[0].type`. Entity scheduling, capability
+queries, trigger zones, and teardown use the same core contracts as the
+platformer package. Scene shutdown empties the entity store even if an earlier
+listener or cleanup fails.
+
+Inject clocks, RNG, or snapshot rules with the `worldRuntime` scene option:
+
+```js
+super({ worldRuntime: { rng: seededRandom, snapshots: snapshotOptions } });
+```

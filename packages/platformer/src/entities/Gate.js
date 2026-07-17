@@ -10,6 +10,10 @@ import Entity from './Entity.js';
 const COLOR = 0xc9873f;
 
 export default class Gate extends Entity {
+  static validateSpec(spec, { path, validateRect }) {
+    validateRect(spec.rect, { path: `${path}.rect` });
+  }
+
   spawn(scene) {
     this.rect = null;
     this.checkpoint = scene.checkpointById(this.spec.beaconId);

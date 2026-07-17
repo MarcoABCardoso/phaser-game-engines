@@ -78,13 +78,15 @@ Acceptance criteria:
 
 ## Milestone 3 — Optional real-time mechanics
 
-- Move health, damage, melee attacks, fall consequences, checkpoints, run
+Status: complete.
+
+- [x] Move health, damage, melee attacks, fall consequences, checkpoints, run
   failure, and opinionated enemies into opt-in mechanics or recipes.
-- Replace the narrow `attackable` convention with capabilities such as
+- [x] Replace the narrow `attackable` convention with capabilities such as
   `interactable`, `targetable`, `damageReceiver`, and game-defined capabilities.
-- Keep dialogue reusable, but stop making it an automatic responsibility of the
+- [x] Keep dialogue reusable, but stop making it an automatic responsibility of the
   platformer scene.
-- Convert the current top-down combat behavior into a basic action-adventure
+- [x] Convert the current top-down combat behavior into a basic action-adventure
   recipe.
 
 Acceptance criteria:
@@ -96,11 +98,13 @@ Acceptance criteria:
 
 ## Milestone 4 — Generic world runtime
 
-- Consolidate proven duplication in registries, entity lifecycle, spatial
+Status: complete.
+
+- [x] Consolidate proven duplication in registries, entity lifecycle, spatial
   queries, trigger zones, portals, clocks, RNG, and serialization contracts.
-- Define versioned level and entity schemas with useful development-time errors.
-- Add lifecycle and cleanup contract tests.
-- Do not merge genre-specific physics or locomotion for superficial symmetry.
+- [x] Define versioned level and entity schemas with useful development-time errors.
+- [x] Add lifecycle and cleanup contract tests.
+- [x] Do not merge genre-specific physics or locomotion for superficial symmetry.
 
 Acceptance criteria:
 

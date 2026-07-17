@@ -8,20 +8,18 @@
 // Latched until the player leaves the zone, so arriving right next to a return portal
 // doesn't immediately bounce you back through it.
 import Entity from './Entity.js';
-import { pointInRect } from '../systems/geometry.js';
+import { createTriggerZone, validatePortalSpec } from '@phaser-game-engines/core';
 
 export default class Portal extends Entity {
+  static validateSpec = validatePortalSpec;
+
   spawn() {
-    this.armed = true;
+    this.trigger = createTriggerZone(this.spec.zone, { initiallyArmed: true });
   }
 
   update(scene) {
     if (scene.transitioning) return;
-    const inside = pointInRect(scene.player.x, scene.player.y, this.spec.zone);
-    if (!inside) {
-      this.armed = true;
-    } else if (this.armed) {
-      this.armed = false;
+    if (this.trigger.update(scene.player).triggered) {
       scene.enterArea(this.spec.to, this.spec.entry);
     }
   }

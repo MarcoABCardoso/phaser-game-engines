@@ -15,6 +15,10 @@ import { motionOmega, motionOffset } from '../systems/platform-motion.js';
 const COLOR = 0x5a7fa8;
 
 export default class MovingPlatform extends Entity {
+  static validateSpec(spec, { path, validateRect }) {
+    validateRect(spec.rect, { path: `${path}.rect` });
+  }
+
   spawn(scene) {
     const r = this.spec.rect; // home position/size {x,y,w,h} (top-left)
     this.homeX = r.x + r.w / 2;

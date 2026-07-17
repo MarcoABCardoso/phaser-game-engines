@@ -65,4 +65,14 @@ describe('lifecycle events', () => {
     expect(() => lifecycle.on('tick', null)).toThrow(TypeError);
     expect(() => lifecycle.emit({})).toThrow(TypeError);
   });
+
+  it('runs every listener even when one fails', () => {
+    const lifecycle = createLifecycle();
+    const later = vi.fn();
+    lifecycle.on('shutdown', () => { throw new Error('broken cleanup'); });
+    lifecycle.on('shutdown', later);
+
+    expect(() => lifecycle.emit('shutdown')).toThrow(AggregateError);
+    expect(later).toHaveBeenCalledOnce();
+  });
 });

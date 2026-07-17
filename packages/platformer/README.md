@@ -1,9 +1,10 @@
 # @phaser-game-engines/platformer
 
-A reusable Phaser 3 platformer engine built on Arcade Physics. It provides a
-subclassable `PlatformerScene`, a data-driven entity loop, floor and one-way
-platforms, movement options, attacks, health, checkpoints, dialogue, portals,
-and spawn controllers.
+A reusable Phaser 3 platformer engine built on Arcade Physics. The base
+`PlatformerScene` provides world adaptation, a data-driven entity loop, floor
+and one-way platforms, traversal, portals, contextual actions, and lifecycle
+events. It does not activate health, combat, checkpoints, dialogue, persistence,
+fall consequences, or run-failure policy.
 
 ## Use
 
@@ -27,6 +28,19 @@ own entities through its level's `entityTypes` map.
 
 Phaser is a peer dependency so the host game owns the Phaser version and
 runtime instance.
+
+## Optional mechanics and compatibility recipe
+
+Pass mechanics as `new PlatformerScene({ mechanics: [...] })` or use
+`scene.mechanicHost.install(mechanic)`. Installers may return cleanup functions;
+the scene removes all installed mechanics automatically on shutdown.
+
+`createLandingConsequenceMechanic({ resolve, apply })` maps schema-free landing
+facts to game-owned consequences. `ACTION_PLATFORMER_ENTITY_TYPES` contains the
+opinionated barricade, boss, sign, dialogue-trigger, and checkpoint-gate types.
+`ActionPlatformerScene` opts into the former all-in-one behavior for existing
+action-platformer games; `PlatformerScene` keeps those compatibility methods
+inactive by default.
 
 ## Input intents
 
@@ -70,9 +84,8 @@ scene.offerContextualAction({
 });
 ```
 
-Built-in signs now offer press actions. Unlit checkpoints offer a press action;
-lit checkpoints offer a hold-to-rest action, so overlapping interactions resolve
-through one priority system rather than competing to consume the keyboard edge.
+The action-platformer recipe's signs and checkpoints use the same priority
+system rather than competing to consume a keyboard edge.
 `currentContextualAction` exposes the selected action for HUD rendering.
 
 ## Lifecycle events
@@ -131,10 +144,41 @@ as jumps, dashes, sprints, ledge grabs, mantles, and landings. The scene facade
 applies the patch to its Arcade body and maps events to the existing hooks.
 
 Landing events contain `{ drop, impactVelocity }`; the controller never assigns
-damage or health semantics. The compatibility scene preserves its old fall rule
-by default; return `false` from `landingConsequencesEnabled()` to omit it. A
-game can then implement `onLanding(fact)` or observe the scene lifecycle's
-`landing` event from a composable mechanic without carrying HP state.
+damage or health semantics. The base scene applies no consequence. A game can
+implement `onLanding(fact)`, install `createLandingConsequenceMechanic`, or
+observe the `landing` event without carrying HP state. `ActionPlatformerScene`
+retains the old tiered fall rule.
 
 `createAreaTransitionController()` separately provides a deterministic
 `begin`/`complete`/`cancel` guard for asynchronous area changes.
+
+## World content and cleanup
+
+`PlatformerScene` creates the same core `worldRuntime` used by `TopDownScene`.
+It validates the world size, spawn, floor segments, platforms, entity types, and
+registered entity-specific fields before constructing the area. Levels and
+entities may declare `schemaVersion: 1`; omitted versions remain compatible and
+mean version 1.
+
+Invalid content fails with its exact path, including area identifiers during a
+transition, for example `level("tower").platforms[3].h`. A failed next-area
+validation leaves the current area intact.
+
+The shared entity store owns deterministic update order and teardown. Every
+entity inherits a `resources` scope for listeners, timers, bodies, and similar
+handles. Area teardown and scene shutdown empty the store and run all resource
+cleanups even when another cleanup throws. The shared portal/trigger-zone
+contract also prevents arrival zones from immediately bouncing a player back.
+
+Explicit runtime dependencies can be supplied without coupling movement to
+them:
+
+```js
+super({
+  worldRuntime: {
+    clock: () => simulation.now,
+    rng: () => simulation.random(),
+    snapshots: snapshotOptions,
+  },
+});
+```

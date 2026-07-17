@@ -1,7 +1,17 @@
 import Phaser from 'phaser';
-import { TopDownScene } from '@phaser-game-engines/top-down';
+import {
+  ACTION_ADVENTURE_ENTITY_TYPES,
+  TopDownScene,
+  createActionAdventureMechanic,
+} from '@phaser-game-engines/top-down';
 
 class BasicTopDownScene extends TopDownScene {
+  constructor() {
+    super({
+      entityTypes: ACTION_ADVENTURE_ENTITY_TYPES,
+      mechanics: [createActionAdventureMechanic()],
+    });
+  }
   getLevel() {
     return { world: { width: 1920, height: 540 }, spawn: { x: 100, y: 100 }, walls: [
       // Village (left) and grove (right) are separate map sections, divided by a wall.

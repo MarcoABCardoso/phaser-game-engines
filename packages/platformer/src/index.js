@@ -1,9 +1,10 @@
 // Public API for the Phaser platformer engine. Subpath exports remain available
 // for consumers that need a specific entity or pure system.
 export { default as PlatformerScene } from './scenes/PlatformerScene.js';
+export { default as ActionPlatformerScene } from './scenes/ActionPlatformerScene.js';
 export { default as Entity } from './entities/Entity.js';
 export { default as EntityManager } from './entities/EntityManager.js';
-export { BASE_ENTITY_TYPES } from './entities/registry.js';
+export { BASE_ENTITY_TYPES, ACTION_PLATFORMER_ENTITY_TYPES } from './entities/registry.js';
 export {
   createTraversalController,
   createLocomotionController,
@@ -14,3 +15,4 @@ export {
   createLandingController,
   createAreaTransitionController,
 } from './controllers/index.js';
+export { createLandingConsequenceMechanic } from './mechanics/landing-consequences.js';

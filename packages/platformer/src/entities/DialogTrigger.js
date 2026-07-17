@@ -3,16 +3,21 @@
 // there...") instead of at a sign or an object. No body, no visuals — a rule, like a
 // Spawner — so it's cheap and rebuilds fresh each run (fires once per run).
 import Entity from './Entity.js';
-import { pointInRect } from '../systems/geometry.js';
+import { createTriggerZone } from '@phaser-game-engines/core';
 
 export default class DialogTrigger extends Entity {
+  static validateSpec(spec, { path, validateRect }) {
+    validateRect(spec.zone, { path: `${path}.zone` });
+  }
+
   spawn() {
     this.fired = false;
+    this.trigger = createTriggerZone(this.spec.zone, { initiallyArmed: true });
   }
 
   update(scene) {
     if (this.fired || scene.dialogActive) return;
-    if (pointInRect(scene.player.x, scene.player.y, this.spec.zone)) {
+    if (this.trigger.update(scene.player).triggered) {
       this.fired = true;
       scene.startDialog(this.spec.dialogId);
     }

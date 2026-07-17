@@ -7,7 +7,8 @@
     ".": "./src/index.js",
     "./entities/*.js": "./src/entities/*.js",
     "./scenes/*.js": "./src/scenes/*.js",
-    "./systems/*.js": "./src/systems/*.js"
+    "./systems/*.js": "./src/systems/*.js",
+    "./recipes/*.js": "./src/recipes/*.js"
   },
   "files": ["src", "README.md"],
   "dependencies": { "@phaser-game-engines/core": "0.1.0" },

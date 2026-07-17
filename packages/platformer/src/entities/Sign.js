@@ -10,6 +10,19 @@ const COLOR = 0x8a7a4a;
 const POST_COLOR = 0x5a4a30;
 
 export default class Sign extends Entity {
+  static validateSpec(spec, { path, validateRect }) {
+    validateRect(spec.zone, { path: `${path}.zone` });
+    validateRect(spec.board, { path: `${path}.board` });
+    validateRect(spec.post, { path: `${path}.post` });
+  }
+
+  constructor(spec) {
+    super(spec);
+    this.capabilities.provide('interactable', {
+      label: spec.label ?? 'Read sign',
+    });
+  }
+
   spawn(scene) {
     const b = this.spec.board; // { x, y, w, h } — the drawn board
     const p = this.spec.post; // { x, y, w, h } — the drawn post beneath it

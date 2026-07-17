@@ -58,6 +58,7 @@ export function createLifecycle() {
     if (!entries) return 0;
 
     let invoked = 0;
+    const errors = [];
     for (const entry of entries.slice()) {
       if (!entry.active) continue;
       if (entry.once) {
@@ -66,9 +67,10 @@ export function createLifecycle() {
         if (index !== -1) entries.splice(index, 1);
       }
       invoked += 1;
-      entry.listener(payload);
+      try { entry.listener(payload); } catch (error) { errors.push(error); }
     }
     if (entries.length === 0) listeners.delete(event);
+    if (errors.length) throw new AggregateError(errors, `Lifecycle event ${String(event)} failed.`);
     return invoked;
   }
 

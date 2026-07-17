@@ -1,9 +1,11 @@
 import Entity from './Entity.js';
-import { pointInRect } from '../systems/geometry.js';
+import { createTriggerZone, validatePortalSpec } from '@phaser-game-engines/core';
 
 export default class Portal extends Entity {
+  static validateSpec = validatePortalSpec;
+
   spawn(scene) {
-    this.armed = false;
+    this.trigger = createTriggerZone(this.spec.zone);
     // Portals are often placed at doors or map edges, but a marker gives an
     // engine-only game a visible, discoverable gateway without custom art.
     const marker = this.spec.marker;
@@ -13,9 +15,9 @@ export default class Portal extends Entity {
     }
   }
   update(scene) {
-    const inside = pointInRect(scene.player.x, scene.player.y, this.spec.zone);
-    if (!inside) this.armed = true;
-    else if (this.armed && !scene.transitioning) { this.armed = false; scene.enterArea(this.spec.to, this.spec.entry); }
+    if (!scene.transitioning && this.trigger.update(scene.player).triggered) {
+      scene.enterArea(this.spec.to, this.spec.entry);
+    }
   }
   destroy() { this.marker?.destroy(); this.label?.destroy(); }
 }

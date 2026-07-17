@@ -1,5 +1,5 @@
-// Barricade.js — a breakable wall (the attack corridor's gate). An attackable
-// surface: it opts into the shared attack loop and depletes hp per landed hit. It's
+// Barricade.js — a breakable wall (the attack corridor's gate). A targetable
+// damage receiver that depletes hp per landed hit. It's
 // a non-main obstacle, so it carries no goneFlag — every run rebuilds it fresh.
 import Entity from './Entity.js';
 import { pointInRect } from '../systems/geometry.js';
@@ -7,16 +7,24 @@ import { pointInRect } from '../systems/geometry.js';
 const COLOR = 0x8a5a3f;
 
 export default class Barricade extends Entity {
+  static validateSpec(spec, { path, finite, validateRect }) {
+    validateRect(spec.wall, { path: `${path}.wall` });
+    finite(spec.hp, `${path}.hp`, { positive: true });
+  }
+
+  constructor(spec) {
+    super(spec);
+    this.capabilities.provide('targetable', { inRange: (scene) => this.inAttackRange(scene) });
+    this.capabilities.provide('damageReceiver', {
+      receive: ({ scene, amount }) => this.onHit(scene, amount),
+    });
+  }
   spawn(scene) {
     this.wall = this.spec.wall; // { x, y, w, h }
     this.maxHp = this.spec.hp;
     this.hp = this.spec.hp;
     this.broken = false;
     this.rect = scene.addSolid(this.wall, COLOR);
-  }
-
-  get attackable() {
-    return !this.broken;
   }
 
   inAttackRange(scene) {

@@ -1,7 +1,7 @@
 // Boss.js — the attack arena's boss: an enemy that's inert AND unseen until it's armed
 // (the artifact inside its arena is grabbed — see arm()), then it appears, seals the way
-// behind the player, chases within its bounds, and trades hits. It's both an attackable
-// surface (while awake) and an autonomous actor, and it owns the arena gate it raises.
+// behind the player, chases within its bounds, and trades hits. It exposes targetable
+// and damageReceiver capabilities while awake and owns the arena gate it raises.
 // Defeating it is a main objective, so it carries a goneFlag — once that's banked it
 // rebuilds already-gone.
 import Entity from './Entity.js';
@@ -16,6 +16,13 @@ const KNOCKBACK_MS = 220; // window where chase AI yields to the boss's own hit-
 const HIT_KNOCKBACK = 260; // boss horizontal knockback from a landed player hit
 
 export default class Boss extends Entity {
+  constructor(spec) {
+    super(spec);
+    this.capabilities.provide('targetable', { inRange: (scene) => this.inAttackRange(scene) });
+    this.capabilities.provide('damageReceiver', {
+      receive: ({ scene, amount }) => this.onHit(scene, amount),
+    });
+  }
   spawn(scene) {
     this.arena = this.spec.arena;
     this.hp = this.spec.hp;
@@ -54,12 +61,8 @@ export default class Boss extends Entity {
     return Boolean(this.rect);
   }
 
-  get attackable() {
-    return this.alive && this.active;
-  }
-
   inAttackRange(scene) {
-    if (!this.attackable) return false;
+    if (!this.alive || !this.active) return false;
     const dx = Math.abs(scene.player.x - this.rect.x);
     const dy = Math.abs(scene.player.y - this.rect.y);
     return (

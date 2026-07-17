@@ -7,7 +7,14 @@
     ".": "./src/index.js",
     "./input.js": "./src/input.js",
     "./actions.js": "./src/actions.js",
-    "./lifecycle.js": "./src/lifecycle.js"
+    "./lifecycle.js": "./src/lifecycle.js",
+    "./capabilities.js": "./src/capabilities.js",
+    "./mechanics.js": "./src/mechanics.js",
+    "./geometry.js": "./src/geometry.js",
+    "./resources.js": "./src/resources.js",
+    "./schema.js": "./src/schema.js",
+    "./serialization.js": "./src/serialization.js",
+    "./world.js": "./src/world.js"
   },
   "files": ["src", "README.md"],
   "engines": { "node": ">=22" }

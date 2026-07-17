@@ -3,10 +3,14 @@ import {
   actionState,
   advanceActionActivation,
   createLifecycle,
+  createMechanicHost,
+  createWorldRuntime,
   createInputIntent,
   executeContextualAction,
   lifecycleEvent,
+  runCleanups,
   selectContextualAction,
+  validateRect,
 } from '@phaser-game-engines/core';
 import EntityManager from '../entities/EntityManager.js';
 import { BASE_ENTITY_TYPES } from '../entities/registry.js';
@@ -17,34 +21,49 @@ export default class TopDownScene extends Phaser.Scene {
   constructor(config = {}) {
     super(config);
     this.entityTypes = config.entityTypes;
+    this.configuredMechanics = [...(config.mechanics ?? [])];
+    this.worldRuntimeOptions = config.worldRuntime ?? {};
     this.lifecycle = createLifecycle();
+    this.mechanicHost = createMechanicHost(this);
   }
 
   getLevel() { throw new Error('TopDownScene subclasses must implement getLevel()'); }
   moveSpeed() { return 210; }
-  combatEnabled() { return true; }
-  playerMaxHealth() { return 5; }
-  attackDamage() { return 1; }
-  attackCooldownMs() { return 250; }
-  getSave() { return { flags: {}, inventory: {} }; }
-  statusText() {
-    return this.combatEnabled() ? `HP ${this.health}/${this.playerMaxHealth()}` : '';
-  }
+  statusText() { return ''; }
+  getMechanics() { return this.configuredMechanics; }
 
   create() {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this });
+      runCleanups([
+        () => this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this }),
+        () => this.mechanicHost.clear(),
+        () => this.entities?.destroyAll(this),
+      ], 'Top-down scene shutdown failed.');
     });
     this.level = this.getLevel();
-    this.save = this.getSave();
     this.transitioning = false;
-    if (this.combatEnabled()) {
-      this.health = this.playerMaxHealth();
-      this.lastAttackAt = -Infinity;
-    } else {
-      delete this.health;
-      delete this.lastAttackAt;
-    }
+    const types = {
+      ...BASE_ENTITY_TYPES,
+      ...(this.level.entityTypes ?? {}),
+      ...(this.entityTypes ?? {}),
+    };
+    this.worldRuntime = createWorldRuntime({
+      ...this.worldRuntimeOptions,
+      types,
+      EntityStoreType: EntityManager,
+      clock: this.worldRuntimeOptions.clock ?? (() => this.time.now),
+    });
+    this.worldRuntime.validateLevel(this.level, {
+      validateExtension: (level, { path, fail }) => {
+        if (level.walls !== undefined && !Array.isArray(level.walls)) {
+          fail(`${path}.walls`, 'expected an array.');
+        }
+        (level.walls ?? []).forEach((wall, index) => {
+          validateRect(wall, { path: `${path}.walls[${index}]` });
+        });
+      },
+    });
+    for (const mechanic of this.getMechanics()) this.mechanicHost.install(mechanic);
 
     const { width, height } = this.level.world;
     this.physics.world.setBounds(0, 0, width, height);
@@ -86,11 +105,7 @@ export default class TopDownScene extends Phaser.Scene {
 
     this.contextualActions = [];
     this.contextualActionActivation = null;
-    this.entities = new EntityManager({
-      ...BASE_ENTITY_TYPES,
-      ...(this.level.entityTypes ?? {}),
-      ...(this.entityTypes ?? {}),
-    });
+    this.entities = this.worldRuntime.entities;
     this.entities.build(this, this.level.entitySpecs);
     this.prompt = this.add.text(12, 12, '', {
       fontFamily: 'sans-serif',
@@ -181,7 +196,6 @@ export default class TopDownScene extends Phaser.Scene {
         ? this.message
         : (this.nearInteraction?.prompt ?? this.statusText()),
     );
-    if (actionState(this.inputIntent, 'primary').pressed) this.attack(time);
     this.lifecycle.emit(lifecycleEvent.tick, { scene: this, time, delta });
   }
 
@@ -207,22 +221,6 @@ export default class TopDownScene extends Phaser.Scene {
     return actionState(this.inputIntent, 'interact').pressed;
   }
 
-  attack(time) {
-    if (!this.combatEnabled()) return;
-    if (time - this.lastAttackAt < this.attackCooldownMs()) return;
-    this.lastAttackAt = time;
-    const target = this.entities.attackableInReach(this);
-    if (target) target.onHit(this, this.attackDamage());
-    this.onAttack(target);
-  }
-
-  collect(entity) {
-    if (entity.goneFlag) this.save.flags[entity.goneFlag] = true;
-    const item = entity.spec.item ?? entity.id;
-    if (item) this.save.inventory[item] = (this.save.inventory[item] ?? 0) + 1;
-    this.onCollect(entity);
-  }
-
   interact(entity) {
     if (entity.spec.message) this.showMessage(entity.spec.message);
     this.onInteract(entity);
@@ -242,29 +240,11 @@ export default class TopDownScene extends Phaser.Scene {
     });
   }
 
-  damagePlayer(amount, source) {
-    if (!this.combatEnabled()) return;
-    if (this.invulnerableUntil > this.time.now) return;
-    this.invulnerableUntil = this.time.now + 500;
-    this.health = Math.max(0, this.health - amount);
-    if (source) {
-      const dx = this.player.x - source.x;
-      const dy = this.player.y - source.y;
-      const distance = Math.hypot(dx, dy) || 1;
-      this.player.body.setVelocity((dx / distance) * 160, (dy / distance) * 160);
-    }
-    if (!this.health) this.onPlayerDefeated();
-  }
-
   enterArea(to, entry) {
     this.transitioning = true;
     this.onEnterArea(to, entry);
   }
 
-  onAttack() {}
-  onCollect() {}
   onInteract() {}
-  onEnemyDefeated() {}
-  onPlayerDefeated() {}
   onEnterArea() {}
 }

@@ -18,15 +18,17 @@
 // }
 import Entity from './Entity.js';
 import { resolveSpawnPoint } from '../systems/spawn.js';
-import { pointInRect } from '../systems/geometry.js';
+import { createTriggerZone } from '@phaser-game-engines/core';
 
 export default class Spawner extends Entity {
-  spawn() {
-    this.wasInside = false; // for onEnterZone edge detection
+  spawn(scene) {
+    this.zoneTrigger = this.spec.trigger?.onEnterZone
+      ? createTriggerZone(this.spec.trigger.onEnterZone, { initiallyArmed: true })
+      : null;
     this.everyAccum = 0; // for `every` interval accumulation
     this.emitted = 0; // total entities emitted (for `limit` and cycle index)
     this.done = false; // latched once a non-repeat spawner has fired / hit its limit
-    this.rng = this.spec.rng || Math.random;
+    this.rng = this.spec.rng ?? scene?.worldRuntime?.rng?.next ?? Math.random;
   }
 
   update(scene, time, delta) {
@@ -45,10 +47,7 @@ export default class Spawner extends Entity {
     if (t.onStart) return true;
 
     if (t.onEnterZone) {
-      const inside = pointInRect(scene.player.x, scene.player.y, t.onEnterZone);
-      const entered = inside && !this.wasInside;
-      this.wasInside = inside;
-      return entered;
+      return this.zoneTrigger.update(scene.player).triggered;
     }
 
     if (t.atDangerTier !== undefined) {

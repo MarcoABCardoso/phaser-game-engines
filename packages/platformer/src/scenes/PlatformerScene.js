@@ -3,10 +3,16 @@ import {
   actionState,
   advanceActionActivation,
   createLifecycle,
+  createMechanicHost,
+  createWorldRuntime,
   createInputIntent,
   executeContextualAction,
+  getCapability,
+  hasCapability,
   lifecycleEvent,
+  runCleanups,
   selectContextualAction,
+  validateRect,
 } from '@phaser-game-engines/core';
 import { fallDamageForDrop } from '../systems/fall.js';
 import { shouldCollideOneWay } from '../systems/movement.js';
@@ -15,7 +21,7 @@ import {
   createTraversalController as createHeadlessTraversalController,
 } from '../controllers/index.js';
 import EntityManager from '../entities/EntityManager.js';
-import { BASE_ENTITY_TYPES } from '../entities/registry.js';
+import { ACTION_PLATFORMER_ENTITY_TYPES, BASE_ENTITY_TYPES } from '../entities/registry.js';
 import { pointInRect } from '../systems/geometry.js';
 import {
   createDialog,
@@ -27,9 +33,8 @@ import {
 
 // PlatformerScene — the Arcade Physics compatibility facade for the generic platformer
 // controllers. It adapts bodies, collisions, input, and presentation around a segmented
-// floor + platforms, a player
-// body that runs/jumps/falls (with tiered stumble-vs-hurt landings), an attack that
-// dispatches over attackable entities, HP with i-frames/knockback, generic checkpoints
+// floor + platforms and a player body that runs/jumps/falls. The optional compatibility
+// recipe adds attacks over entity capabilities, HP with i-frames/knockback, checkpoints,
 // (respawn markers you interact with), a world-freezing dialogue system, and the entity
 // manager that loops over everything.
 //
@@ -48,7 +53,7 @@ const STUMBLE_STUN_MS = 170; // brief loss of control on a stumble
 const FALL_HURT_STUN_MS = 320; // landing-stun on a damaging fall
 const HOLD_MS = 600; // how long a destructive action (rest / abandon) must be held to fire
 const ATTACK_COOLDOWN_MS = 260; // min time between landed hits
-const ATTACK_REACH = 56; // px beyond an attackable's edges a swing still lands
+const ATTACK_REACH = 56; // px beyond a target's edges a swing still lands
 const ONE_WAY_GRACE = 8; // px slack for landing on a one-way ("thin") platform's top
 const ATTACK_INDICATOR_H = 50; // height of the attack-range flash rectangle
 const ATTACK_INDICATOR_MS = 140; // how long the attack-range flash stays visible
@@ -85,17 +90,28 @@ const PAL = {
 export default class PlatformerScene extends Phaser.Scene {
   constructor(config = {}) {
     super(config);
+    this.configuredMechanics = [...(config.mechanics ?? [])];
+    this.entityTypes = config.entityTypes;
+    this.worldRuntimeOptions = config.worldRuntime ?? {};
+    this.legacyRealTimeMechanics = config.legacyRealTimeMechanics ?? false;
     this.lifecycle = createLifecycle();
+    this.mechanicHost = createMechanicHost(this);
   }
 
   create() {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this });
+      runCleanups([
+        () => this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this }),
+        () => this.mechanicHost.clear(),
+        () => this.entities?.destroyAll(this),
+      ], 'Platformer scene shutdown failed.');
     });
     // The subclass initialises its own state (save, run state, dialogue tables) here,
     // before anything that reads it is built.
-    this.dialogs = {};
-    this.speakers = {};
+    if (this.legacyRealTimeMechanics) {
+      this.dialogs = {};
+      this.speakers = {};
+    }
     this.init();
 
     // LEVEL SCHEMA (returned by getLevel()): {
@@ -107,6 +123,20 @@ export default class PlatformerScene extends Phaser.Scene {
     // The game returns the STARTING area's schema (which area that is may depend on the
     // save — the last-rested beacon can live in any area). enterArea(id) fetches others.
     this.level = this.getLevel();
+    const types = {
+      ...BASE_ENTITY_TYPES,
+      ...(this.legacyRealTimeMechanics ? ACTION_PLATFORMER_ENTITY_TYPES : {}),
+      ...(this.level.entityTypes ?? {}),
+      ...(this.entityTypes ?? {}),
+    };
+    this.worldRuntime = createWorldRuntime({
+      ...this.worldRuntimeOptions,
+      types,
+      EntityStoreType: EntityManager,
+      clock: this.worldRuntimeOptions.clock ?? (() => this.time.now),
+    });
+    this.validateLevelContent(this.level);
+    for (const mechanic of this.configuredMechanics) this.mechanicHost.install(mechanic);
     this.currentAreaId = this.level.id ?? null;
     this.transitioning = false;
 
@@ -124,19 +154,19 @@ export default class PlatformerScene extends Phaser.Scene {
     // World display objects that live outside a group (floor labels, …), tracked so a load
     // can tear them down.
     this.worldDecor = [];
-    this.entities = new EntityManager(this.level.entityTypes || BASE_ENTITY_TYPES);
+    this.entities = this.worldRuntime.entities;
     this.traversalController = this.createTraversalController();
     this.areaTransitionController = this.createAreaTransitionController();
 
-    this.attackReach = ATTACK_REACH; // how far a swing reaches; entities read this
+    if (this.legacyRealTimeMechanics) this.attackReach = ATTACK_REACH;
     // Checkpoints revealed in the field this run (e.g. by an enemy on death). Cleared each
     // reset; a permanent reveal is the game's business. Set up before buildCheckpoints.
-    this.revealedThisRun = new Set();
+    if (this.legacyRealTimeMechanics) this.revealedThisRun = new Set();
     this.buildWorld();
-    this.buildCheckpoints();
+    if (this.legacyRealTimeMechanics) this.buildCheckpoints();
     this.buildPlayer();
-    this.buildAttackIndicator();
-    // Everything attackable/collectible/autonomous lives in one instantiated list; the
+    if (this.legacyRealTimeMechanics) this.buildAttackIndicator();
+    // Every targetable/collectible/autonomous entity lives in one instantiated list; the
     // scene loops over it generically. Built after the player so entities can read it.
     this.entities.build(this, this.level.entitySpecs);
     this.onEntitiesBuilt();
@@ -167,7 +197,7 @@ export default class PlatformerScene extends Phaser.Scene {
       up: Phaser.Input.Keyboard.KeyCodes.UP,
       down: Phaser.Input.Keyboard.KeyCodes.DOWN, // drop through a one-way platform (with jump)
       s: Phaser.Input.Keyboard.KeyCodes.S,
-      attack: Phaser.Input.Keyboard.KeyCodes.F, // swing at an attackable in reach
+      attack: Phaser.Input.Keyboard.KeyCodes.F, // optional recipe primary action
       interact: Phaser.Input.Keyboard.KeyCodes.E, // light / rest at a checkpoint
       abandon: Phaser.Input.Keyboard.KeyCodes.R, // give up in the field (hold)
     });
@@ -220,9 +250,24 @@ export default class PlatformerScene extends Phaser.Scene {
   isCheckpointLit(cp) { return Boolean(cp && cp.alwaysLit); }
   isCheckpointRevealed(cp) { return !cp || !cp.hiddenUntilFlag; }
   isCheckpointUsable(/* cp */) { return true; }
-  landingConsequencesEnabled() { return true; }
+  landingConsequencesEnabled() { return this.legacyRealTimeMechanics; }
   // Escalation tier for spawners etc. (no danger model in the bare engine).
   currentDangerTier() { return 0; }
+  validateLevelContent(level, path = 'level') {
+    return this.worldRuntime.validateLevel(level, {
+      path,
+      validateExtension: (content, context) => {
+        for (const field of ['floorSegments', 'platforms']) {
+          if (content[field] !== undefined && !Array.isArray(content[field])) {
+            context.fail(`${path}.${field}`, 'expected an array.');
+          }
+          (content[field] ?? []).forEach((rect, index) => {
+            validateRect(rect, { path: `${path}.${field}[${index}]` });
+          });
+        }
+      },
+    });
+  }
   /** Override to supply gamepad, touch, AI, network, or replay input. */
   readInputIntent() {
     const left = this.keys.left.isDown || this.keys.a.isDown;
@@ -437,23 +482,28 @@ export default class PlatformerScene extends Phaser.Scene {
     // A hang may have suspended gravity; make sure a fresh run starts under normal physics.
     this.player.body.setAllowGravity(true);
     this.player.body.setGravityY(0);
-    this.attackIndicatorUntil = 0;
-    if (this.attackIndicator) this.attackIndicator.setAlpha(0);
+    if (this.legacyRealTimeMechanics) {
+      this.attackIndicatorUntil = 0;
+      if (this.attackIndicator) this.attackIndicator.setAlpha(0);
+    }
     this.stunUntil = 0;
     this.prevPlayerX = this.player.x;
-    this.runEnding = false;
-    this.runMessage = '';
-    this.currentCheckpoint = null;
-    this.atLitCheckpoint = false;
-    // Dialogue never persists across a reset (the world was frozen while it was open).
-    this.dialogState = null;
-    this.dialogOnDone = null;
-    this.nearReadable = null;
+    if (this.legacyRealTimeMechanics) {
+      this.runEnding = false;
+      this.runMessage = '';
+      this.currentCheckpoint = null;
+      this.atLitCheckpoint = false;
+      this.dialogState = null;
+      this.dialogOnDone = null;
+      this.nearReadable = null;
+    }
     this.contextualActions = [];
     this.currentContextualAction = null;
     this.contextualActionActivation = null;
-    this.abandonActionActivation = null;
-    this.playerInvincibleUntil = 0;
+    if (this.legacyRealTimeMechanics) {
+      this.abandonActionActivation = null;
+      this.playerInvincibleUntil = 0;
+    }
     this.player.setAlpha(1);
 
     // The game resets its own per-run transient state (and seeds this run's vitals) here.
@@ -492,7 +542,7 @@ export default class PlatformerScene extends Phaser.Scene {
     this.oneWayPlatforms.clear(true, true);
     this.movers.clear(true, true);
     for (const id of Object.keys(this.checkpointRects || {})) this.checkpointRects[id].destroy();
-    this.checkpointRects = {};
+    if (this.legacyRealTimeMechanics) this.checkpointRects = {};
     for (const o of this.worldDecor) o.destroy();
     this.worldDecor = [];
     this.platformRects = {};
@@ -502,14 +552,25 @@ export default class PlatformerScene extends Phaser.Scene {
   // a reset that respawns elsewhere. Leaves run state and the player alone (the caller
   // repositions). The subclass returns the target's schema from getLevel(areaId).
   swapWorld(areaId) {
+    const nextLevel = this.getLevel(areaId);
+    const unregisterTypes = [];
+    try {
+      for (const [name, EntityType] of Object.entries(nextLevel.entityTypes ?? {})) {
+        unregisterTypes.push(this.worldRuntime.registry.register(name, EntityType));
+      }
+      this.validateLevelContent(nextLevel, `level(${JSON.stringify(areaId)})`);
+    } catch (error) {
+      for (const unregister of unregisterTypes.reverse()) unregister();
+      throw error;
+    }
     this.teardownWorld();
-    this.level = this.getLevel(areaId);
+    this.level = nextLevel;
     this.currentAreaId = this.level.id ?? areaId;
     this.physics.world.setBounds(0, 0, this.level.world.width, this.level.world.height);
     this.cameras.main.setBounds(0, 0, this.level.world.width, this.level.world.height);
-    this.revealedThisRun.clear();
+    this.revealedThisRun?.clear();
     this.buildWorld();
-    this.buildCheckpoints();
+    if (this.legacyRealTimeMechanics) this.buildCheckpoints();
     this.entities.build(this, this.level.entitySpecs);
     this.onEntitiesBuilt();
   }
@@ -545,12 +606,14 @@ export default class PlatformerScene extends Phaser.Scene {
     this.player.body.setAllowGravity(true);
     this.player.body.setGravityY(0);
     this.stunUntil = 0;
-    this.currentCheckpoint = null;
-    this.atLitCheckpoint = false;
+    if (this.legacyRealTimeMechanics) {
+      this.currentCheckpoint = null;
+      this.atLitCheckpoint = false;
+    }
     this.contextualActions = [];
     this.currentContextualAction = null;
     this.contextualActionActivation = null;
-    this.abandonActionActivation = null;
+    if (this.legacyRealTimeMechanics) this.abandonActionActivation = null;
   }
 
   // Rebuild the obstacle visuals a run may have mutated (opened gate, cleared ledge) plus
@@ -558,11 +621,13 @@ export default class PlatformerScene extends Phaser.Scene {
   // each run presents fresh. Rebuilding the entity list is a single call — anything the
   // game marks permanently done rebuilds into its done state via each entity's spawn().
   resetObstacles() {
-    this.revealedThisRun.clear();
+    this.revealedThisRun?.clear();
     this.entities.build(this, this.level.entitySpecs);
     this.onEntitiesBuilt();
     // Checkpoint lit-state may have changed since create, so repaint each marker.
-    for (const c of this.level.checkpoints || []) this.refreshCheckpointVisual(c);
+    if (this.legacyRealTimeMechanics) {
+      for (const c of this.level.checkpoints || []) this.refreshCheckpointVisual(c);
+    }
   }
 
   // --- input & movement ------------------------------------------------------
@@ -598,7 +663,7 @@ export default class PlatformerScene extends Phaser.Scene {
     const attackPressed = actionState(this.inputIntent, 'primary').pressed;
     this.updateTraversal(time, delta, onGround, onOneWay);
 
-    if (!stunned && !this.hanging && attackPressed) {
+    if (this.legacyRealTimeMechanics && !stunned && !this.hanging && attackPressed) {
       this.showAttackIndicator(time);
       this.handleAttack(time);
     }
@@ -608,7 +673,7 @@ export default class PlatformerScene extends Phaser.Scene {
     if (this.dialogState) return;
 
     // A fall down a pitfall (past the floor line, into a gap) is lethal — end the run.
-    if (this.level.pitKillY != null && this.player.y > this.level.pitKillY) {
+    if (this.legacyRealTimeMechanics && this.level.pitKillY != null && this.player.y > this.level.pitKillY) {
       this.endRun('You fall into the dark. The run ends.');
       return;
     }
@@ -616,9 +681,9 @@ export default class PlatformerScene extends Phaser.Scene {
     // One generic pass drives every autonomous/collectible/moving thing.
     this.entities.update(this, time, delta);
     if (this.dialogState) return;
-    this.updateCheckpoints(delta);
+    if (this.legacyRealTimeMechanics) this.updateCheckpoints(delta);
     this.resolveContextualActions(time, delta);
-    this.updateAbandonAction(delta);
+    if (this.legacyRealTimeMechanics) this.updateAbandonAction(delta);
     if (this.dialogState) return;
     // The game advances its per-frame systems (map knowledge, danger clock…).
     this.onTick(time, delta);
@@ -627,12 +692,13 @@ export default class PlatformerScene extends Phaser.Scene {
     this.updatePlayerVisual(time, onGround);
 
     // Flicker while invincible, so a hit visibly reads as "safe for a moment."
-    const invincible = this.isPlayerInvincible(time);
-    this.player.setAlpha(
-      invincible ? (Math.floor(time / INVINCIBLE_FLICKER_MS) % 2 === 0 ? 0.35 : 1) : 1,
-    );
-
-    if (time > (this.attackIndicatorUntil || 0)) this.attackIndicator.setAlpha(0);
+    if (this.legacyRealTimeMechanics) {
+      const invincible = this.isPlayerInvincible(time);
+      this.player.setAlpha(
+        invincible ? (Math.floor(time / INVINCIBLE_FLICKER_MS) % 2 === 0 ? 0.35 : 1) : 1,
+      );
+      if (time > (this.attackIndicatorUntil || 0)) this.attackIndicator?.setAlpha(0);
+    }
 
     this.prevPlayerX = this.player.x;
   }
@@ -759,21 +825,29 @@ export default class PlatformerScene extends Phaser.Scene {
     }
   }
 
-  // --- attackable surfaces ---------------------------------------------------
+  // --- target and damage-receiver capabilities ------------------------------
 
   // One code path for every swing, whatever it hits. The entity list resolves the target
-  // (first attackable surface in reach); the scene owns the swing bookkeeping that's the
+  // (first targetable damage receiver in reach); the compatibility recipe owns bookkeeping
   // same for any target — cooldown, recoil, flash, damage. The game reacts to a landed
   // hit (e.g. attack-skill xp) via onAttackLanded, and supplies the damage via swingDamage.
   handleAttack(time) {
     if (time - (this.lastAttackAt || 0) < ATTACK_COOLDOWN_MS) return;
-    const target = this.entities.attackableInReach(this);
+    const target = this.entities.firstWithCapability(
+      'targetable',
+      (capability, entity) => hasCapability(entity, 'damageReceiver')
+        && (typeof capability?.inRange !== 'function' || capability.inRange(this)),
+    );
     if (!target) return;
 
     this.lastAttackAt = time;
     // Notify before reading damage, so a hit that raises the attack skill applies to itself.
     this.onAttackLanded(target);
-    target.onHit(this, this.swingDamage());
+    getCapability(target, 'damageReceiver')?.receive?.({
+      scene: this,
+      source: this.player,
+      amount: this.swingDamage(),
+    });
     this.applyAttackRecoil();
     this.flash(0xffb066);
   }

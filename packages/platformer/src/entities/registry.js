@@ -12,12 +12,16 @@ import Gate from './Gate.js';
 import Portal from './Portal.js';
 
 export const BASE_ENTITY_TYPES = {
+  spawner: Spawner,
+  movingPlatform: MovingPlatform,
+  portal: Portal,
+};
+
+/** Opinionated entities retained for the legacy action-platformer recipe. */
+export const ACTION_PLATFORMER_ENTITY_TYPES = {
   barricade: Barricade,
   boss: Boss,
-  spawner: Spawner,
   sign: Sign,
-  movingPlatform: MovingPlatform,
   dialogTrigger: DialogTrigger,
   gate: Gate,
-  portal: Portal,
 };
