@@ -115,13 +115,15 @@ Acceptance criteria:
 
 ## Milestone 5 — Extensible battle orchestration
 
-- Document lifecycle event payloads and stable event ordering.
-- Add custom phase pipelines and schedulers.
-- Support reactions, interrupts, participants entering or leaving schedules,
+Status: complete.
+
+- [x] Document lifecycle event payloads and stable event ordering.
+- [x] Add custom phase pipelines and schedulers.
+- [x] Support reactions, interrupts, participants entering or leaving schedules,
   and commands with multiple selection stages.
-- Separate logical resolution from presentation pacing through an effect queue
+- [x] Separate logical resolution from presentation pacing through an effect queue
   or pause/resume continuation contract.
-- Add snapshots, cancellation behavior, and stronger default command validation.
+- [x] Add snapshots, cancellation behavior, and stronger default command validation.
 
 Acceptance criteria:
 
@@ -133,12 +135,14 @@ Acceptance criteria:
 
 ## Milestone 6 — Determinism, saves, and tooling
 
-- Provide seedable RNG and explicit clock dependencies.
-- Define versioned snapshots and migrations.
-- Record and replay input intents and battle commands.
-- Add debug views for lifecycle events, active capabilities, contextual actions,
+Status: complete.
+
+- [x] Provide seedable RNG and explicit clock dependencies.
+- [x] Define versioned snapshots and migrations.
+- [x] Record and replay input intents and battle commands.
+- [x] Add debug views for lifecycle events, active capabilities, contextual actions,
   and controller state.
-- Publish JSDoc types or generated TypeScript declarations for public contracts.
+- [x] Publish JSDoc types or generated TypeScript declarations for public contracts.
 
 Acceptance criteria:
 

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Reusable Phaser 3 turn-based battle engine.",
   "type": "module",
+  "types": "./src/index.d.ts",
   "exports": {
     ".": "./src/index.js",
     "./scenes/*.js": "./src/scenes/*.js",

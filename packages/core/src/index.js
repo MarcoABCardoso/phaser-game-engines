@@ -19,6 +19,14 @@ export {
   validateRect,
 } from './schema.js';
 export { createSnapshotCodec } from './serialization.js';
+export { createManualClock, createSeededRng, systemClock } from './determinism.js';
+export { createSessionRecorder, replaySession } from './recording.js';
+export {
+  createDebugEventLog,
+  inspectCapabilities,
+  inspectContextualActions,
+  inspectController,
+} from './debug.js';
 export {
   createEntityRegistry,
   createTriggerZone,

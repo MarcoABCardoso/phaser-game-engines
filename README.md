@@ -33,3 +33,7 @@ Run the top-down sample with `npm run dev:top-down-sample`.
 Run the non-combat botanical survey with
 `npm run dev:non-combat-top-down-sample`. It uses contextual actions and
 lifecycle events without health, attacks, enemies, or inventory.
+
+The battle package has three contrasting samples: `dev:battle-sample` uses an
+HP/MP rules adapter, `dev:pp-battle-sample` uses PP and type matchups, and
+`dev:negotiation-battle-sample` resolves support without elimination.

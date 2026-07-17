@@ -96,6 +96,19 @@ level.entitySpecs[2].zone.w: expected a positive finite number.
 `{ version, data }` and applies every sequential migration before restore. It
 defines serialization boundaries without prescribing a game-state schema.
 
+## Determinism, recording, and debug inspection
+
+`createSeededRng(seed)` returns a serializable Mulberry32 random function;
+`createManualClock(time)` provides an explicitly advanced, restorable clock.
+Both can be passed directly to headless controllers. `createSessionRecorder`
+records normalized input intents and accepted battle commands against an
+explicit clock, and `replaySession` dispatches them in stable time/index order.
+
+Debug helpers stay presentation-neutral: `createDebugEventLog` captures a
+bounded lifecycle trace, while `inspectCapabilities`,
+`inspectContextualActions`, and `inspectController` return JSON-friendly data
+for a game overlay, console, or test reporter.
+
 ## Lifecycle events
 
 `createLifecycle()` provides a synchronous, Phaser-free event channel for

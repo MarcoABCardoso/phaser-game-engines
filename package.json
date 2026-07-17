@@ -15,7 +15,11 @@
     "dev:non-combat-top-down-sample": "vite samples/non-combat-top-down --host 127.0.0.1",
     "build:non-combat-top-down-sample": "vite build samples/non-combat-top-down",
     "dev:battle-sample": "vite samples/basic-turn-based-battle --host 127.0.0.1",
-    "build:battle-sample": "vite build samples/basic-turn-based-battle"
+    "build:battle-sample": "vite build samples/basic-turn-based-battle",
+    "dev:pp-battle-sample": "vite samples/pp-turn-based-battle --host 127.0.0.1",
+    "build:pp-battle-sample": "vite build samples/pp-turn-based-battle",
+    "dev:negotiation-battle-sample": "vite samples/negotiation-turn-based-battle --host 127.0.0.1",
+    "build:negotiation-battle-sample": "vite build samples/negotiation-turn-based-battle"
   },
   "devDependencies": {
     "phaser": "^3.90.0",
