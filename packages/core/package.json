@@ -1,0 +1,13 @@
+{
+  "name": "@phaser-game-engines/core",
+  "version": "0.1.0",
+  "description": "Headless contracts shared by Phaser game-engine packages.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./input.js": "./src/input.js",
+    "./actions.js": "./src/actions.js"
+  },
+  "files": ["src", "README.md"],
+  "engines": { "node": ">=22" }
+}

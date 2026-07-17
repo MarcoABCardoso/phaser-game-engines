@@ -4,8 +4,13 @@ A workspace for reusable Phaser game-engine packages. Each package owns its runt
 
 ## Packages
 
+- `@phaser-game-engines/core` — Phaser-free input and contextual-action contracts shared by genre engines.
 - `@phaser-game-engines/platformer` — Phaser 3 / Arcade Physics platformer engine.
 - `@phaser-game-engines/top-down` — Phaser 3 / Arcade Physics top-down engine.
+- `@phaser-game-engines/turn-based-battle` — generic phase-driven battle state machine with an optional Phaser adapter.
+
+See [ROADMAP.md](./ROADMAP.md) for the mission, architectural direction, and
+sequenced implementation milestones.
 
 ## Verify
 

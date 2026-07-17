@@ -26,17 +26,16 @@ export default class Sign extends Entity {
   }
 
   update(scene) {
-    // Advertise the read prompt when the player is in range; the scene surfaces
-    // whatever readable is nearest through its single action-prompt line.
-    if (pointInRect(scene.player.x, scene.player.y, this.spec.zone)) {
-      scene.nearReadable = { id: this.id, prompt: 'E: read the sign' };
-      // Same key as beacons, but a sign is never at a beacon, so there's no conflict:
-      // this consumes the press first (entities update before beacons) and the scene
-      // freezes for the dialogue.
-      if (!scene.dialogActive && scene.wasInteractJustPressed()) {
-        scene.startDialog(this.spec.dialogId);
-      }
-    }
+    if (!pointInRect(scene.player.x, scene.player.y, this.spec.zone)) return;
+    scene.offerContextualAction({
+      id: `read:${this.id}`,
+      kind: 'readable',
+      label: this.spec.label ?? 'Read sign',
+      priority: this.spec.priority ?? 0,
+      source: this,
+      available: () => !scene.dialogActive,
+      execute: () => scene.startDialog(this.spec.dialogId),
+    });
   }
 
   destroy() {

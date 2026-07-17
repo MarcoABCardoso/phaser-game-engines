@@ -1,4 +1,11 @@
 import Phaser from 'phaser';
+import {
+  actionState,
+  advanceActionActivation,
+  createInputIntent,
+  executeContextualAction,
+  selectContextualAction,
+} from '@phaser-game-engines/core';
 import { fallDamageForDrop } from '../systems/fall.js';
 import {
   shouldCollideOneWay,
@@ -211,6 +218,50 @@ export default class PlatformerScene extends Phaser.Scene {
   isCheckpointUsable(/* cp */) { return true; }
   // Escalation tier for spawners etc. (no danger model in the bare engine).
   currentDangerTier() { return 0; }
+  /** Override to supply gamepad, touch, AI, network, or replay input. */
+  readInputIntent() {
+    const left = this.keys.left.isDown || this.keys.a.isDown;
+    const right = this.keys.right.isDown || this.keys.d.isDown;
+    const up = this.keys.up.isDown;
+    const down = this.keys.down.isDown || this.keys.s.isDown;
+    return {
+      move: {
+        x: (right ? 1 : 0) - (left ? 1 : 0),
+        y: (down ? 1 : 0) - (up ? 1 : 0),
+      },
+      actions: {
+        moveLeft: {
+          pressed: Phaser.Input.Keyboard.JustDown(this.keys.left)
+            || Phaser.Input.Keyboard.JustDown(this.keys.a),
+          down: left,
+        },
+        moveRight: {
+          pressed: Phaser.Input.Keyboard.JustDown(this.keys.right)
+            || Phaser.Input.Keyboard.JustDown(this.keys.d),
+          down: right,
+        },
+        down: { down },
+        jump: {
+          pressed: Phaser.Input.Keyboard.JustDown(this.keys.jump)
+            || Phaser.Input.Keyboard.JustDown(this.keys.up),
+          down: this.keys.jump.isDown || this.keys.up.isDown,
+        },
+        primary: {
+          pressed: Phaser.Input.Keyboard.JustDown(this.keys.attack),
+          down: this.keys.attack.isDown,
+        },
+        interact: {
+          pressed: Phaser.Input.Keyboard.JustDown(this.keys.interact),
+          down: this.keys.interact.isDown,
+        },
+        abandon: {
+          pressed: Phaser.Input.Keyboard.JustDown(this.keys.abandon),
+          down: this.keys.abandon.isDown,
+        },
+      },
+      meta: { source: 'keyboard' },
+    };
+  }
   // Frame hook + gameplay events the game reacts to.
   onTick(/* time, delta */) {}
   onJump() {}
@@ -411,9 +462,10 @@ export default class PlatformerScene extends Phaser.Scene {
     this.dialogState = null;
     this.dialogOnDone = null;
     this.nearReadable = null;
-    this.interactJustPressed = false;
-    this.interactHeldMs = 0;
-    this.abandonHeldMs = 0;
+    this.contextualActions = [];
+    this.currentContextualAction = null;
+    this.contextualActionActivation = null;
+    this.abandonActionActivation = null;
     this.playerInvincibleUntil = 0;
     this.player.setAlpha(1);
 
@@ -511,8 +563,10 @@ export default class PlatformerScene extends Phaser.Scene {
     this.stunUntil = 0;
     this.currentCheckpoint = null;
     this.atLitCheckpoint = false;
-    this.interactHeldMs = 0;
-    this.abandonHeldMs = 0;
+    this.contextualActions = [];
+    this.currentContextualAction = null;
+    this.contextualActionActivation = null;
+    this.abandonActionActivation = null;
   }
 
   // Rebuild the obstacle visuals a run may have mutated (opened gate, cleared ledge) plus
@@ -534,6 +588,7 @@ export default class PlatformerScene extends Phaser.Scene {
     // An area load is in progress (fading out/in): hold everything — movement, timers,
     // triggers — until the new area is up and the player is placed.
     if (this.transitioning) return;
+    this.inputIntent = createInputIntent(this.readInputIntent(time, delta));
     // Dialogue freezes the world: while a conversation is open we only tick the typewriter
     // and read the advance key, and return before any movement, timer, enemy, hazard, or
     // trigger runs. This is the "dialogue pauses everything" rule.
@@ -542,10 +597,9 @@ export default class PlatformerScene extends Phaser.Scene {
       return;
     }
 
-    // Read the interact key once per frame so a readable (sign) and the checkpoint logic
-    // consult the same edge instead of racing to consume JustDown.
-    this.interactJustPressed = Phaser.Input.Keyboard.JustDown(this.keys.interact);
-    // Recomputed each frame by whatever readable the player is standing at (see Sign).
+    // Recomputed from actions offered by nearby entities and world mechanics.
+    this.contextualActions = [];
+    this.currentContextualAction = null;
     this.nearReadable = null;
 
     const dt = delta / 1000;
@@ -559,13 +613,12 @@ export default class PlatformerScene extends Phaser.Scene {
     this.onOneWay = onOneWay;
     const stunned = time < this.stunUntil;
 
-    const left = this.keys.left.isDown || this.keys.a.isDown;
-    const right = this.keys.right.isDown || this.keys.d.isDown;
-    const down = this.keys.down.isDown || this.keys.s.isDown;
-    const jumpPressed =
-      Phaser.Input.Keyboard.JustDown(this.keys.jump) || Phaser.Input.Keyboard.JustDown(this.keys.up);
-    const jumpHeld = this.keys.jump.isDown || this.keys.up.isDown;
-    const attackPressed = Phaser.Input.Keyboard.JustDown(this.keys.attack);
+    const left = this.inputIntent.move.x < 0;
+    const right = this.inputIntent.move.x > 0;
+    const down = actionState(this.inputIntent, 'down').down;
+    const jumpPressed = actionState(this.inputIntent, 'jump').pressed;
+    const jumpHeld = actionState(this.inputIntent, 'jump').down;
+    const attackPressed = actionState(this.inputIntent, 'primary').pressed;
 
     // Back on solid ground: refill the air-jump and air-dash budgets and re-arm the coyote
     // window (a short grace to still ground-jump just after walking off a ledge).
@@ -708,6 +761,9 @@ export default class PlatformerScene extends Phaser.Scene {
     this.entities.update(this, time, delta);
     if (this.dialogState) return;
     this.updateCheckpoints(delta);
+    this.resolveContextualActions(time, delta);
+    this.updateAbandonAction(delta);
+    if (this.dialogState) return;
     // The game advances its per-frame systems (map knowledge, danger clock…).
     this.onTick(time, delta);
 
@@ -737,8 +793,8 @@ export default class PlatformerScene extends Phaser.Scene {
     if (!cfg || !cfg.enabled) return;
     const windowMs = cfg.doubleTapMs || DASH_DOUBLE_TAP_MS;
     const edges = [
-      [-1, Phaser.Input.Keyboard.JustDown(this.keys.left) || Phaser.Input.Keyboard.JustDown(this.keys.a)],
-      [1, Phaser.Input.Keyboard.JustDown(this.keys.right) || Phaser.Input.Keyboard.JustDown(this.keys.d)],
+      [-1, actionState(this.inputIntent, 'moveLeft').pressed],
+      [1, actionState(this.inputIntent, 'moveRight').pressed],
     ];
     for (const [dir, pressed] of edges) {
       if (!pressed) continue;
@@ -901,32 +957,78 @@ export default class PlatformerScene extends Phaser.Scene {
     // Standing in a lit checkpoint is a game event (banking, danger pause…).
     if (this.atLitCheckpoint) this.onAtLitCheckpoint(cp);
 
-    // Interact (E): act on an unlit checkpoint instantly (constructive, pure upside); hold
-    // at a lit one to trigger its destructive action (rest/reset), so it must be deliberate.
+    // An unlit checkpoint is an immediate action. Resting at a lit checkpoint is
+    // deliberately held; both compete normally with actions offered by entities.
     if (cp && !this.atLitCheckpoint) {
-      this.interactHeldMs = 0;
-      if (this.interactJustPressed) this.onCheckpointLit(cp);
-    } else if (cp && this.atLitCheckpoint && this.keys.interact.isDown) {
-      this.interactHeldMs += delta;
-      if (this.interactHeldMs >= HOLD_MS) {
-        this.interactHeldMs = 0;
-        this.onCheckpointRest(cp);
-        return;
-      }
-    } else {
-      this.interactHeldMs = 0;
+      this.offerContextualAction({
+        id: `checkpoint:light:${cp.id}`,
+        label: cp.lightLabel ?? 'Light checkpoint',
+        priority: cp.interactionPriority ?? 20,
+        source: cp,
+        execute: () => this.onCheckpointLit(cp),
+      });
+    } else if (cp && this.atLitCheckpoint) {
+      this.offerContextualAction({
+        id: `checkpoint:rest:${cp.id}`,
+        label: cp.restLabel ?? 'Rest at checkpoint',
+        priority: cp.interactionPriority ?? 20,
+        source: cp,
+        activation: { action: 'interact', mode: 'hold', durationMs: HOLD_MS },
+        execute: () => this.onCheckpointRest(cp),
+      });
     }
+  }
 
-    // Abandon (R): give up in the field — hold to confirm.
-    if (this.keys.abandon.isDown) {
-      this.abandonHeldMs += delta;
-      if (this.abandonHeldMs >= HOLD_MS) {
-        this.abandonHeldMs = 0;
-        this.onAbandon();
-      }
-    } else {
-      this.abandonHeldMs = 0;
+  offerContextualAction(action) {
+    if (!action || typeof action.execute !== 'function') {
+      throw new TypeError('A contextual action requires an execute function.');
     }
+    this.contextualActions.push(action);
+    return action;
+  }
+
+  contextualActionContext(time = this.time.now, delta = 0) {
+    return {
+      scene: this,
+      player: this.player,
+      intent: this.inputIntent,
+      time,
+      delta,
+    };
+  }
+
+  resolveContextualActions(time, delta) {
+    const context = this.contextualActionContext(time, delta);
+    const action = selectContextualAction(this.contextualActions, context);
+    this.currentContextualAction = action;
+    const activation = advanceActionActivation(
+      action,
+      this.contextualActionActivation,
+      this.inputIntent,
+      delta,
+    );
+    this.contextualActionActivation = activation.state;
+
+    if (action?.kind === 'readable') {
+      this.nearReadable = { id: action.source?.id ?? action.id, prompt: action.label, action };
+    }
+    if (activation.triggered) executeContextualAction(action, context);
+  }
+
+  updateAbandonAction(delta) {
+    const action = {
+      id: 'abandon-run',
+      activation: { action: 'abandon', mode: 'hold', durationMs: HOLD_MS },
+      execute: () => this.onAbandon(),
+    };
+    const activation = advanceActionActivation(
+      action,
+      this.abandonActionActivation,
+      this.inputIntent,
+      delta,
+    );
+    this.abandonActionActivation = activation.state;
+    if (activation.triggered) executeContextualAction(action, this.contextualActionContext());
   }
 
   // --- dialogue --------------------------------------------------------------
@@ -942,7 +1044,7 @@ export default class PlatformerScene extends Phaser.Scene {
   // Whether the interact key's edge fired this frame — the single read shared by the
   // checkpoint logic and readables (signs), so they don't fight over JustDown.
   wasInteractJustPressed() {
-    return Boolean(this.interactJustPressed);
+    return actionState(this.inputIntent, 'interact').pressed;
   }
 
   startDialog(id, onDone = null) {
@@ -959,7 +1061,7 @@ export default class PlatformerScene extends Phaser.Scene {
 
   updateDialog(time, delta) {
     tickDialog(this.dialogState, delta);
-    if (Phaser.Input.Keyboard.JustDown(this.keys.interact)) {
+    if (actionState(this.inputIntent, 'interact').pressed) {
       advanceDialog(this.dialogState);
       if (this.dialogState.done) this.endDialog();
     }

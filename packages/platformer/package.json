@@ -13,6 +13,9 @@
     "src",
     "README.md"
   ],
+  "dependencies": {
+    "@phaser-game-engines/core": "0.1.0"
+  },
   "peerDependencies": {
     "phaser": "^3.90.0"
   },

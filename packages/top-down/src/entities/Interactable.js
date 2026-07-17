@@ -8,8 +8,13 @@ export default class Interactable extends Entity {
   }
   update(scene) {
     if (!pointInRect(scene.player.x, scene.player.y, this.spec.zone, 0)) return;
-    scene.nearInteraction = { prompt: this.spec.prompt ?? 'E: interact', entity: this };
-    if (scene.wasInteractJustPressed()) scene.interact(this);
+    scene.offerContextualAction({
+      id: `interact:${this.id}`,
+      label: this.spec.label ?? this.spec.prompt ?? 'Interact',
+      priority: this.spec.priority ?? 0,
+      source: this,
+      execute: () => scene.interact(this),
+    });
   }
   destroy() { this.sprite?.destroy(); }
 }

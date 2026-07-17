@@ -12,3 +12,12 @@ export function facingFromVelocity(x, y, fallback = 'down') {
   if (Math.abs(x) >= Math.abs(y)) return x > 0 ? 'right' : 'left';
   return y > 0 ? 'down' : 'up';
 }
+
+/** Convert an already-normalized input intent into world velocity. */
+export function movementFromIntent(move = {}, speed = 200) {
+  const x = Number(move.x) || 0;
+  const y = Number(move.y) || 0;
+  const magnitude = Math.hypot(x, y);
+  const scale = magnitude > 1 ? 1 / magnitude : 1;
+  return { x: x * scale * speed, y: y * scale * speed };
+}
