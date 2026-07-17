@@ -35,7 +35,7 @@ genre packages.
 
 ## Milestone 1 — Composable real-time foundations
 
-Status: in progress.
+Status: complete.
 
 - [x] Add a small `@phaser-game-engines/core` package.
 - [x] Define normalized, device-independent input intents.
@@ -44,9 +44,9 @@ Status: in progress.
 - [x] Integrate input intents into the platformer adapter.
 - [x] Replace platformer sign/checkpoint input competition with contextual
   actions.
-- [ ] Add a minimal lifecycle event contract that mechanics can observe without
+- [x] Add a minimal lifecycle event contract that mechanics can observe without
   overriding scene hooks.
-- [ ] Add one non-combat top-down sample to prove that health and attacks are not
+- [x] Add one non-combat top-down sample to prove that health and attacks are not
   required concepts.
 
 Acceptance criteria:

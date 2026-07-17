@@ -56,3 +56,25 @@ scene.offerContextualAction({
 
 Equal priorities preserve entity offer order. `nearInteraction` remains as a
 compatibility view for existing HUD subclasses.
+
+## Lifecycle events
+
+Each scene exposes a Phaser-free `lifecycle` channel. It publishes `ready` after
+scene construction, `tick` after each active world update, and `shutdown` when
+Phaser shuts the scene down. Subscribe from composable mechanics without
+claiming a subclass hook:
+
+```js
+import { lifecycleEvent } from '@phaser-game-engines/core';
+
+const stop = scene.lifecycle.on(lifecycleEvent.tick, ({ delta }) => mechanic.update(delta));
+scene.lifecycle.once(lifecycleEvent.shutdown, stop);
+```
+
+## Optional combat
+
+Combat remains enabled by default for compatibility. A non-combat game can
+override `combatEnabled()` to return `false`. The scene then omits health and
+attack-cooldown state, ignores its default primary attack action, and renders no
+HP fallback. Override `statusText()` when the game has a different form of
+progress to show.

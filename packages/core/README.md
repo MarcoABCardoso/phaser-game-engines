@@ -26,3 +26,24 @@ const action = selectContextualAction([
 
 Input adapters decide how keyboard, gamepad, touch, AI, or replay data produces
 the intent. Games and entities decide what contextual actions mean.
+
+## Lifecycle events
+
+`createLifecycle()` provides a synchronous, Phaser-free event channel for
+composable mechanics. `on()` returns an unsubscribe function, `once()` installs
+a one-shot listener, and `clear()` removes one event's listeners or all of them.
+Listeners run in registration order.
+
+The real-time scene adapters expose a `scene.lifecycle` channel and publish the
+shared `lifecycleEvent.ready`, `lifecycleEvent.tick`, and
+`lifecycleEvent.shutdown` events. Their payloads are `{ scene }`,
+`{ scene, time, delta }`, and `{ scene }`, respectively.
+
+```js
+import { lifecycleEvent } from '@phaser-game-engines/core';
+
+const stop = scene.lifecycle.on(lifecycleEvent.tick, ({ delta }) => {
+  mechanic.update(delta);
+});
+scene.lifecycle.once(lifecycleEvent.shutdown, stop);
+```

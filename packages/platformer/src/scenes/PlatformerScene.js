@@ -2,8 +2,10 @@ import Phaser from 'phaser';
 import {
   actionState,
   advanceActionActivation,
+  createLifecycle,
   createInputIntent,
   executeContextualAction,
+  lifecycleEvent,
   selectContextualAction,
 } from '@phaser-game-engines/core';
 import { fallDamageForDrop } from '../systems/fall.js';
@@ -92,7 +94,15 @@ const PAL = {
 };
 
 export default class PlatformerScene extends Phaser.Scene {
+  constructor(config = {}) {
+    super(config);
+    this.lifecycle = createLifecycle();
+  }
+
   create() {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this });
+    });
     // The subclass initialises its own state (save, run state, dialogue tables) here,
     // before anything that reads it is built.
     this.dialogs = {};
@@ -175,6 +185,7 @@ export default class PlatformerScene extends Phaser.Scene {
     this.resetTransient();
 
     this.onReady();
+    this.lifecycle.emit(lifecycleEvent.ready, { scene: this });
   }
 
   // --- overridable HOOKS & PROVIDERS (generic defaults; a game overrides) -----
@@ -766,6 +777,7 @@ export default class PlatformerScene extends Phaser.Scene {
     if (this.dialogState) return;
     // The game advances its per-frame systems (map knowledge, danger clock…).
     this.onTick(time, delta);
+    this.lifecycle.emit(lifecycleEvent.tick, { scene: this, time, delta });
 
     this.updatePlayerVisual(time, onGround);
 

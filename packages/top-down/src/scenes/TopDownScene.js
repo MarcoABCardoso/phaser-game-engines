@@ -2,8 +2,10 @@ import Phaser from 'phaser';
 import {
   actionState,
   advanceActionActivation,
+  createLifecycle,
   createInputIntent,
   executeContextualAction,
+  lifecycleEvent,
   selectContextualAction,
 } from '@phaser-game-engines/core';
 import EntityManager from '../entities/EntityManager.js';
@@ -15,21 +17,34 @@ export default class TopDownScene extends Phaser.Scene {
   constructor(config = {}) {
     super(config);
     this.entityTypes = config.entityTypes;
+    this.lifecycle = createLifecycle();
   }
 
   getLevel() { throw new Error('TopDownScene subclasses must implement getLevel()'); }
   moveSpeed() { return 210; }
+  combatEnabled() { return true; }
   playerMaxHealth() { return 5; }
   attackDamage() { return 1; }
   attackCooldownMs() { return 250; }
   getSave() { return { flags: {}, inventory: {} }; }
+  statusText() {
+    return this.combatEnabled() ? `HP ${this.health}/${this.playerMaxHealth()}` : '';
+  }
 
   create() {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this });
+    });
     this.level = this.getLevel();
     this.save = this.getSave();
     this.transitioning = false;
-    this.health = this.playerMaxHealth();
-    this.lastAttackAt = -Infinity;
+    if (this.combatEnabled()) {
+      this.health = this.playerMaxHealth();
+      this.lastAttackAt = -Infinity;
+    } else {
+      delete this.health;
+      delete this.lastAttackAt;
+    }
 
     const { width, height } = this.level.world;
     this.physics.world.setBounds(0, 0, width, height);
@@ -84,6 +99,7 @@ export default class TopDownScene extends Phaser.Scene {
       backgroundColor: '#00000099',
       padding: { x: 6, y: 4 },
     }).setScrollFactor(0).setDepth(100);
+    this.lifecycle.emit(lifecycleEvent.ready, { scene: this });
   }
 
   addSolid(rect, color = 0x374151) {
@@ -163,9 +179,10 @@ export default class TopDownScene extends Phaser.Scene {
     this.prompt.setText(
       this.messageUntil > time
         ? this.message
-        : (this.nearInteraction?.prompt ?? `HP ${this.health}/${this.playerMaxHealth()}`),
+        : (this.nearInteraction?.prompt ?? this.statusText()),
     );
     if (actionState(this.inputIntent, 'primary').pressed) this.attack(time);
+    this.lifecycle.emit(lifecycleEvent.tick, { scene: this, time, delta });
   }
 
   offerContextualAction(action) {
@@ -191,6 +208,7 @@ export default class TopDownScene extends Phaser.Scene {
   }
 
   attack(time) {
+    if (!this.combatEnabled()) return;
     if (time - this.lastAttackAt < this.attackCooldownMs()) return;
     this.lastAttackAt = time;
     const target = this.entities.attackableInReach(this);
@@ -225,6 +243,7 @@ export default class TopDownScene extends Phaser.Scene {
   }
 
   damagePlayer(amount, source) {
+    if (!this.combatEnabled()) return;
     if (this.invulnerableUntil > this.time.now) return;
     this.invulnerableUntil = this.time.now + 500;
     this.health = Math.max(0, this.health - amount);

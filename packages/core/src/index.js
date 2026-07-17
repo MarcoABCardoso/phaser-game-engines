@@ -4,3 +4,4 @@ export {
   selectContextualAction,
   executeContextualAction,
 } from './actions.js';
+export { createLifecycle, lifecycleEvent } from './lifecycle.js';

@@ -74,3 +74,17 @@ Built-in signs now offer press actions. Unlit checkpoints offer a press action;
 lit checkpoints offer a hold-to-rest action, so overlapping interactions resolve
 through one priority system rather than competing to consume the keyboard edge.
 `currentContextualAction` exposes the selected action for HUD rendering.
+
+## Lifecycle events
+
+Each scene exposes a Phaser-free `lifecycle` channel. It publishes `ready` after
+the existing `onReady` hook, `tick` after each active world update, and
+`shutdown` when Phaser shuts the scene down. This lets multiple mechanics
+compose without competing for `onReady` or `onTick` overrides:
+
+```js
+import { lifecycleEvent } from '@phaser-game-engines/core';
+
+const stop = scene.lifecycle.on(lifecycleEvent.tick, ({ delta }) => mechanic.update(delta));
+scene.lifecycle.once(lifecycleEvent.shutdown, stop);
+```

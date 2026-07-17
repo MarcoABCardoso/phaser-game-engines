@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.js",
     "./input.js": "./src/input.js",
-    "./actions.js": "./src/actions.js"
+    "./actions.js": "./src/actions.js",
+    "./lifecycle.js": "./src/lifecycle.js"
   },
   "files": ["src", "README.md"],
   "engines": { "node": ">=22" }

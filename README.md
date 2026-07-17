@@ -29,3 +29,7 @@ npm run dev:sample
 The sample lives in `samples/basic-platformer/` and subclasses `PlatformerScene` without importing any roguelike code.
 
 Run the top-down sample with `npm run dev:top-down-sample`.
+
+Run the non-combat botanical survey with
+`npm run dev:non-combat-top-down-sample`. It uses contextual actions and
+lifecycle events without health, attacks, enemies, or inventory.
