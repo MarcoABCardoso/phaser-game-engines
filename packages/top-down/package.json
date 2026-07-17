@@ -1,0 +1,15 @@
+{
+  "name": "@phaser-game-engines/top-down",
+  "version": "0.1.0",
+  "description": "Reusable Phaser 3 / Arcade Physics top-down engine.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./entities/*.js": "./src/entities/*.js",
+    "./scenes/*.js": "./src/scenes/*.js",
+    "./systems/*.js": "./src/systems/*.js"
+  },
+  "files": ["src", "README.md"],
+  "peerDependencies": { "phaser": "^3.90.0" },
+  "engines": { "node": ">=22" }
+}

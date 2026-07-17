@@ -1,0 +1,21 @@
+{
+  "name": "phaser-game-engines",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "dev:sample": "vite samples/basic-platformer --host 127.0.0.1",
+    "build:sample": "vite build samples/basic-platformer",
+    "dev:top-down-sample": "vite samples/basic-top-down --host 127.0.0.1",
+    "build:top-down-sample": "vite build samples/basic-top-down"
+  },
+  "devDependencies": {
+    "phaser": "^3.90.0",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
+  }
+}
