@@ -24,7 +24,7 @@ const rules = {
 };
 ```
 
-`applyChanges` is an optional generic helper for `set`, `increment`, `append`, and `remove` state patches. It does not attach gameplay meaning to any field. The Phaser `BattleScene` is similarly optional: subclasses supply menus, target choices, rendering, and commands through hooks.
+`applyChanges` is an optional generic helper for `set`, `increment`, `append`, and `remove` state patches. It does not attach gameplay meaning to any field. The Phaser `BattleScene` is similarly optional: subclasses supply menus, target choices, rendering, and commands through hooks. Use `createBattleDisplay()` to create presentation objects before the initial state is rendered, and update them from `renderBattleState(state)`.
 
 ## Event contract and ordering
 

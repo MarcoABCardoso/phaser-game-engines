@@ -2,6 +2,17 @@ import type Phaser from 'phaser';
 
 export type ParticipantId = string | number;
 export type BattleCommand = { id: string; actorId: ParticipantId; [key: string]: unknown };
+export interface BattleMenuOption {
+  id: string;
+  label: string;
+  command: BattleCommand;
+  [key: string]: unknown;
+}
+export interface BattleTargetOption {
+  id: ParticipantId;
+  label: string;
+  [key: string]: unknown;
+}
 export type StateChange =
   | { type: 'set'; path: string | (string | number)[]; value: unknown }
   | { type: 'increment'; path: string | (string | number)[]; value: number }
@@ -121,6 +132,12 @@ export class BattleScene extends Phaser.Scene {
   battle: Battle;
   getBattle(): unknown;
   getBattleRules(): BattleRules;
+  createBattleDisplay(): void;
+  getMenuOptions(state: BattleState, activeId: ParticipantId): BattleMenuOption[];
+  getTargetOptions(state: BattleState, activeId: ParticipantId, option: BattleMenuOption): BattleTargetOption[];
+  buildCommand(option: BattleMenuOption, target?: BattleTargetOption): BattleCommand;
+  isPlayerTurn(activeId: ParticipantId): boolean;
+  chooseAiCommand(state: BattleState, activeId: ParticipantId): BattleCommand | null;
   onBattleEvent(type: string, payload: unknown): void;
   renderBattleState(state: BattleState): void;
 }
