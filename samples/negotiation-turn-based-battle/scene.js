@@ -1,4 +1,4 @@
-import { BattleScene } from '@phaser-game-engines/turn-based-battle';
+import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/turn-based-battle';
 import { approaches, negotiationSpec } from './battle.js';
 import { negotiationRules } from './rules.js';
 
@@ -11,6 +11,10 @@ function supportRow(delegate, support) {
 }
 
 export default class NegotiationScene extends BattleScene {
+  constructor() {
+    super({ recipes: [createBattlePresentationRecipe()] });
+  }
+
   getBattle() {
     return negotiationSpec;
   }

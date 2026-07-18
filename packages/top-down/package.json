@@ -3,14 +3,45 @@
   "version": "0.1.0",
   "description": "Reusable Phaser 3 / Arcade Physics top-down engine.",
   "type": "module",
+  "types": "./types/index.d.ts",
   "exports": {
-    ".": "./src/index.js",
-    "./entities/*.js": "./src/entities/*.js",
-    "./scenes/*.js": "./src/scenes/*.js",
-    "./systems/*.js": "./src/systems/*.js",
-    "./recipes/*.js": "./src/recipes/*.js"
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./headless": {
+      "types": "./types/headless.d.ts",
+      "default": "./src/headless.js"
+    },
+    "./entities/*.js": {
+      "types": "./types/entities/*.d.ts",
+      "default": "./src/entities/*.js"
+    },
+    "./scenes/*.js": {
+      "types": "./types/scenes/*.d.ts",
+      "default": "./src/scenes/*.js"
+    },
+    "./systems/*.js": {
+      "types": "./types/systems/*.d.ts",
+      "default": "./src/systems/*.js"
+    },
+    "./recipes/*.js": {
+      "types": "./types/recipes/*.d.ts",
+      "default": "./src/recipes/*.js"
+    },
+    "./schemas/*.json": "./schemas/*.json"
   },
-  "files": ["src", "README.md"],
+  "files": ["src", "types", "schemas", "README.md"],
+  "sideEffects": false,
+  "keywords": ["phaser", "top-down", "arcade-physics", "game-engine"],
+  "homepage": "https://github.com/MarcoABCardoso/phaser-game-engines/tree/main/packages/top-down#readme",
+  "bugs": "https://github.com/MarcoABCardoso/phaser-game-engines/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarcoABCardoso/phaser-game-engines.git",
+    "directory": "packages/top-down"
+  },
+  "publishConfig": { "access": "public" },
   "dependencies": { "@phaser-game-engines/core": "0.1.0" },
   "peerDependencies": { "phaser": "^3.90.0" },
   "engines": { "node": ">=22" }

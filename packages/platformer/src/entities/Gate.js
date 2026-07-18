@@ -16,14 +16,14 @@ export default class Gate extends Entity {
 
   spawn(scene) {
     this.rect = null;
-    this.checkpoint = scene.checkpointById(this.spec.beaconId);
+    this.checkpoint = scene.platformerCheckpoints?.byId(this.spec.beaconId);
     if (this.isOpen(scene)) return; // checkpoint already lit — rebuild open
     this.rect = scene.addSolid(this.spec.rect, COLOR);
     this.rect.setDepth(15);
   }
 
   isOpen(scene) {
-    return this.checkpoint ? scene.isCheckpointLit(this.checkpoint) : true;
+    return this.checkpoint ? scene.platformerCheckpoints.isActive(this.checkpoint) : true;
   }
 
   update(scene) {

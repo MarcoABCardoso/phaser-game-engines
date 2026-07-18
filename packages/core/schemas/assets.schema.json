@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phaser-game-engines.dev/schemas/core/assets.schema.json",
+  "title": "Asset and animation manifest",
+  "type": "object",
+  "required": ["assets"],
+  "properties": {
+    "schemaVersion": { "const": 1, "default": 1 },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "type"],
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "type": { "enum": ["image", "atlas", "tilemap", "audio", "font"] },
+          "url": { "type": "string", "minLength": 1 },
+          "urls": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+          "textureUrl": { "type": "string", "minLength": 1 },
+          "atlasUrl": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      }
+    },
+    "animations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "frames"],
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "frames": {
+            "oneOf": [
+              { "type": "array", "minItems": 1 },
+              { "type": "object", "required": ["asset"], "properties": { "asset": { "type": "string", "minLength": 1 } }, "additionalProperties": true }
+            ]
+          },
+          "frameRate": { "type": "number", "exclusiveMinimum": 0 },
+          "repeat": { "type": "integer" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

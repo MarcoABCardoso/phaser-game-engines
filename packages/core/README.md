@@ -2,6 +2,9 @@
 
 Small, Phaser-free contracts shared by the genre engines.
 
+The package root and `@phaser-game-engines/core/headless` are equivalent; both
+are safe to import in Node and browser environments.
+
 `createInputIntent` normalizes movement and action state from any input source.
 `selectContextualAction` deterministically chooses the highest-priority available
 action, `advanceActionActivation` handles press or hold activation, and
@@ -27,6 +30,39 @@ const action = selectContextualAction([
 Input adapters decide how keyboard, gamepad, touch, AI, or replay data produces
 the intent. Games and entities decide what contextual actions mean.
 
+## Device input adapters
+
+`createKeyboardInputAdapter`, `createGamepadInputAdapter`, and
+`createTouchInputAdapter` all produce the same intent shape and track
+`pressed`/`down`/`released` edges. Keyboard and gamepad bindings can be replaced
+at runtime with `setBindings()`, and every adapter exposes game-owned prompt
+labels through `getPrompt()` and `intent.meta.prompts`.
+
+```js
+const input = createGamepadInputAdapter({ labels: { 0: 'A', 2: 'X' } });
+scene.readInputIntent = () => input.read();
+```
+
+The touch adapter is presentation-neutral: on-screen controls call
+`setMove(x, y)` and `setAction(name, down)`. It does not create DOM or Phaser
+objects.
+
+## Assets and animations
+
+`validateAssetManifest` catches duplicate keys and malformed image, atlas,
+tilemap, audio, and font entries before loading. `preloadAssetManifest` queues a
+validated manifest through a Phaser-compatible loader and converts `loaderror`
+events into diagnostics containing the consumer-facing key and URL. Font or
+custom loaders are supplied as handlers.
+
+`installAnimationDefinitions` turns explicit frames or atlas frame ranges into
+manager definitions. Animation keys remain presentation data and never enter
+headless controller state.
+
+Published JSON Schemas live under each package's `schemas/` export. JavaScript
+projects can use `defineLevel`, `defineEntity`, and `definePortal` for contextual
+TypeScript checking without changing their runtime data.
+
 ## Capabilities and mechanics
 
 `createCapabilities()` is a schema-free bag for named entity abilities. Values
@@ -47,6 +83,11 @@ const stopDamage = entity.capabilities.provide('damageReceiver', {
 const mechanics = createMechanicHost(scene);
 mechanics.install((host) => host.lifecycle.on('tick', updateQuest));
 ```
+
+`defineRecipe` groups mechanics and entity types with a stable ID and exclusive
+ownership claims. `composeRecipes` rejects conflicts before scene construction.
+Recipes may expose named policies so `replaceRecipePolicy` can swap one policy
+without copying the rest of the recipe.
 
 ## World runtime
 
@@ -101,13 +142,21 @@ defines serialization boundaries without prescribing a game-state schema.
 `createSeededRng(seed)` returns a serializable Mulberry32 random function;
 `createManualClock(time)` provides an explicitly advanced, restorable clock.
 Both can be passed directly to headless controllers. `createSessionRecorder`
-records normalized input intents and accepted battle commands against an
-explicit clock, and `replaySession` dispatches them in stable time/index order.
+records normalized input intents, accepted battle commands, and state
+checkpoints against an explicit clock. `createReplayViewer` adds pause, step,
+speed, and first-divergence reporting.
+
+`captureSessionSnapshot` composes explicitly registered state without walking
+Phaser objects. `createSaveStore` uses memory or browser-local-storage adapters
+for staged save slots and recovery data. `createSimulationHarness`,
+`createBugReportBundle`, and `measureBudget` cover deterministic test,
+reporting, and performance loops.
 
 Debug helpers stay presentation-neutral: `createDebugEventLog` captures a
 bounded lifecycle trace, while `inspectCapabilities`,
-`inspectContextualActions`, and `inspectController` return JSON-friendly data
-for a game overlay, console, or test reporter.
+`inspectContextualActions`, and `inspectController` return JSON-friendly data.
+`createDebugOverlayMechanic` renders them through a scene text factory and is
+fully removable from production configuration.
 
 ## Lifecycle events
 

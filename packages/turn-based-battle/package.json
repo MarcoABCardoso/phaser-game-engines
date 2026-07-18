@@ -5,11 +5,39 @@
   "type": "module",
   "types": "./src/index.d.ts",
   "exports": {
-    ".": "./src/index.js",
-    "./scenes/*.js": "./src/scenes/*.js",
-    "./systems/*.js": "./src/systems/*.js"
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./headless": {
+      "types": "./src/headless.d.ts",
+      "default": "./src/headless.js"
+    },
+    "./scenes/*.js": {
+      "types": "./types/scenes/*.d.ts",
+      "default": "./src/scenes/*.js"
+    },
+    "./recipes/*.js": {
+      "types": "./types/recipes/*.d.ts",
+      "default": "./src/recipes/*.js"
+    },
+    "./systems/*.js": {
+      "types": "./types/systems/*.d.ts",
+      "default": "./src/systems/*.js"
+    }
   },
-  "files": ["src", "README.md"],
+  "files": ["src", "types", "README.md"],
+  "sideEffects": false,
+  "keywords": ["phaser", "turn-based", "battle", "state-machine", "game-engine"],
+  "homepage": "https://github.com/MarcoABCardoso/phaser-game-engines/tree/main/packages/turn-based-battle#readme",
+  "bugs": "https://github.com/MarcoABCardoso/phaser-game-engines/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarcoABCardoso/phaser-game-engines.git",
+    "directory": "packages/turn-based-battle"
+  },
+  "publishConfig": { "access": "public" },
+  "dependencies": { "@phaser-game-engines/core": "0.1.0" },
   "peerDependencies": { "phaser": "^3.90.0" },
   "engines": { "node": ">=22" }
 }

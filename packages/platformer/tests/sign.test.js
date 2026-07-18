@@ -6,9 +6,8 @@ function makeScene(player = { x: 10, y: 10 }) {
   return {
     player,
     actions,
-    dialogActive: false,
+    platformerDialogue: { active: false, start: vi.fn() },
     offerContextualAction(action) { actions.push(action); },
-    startDialog: vi.fn(),
   };
 }
 
@@ -32,9 +31,9 @@ describe('platformer sign actions', () => {
       priority: 4,
       source: sign,
     });
-    expect(scene.startDialog).not.toHaveBeenCalled();
+    expect(scene.platformerDialogue.start).not.toHaveBeenCalled();
     scene.actions[0].execute();
-    expect(scene.startDialog).toHaveBeenCalledWith('warning-dialog');
+    expect(scene.platformerDialogue.start).toHaveBeenCalledWith('warning-dialog');
   });
 
   it('offers nothing outside its interaction zone', () => {

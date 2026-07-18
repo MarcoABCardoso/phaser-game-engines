@@ -160,11 +160,15 @@ function normalizeClock(clock) {
 function normalizeRng(rng) {
   const next = typeof rng === 'function' ? rng : rng?.next?.bind(rng);
   if (!next) return Object.freeze({ next: Math.random });
-  return Object.freeze({ next() {
-    const value = next();
-    if (!Number.isFinite(value) || value < 0 || value >= 1) throw new RangeError('World RNG must return a value in [0, 1).');
-    return value;
-  } });
+  const source = rng;
+  const adapter = { next() {
+      const value = next();
+      if (!Number.isFinite(value) || value < 0 || value >= 1) throw new RangeError('World RNG must return a value in [0, 1).');
+      return value;
+    } };
+  if (typeof source?.getState === 'function') adapter.getState = () => source.getState();
+  if (typeof source?.setState === 'function') adapter.setState = (state) => source.setState(state);
+  return Object.freeze(adapter);
 }
 
 export function createWorldRuntime({

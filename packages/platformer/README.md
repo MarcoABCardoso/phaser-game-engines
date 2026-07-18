@@ -6,6 +6,10 @@ and one-way platforms, traversal, portals, contextual actions, and lifecycle
 events. It does not activate health, combat, checkpoints, dialogue, persistence,
 fall consequences, or run-failure policy.
 
+Use `@phaser-game-engines/platformer/headless` in Node tests, simulations, or a
+custom renderer. It exports only traversal and area-transition controllers and
+does not evaluate Phaser. The package root includes the Phaser scene adapters.
+
 ## Use
 
 Extend `PlatformerScene` and supply the world plus game-specific rules through
@@ -29,18 +33,23 @@ own entities through its level's `entityTypes` map.
 Phaser is a peer dependency so the host game owns the Phaser version and
 runtime instance.
 
-## Optional mechanics and compatibility recipe
+## Optional mechanics and recipes
 
 Pass mechanics as `new PlatformerScene({ mechanics: [...] })` or use
 `scene.mechanicHost.install(mechanic)`. Installers may return cleanup functions;
 the scene removes all installed mechanics automatically on shutdown.
 
-`createLandingConsequenceMechanic({ resolve, apply })` maps schema-free landing
-facts to game-owned consequences. `ACTION_PLATFORMER_ENTITY_TYPES` contains the
-opinionated barricade, boss, sign, dialogue-trigger, and checkpoint-gate types.
-`ActionPlatformerScene` opts into the former all-in-one behavior for existing
-action-platformer games; `PlatformerScene` keeps those compatibility methods
-inactive by default.
+`createHealthMechanic`, `createMeleeAttackMechanic`,
+`createCheckpointMechanic`, `createDialogueMechanic`, and
+`createFailureMechanic` are independent. `createPrecisionPlatformerRecipe()`
+provides responsive traversal tuning; `createActionPlatformerRecipe()` composes
+the action mechanics and recipe-specific entities. Pass recipes with
+`super({ recipes: [...] })`.
+
+Recipes expose named `policies`. Use `replaceRecipePolicy(recipe, name,
+replacement)` from core to replace one decision without copying a recipe or
+subclassing a scene. Composition rejects duplicate IDs, conflicting entity
+registrations, and overlapping ownership claims before resources are created.
 
 ## Input intents
 
@@ -56,7 +65,6 @@ gamepad, touch controls, AI, network input, or replay:
     jump: { pressed: true, down: true },
     primary: { pressed: false, down: false },
     interact: { pressed: false, down: false },
-    abandon: { pressed: false, down: false },
     moveLeft: { pressed: false, down: false },
     moveRight: { pressed: true, down: true },
     down: { pressed: false, down: false },
@@ -146,8 +154,7 @@ applies the patch to its Arcade body and maps events to the existing hooks.
 Landing events contain `{ drop, impactVelocity }`; the controller never assigns
 damage or health semantics. The base scene applies no consequence. A game can
 implement `onLanding(fact)`, install `createLandingConsequenceMechanic`, or
-observe the `landing` event without carrying HP state. `ActionPlatformerScene`
-retains the old tiered fall rule.
+observe the `landing` event without carrying HP state.
 
 `createAreaTransitionController()` separately provides a deterministic
 `begin`/`complete`/`cancel` guard for asynchronous area changes.

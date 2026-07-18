@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phaser-game-engines.dev/schemas/platformer/level.schema.json",
+  "title": "Platformer level",
+  "allOf": [
+    { "$ref": "https://phaser-game-engines.dev/schemas/core/world.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "floorSegments": { "type": "array", "items": { "$ref": "https://phaser-game-engines.dev/schemas/core/world.schema.json#/$defs/rect" }, "default": [] },
+        "platforms": { "type": "array", "items": { "$ref": "https://phaser-game-engines.dev/schemas/core/world.schema.json#/$defs/rect" }, "default": [] }
+      }
+    }
+  ]
+}

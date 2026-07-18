@@ -3,14 +3,21 @@ import {
   getCapability,
   hasCapability,
   lifecycleEvent,
+  ContentValidationError,
+  defineRecipe,
 } from '@phaser-game-engines/core';
 import Enemy from '../entities/Enemy.js';
 import Pickup from '../entities/Pickup.js';
 
 export const ACTION_ADVENTURE_ENTITY_TYPES = Object.freeze({ enemy: Enemy, pickup: Pickup });
 
-/** Opt-in health, melee, pickups, and chasing-enemy policy. */
-export function createActionAdventureMechanic(options = {}) {
+/** @typedef {{ maxHealth?: number, attackCooldownMs?: number, attackDamage?: number, invulnerableMs?: number, attackAction?: string, save?: { flags?: Record<string, boolean>, inventory?: Record<string, number> }, onAttack?: Function, onCollect?: Function, onPlayerDefeated?: Function, onEnemyDefeated?: Function, onRemove?: Function, statusText?: Function }} ActionAdventureOptions */
+
+/** Opt-in health, melee, pickups, and chasing-enemy policy.
+ * @param {ActionAdventureOptions} options
+ */
+function createActionAdventureMechanic(options = {}) {
+  validateActionAdventureOptions(options);
   return function installActionAdventure(scene) {
     const maxHealth = options.maxHealth ?? 5;
     const save = options.save ?? { flags: {}, inventory: {} };
@@ -73,4 +80,36 @@ export function createActionAdventureMechanic(options = {}) {
       options.onRemove?.(controller, scene);
     };
   };
+}
+
+/** Compose the action-adventure entities and mechanic as one explicit scene recipe. */
+export function createActionAdventureRecipe(options = {}) {
+  validateActionAdventureOptions(options);
+  return defineRecipe({
+    id: options.id ?? 'top-down.action-adventure',
+    owns: ['player.health', 'player.primary-action', 'world.pickups'],
+    entityTypes: ACTION_ADVENTURE_ENTITY_TYPES,
+    policies: { actionAdventure: createActionAdventureMechanic(options) },
+  });
+}
+
+/** Validate the serializable action-adventure options shared with its JSON Schema.
+ * @param {ActionAdventureOptions} options
+ */
+export function validateActionAdventureOptions(options = {}, { path = 'actionAdventure' } = {}) {
+  if (!options || typeof options !== 'object' || Array.isArray(options)) {
+    throw new ContentValidationError(path, 'expected an object.');
+  }
+  for (const field of ['attackCooldownMs', 'attackDamage', 'invulnerableMs']) {
+    if (options[field] !== undefined && (!Number.isFinite(options[field]) || options[field] < 0)) {
+      throw new ContentValidationError(`${path}.${field}`, 'expected a non-negative finite number.');
+    }
+  }
+  if (options.maxHealth !== undefined && (!Number.isFinite(options.maxHealth) || options.maxHealth <= 0)) {
+    throw new ContentValidationError(`${path}.maxHealth`, 'expected a positive finite number.');
+  }
+  if (options.attackAction !== undefined && (typeof options.attackAction !== 'string' || !options.attackAction)) {
+    throw new ContentValidationError(`${path}.attackAction`, 'expected a non-empty string.');
+  }
+  return options;
 }

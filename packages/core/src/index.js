@@ -1,4 +1,18 @@
 export { createInputIntent, actionState } from './input.js';
+export { defineLevel, defineEntity, definePortal } from './content.js';
+export {
+  ASSET_MANIFEST_VERSION,
+  assetTypes,
+  validateAssetManifest,
+  preloadAssetManifest,
+  installAnimationDefinitions,
+  createAssetLoadError,
+} from './assets.js';
+export {
+  createKeyboardInputAdapter,
+  createGamepadInputAdapter,
+  createTouchInputAdapter,
+} from './input-adapters.js';
 export {
   advanceActionActivation,
   selectContextualAction,
@@ -7,6 +21,7 @@ export {
 export { createLifecycle, lifecycleEvent } from './lifecycle.js';
 export { createCapabilities, getCapability, hasCapability } from './capabilities.js';
 export { createMechanicHost } from './mechanics.js';
+export { composeRecipes, defineRecipe, replaceRecipePolicy } from './recipes.js';
 export { pointInRect, boxesOverlap, entitiesInRect } from './geometry.js';
 export { createResourceScope, runCleanups } from './resources.js';
 export {
@@ -21,11 +36,16 @@ export {
 export { createSnapshotCodec } from './serialization.js';
 export { createManualClock, createSeededRng, systemClock } from './determinism.js';
 export { createSessionRecorder, replaySession } from './recording.js';
+export { createReplayViewer } from './replay.js';
+export { captureSessionSnapshot, restoreSessionSnapshot, createBugReportBundle } from './session.js';
+export { createMemoryStorage, createLocalStorageAdapter, createSaveStore } from './storage.js';
+export { createSimulationHarness, measureBudget } from './testing.js';
 export {
   createDebugEventLog,
   inspectCapabilities,
   inspectContextualActions,
   inspectController,
+  createDebugOverlayMechanic,
 } from './debug.js';
 export {
   createEntityRegistry,

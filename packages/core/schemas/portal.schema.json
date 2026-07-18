@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phaser-game-engines.dev/schemas/core/portal.schema.json",
+  "title": "Portal entity",
+  "allOf": [
+    { "$ref": "world.schema.json#/$defs/entity" },
+    {
+      "type": "object",
+      "required": ["zone", "to"],
+      "properties": {
+        "type": { "const": "portal" },
+        "zone": { "$ref": "world.schema.json#/$defs/rect" },
+        "to": { "type": "string", "minLength": 1 },
+        "entry": { "$ref": "world.schema.json#/$defs/point" }
+      }
+    }
+  ]
+}

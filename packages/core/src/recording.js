@@ -16,6 +16,7 @@ export function createSessionRecorder({ clock = { now: () => 0 }, metadata = {} 
     record,
     recordIntent: (intent) => record('inputIntent', intent),
     recordBattleCommand: (command) => record('battleCommand', command),
+    recordCheckpoint: (state) => record('checkpoint', state),
     clear: () => { entries.length = 0; },
     snapshot: () => ({ version: 1, metadata: clone(metadata), entries: clone(entries) }),
     get entries() { return entries.map(clone); },

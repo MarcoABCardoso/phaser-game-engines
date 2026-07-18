@@ -2,6 +2,11 @@
 
 A generic, phase-driven battle state machine for Phaser games. The engine owns turn order progression, command timing, and event order. Games own their data model and rules: this package never assumes health, mana, damage, healing, attacks, or even a traditional combatant.
 
+Use `@phaser-game-engines/turn-based-battle/headless` in Node tests,
+simulations, servers, or a custom renderer. It exports the controller,
+scheduler, and state helpers without evaluating Phaser. The package root also
+exports the optional Phaser scene adapter.
+
 ## Rules adapter
 
 Pass a rules adapter to `BattleController` (or implement `getBattleRules()` in `BattleScene`). A game supplies:
@@ -24,7 +29,15 @@ const rules = {
 };
 ```
 
-`applyChanges` is an optional generic helper for `set`, `increment`, `append`, and `remove` state patches. It does not attach gameplay meaning to any field. The Phaser `BattleScene` is similarly optional: subclasses supply menus, target choices, rendering, and commands through hooks. Use `createBattleDisplay()` to create presentation objects before the initial state is rendered, and update them from `renderBattleState(state)`.
+`applyChanges` is an optional generic helper for `set`, `increment`, `append`, and `remove` state patches. It does not attach gameplay meaning to any field. The Phaser `BattleScene` is similarly optional and has no menu policy. Add `createBattlePresentationRecipe()` for command and target menus, remappable keyboard/gamepad navigation, AI/effect pacing, reduced motion, readable focus, and text scaling. Games still supply every command, target, rule, and state renderer.
+
+```js
+class MyBattleScene extends BattleScene {
+  constructor() {
+    super({ recipes: [createBattlePresentationRecipe({ textSize: 20 })] });
+  }
+}
+```
 
 ## Event contract and ordering
 

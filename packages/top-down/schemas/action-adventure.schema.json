@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phaser-game-engines.dev/schemas/top-down/action-adventure.schema.json",
+  "title": "Action-adventure recipe serializable options",
+  "type": "object",
+  "properties": {
+    "maxHealth": { "type": "number", "exclusiveMinimum": 0 },
+    "attackCooldownMs": { "type": "number", "minimum": 0 },
+    "attackDamage": { "type": "number", "minimum": 0 },
+    "invulnerableMs": { "type": "number", "minimum": 0 },
+    "attackAction": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}

@@ -128,16 +128,18 @@ export class Battle<Spec = unknown, GameState = unknown, Outcome = unknown> {
   debugState(): Record<string, unknown>;
 }
 
-export class BattleScene extends Phaser.Scene {
-  battle: Battle;
-  getBattle(): unknown;
-  getBattleRules(): BattleRules;
+export class BattleScene<Spec = unknown, GameState = unknown, Outcome = unknown> extends Phaser.Scene {
+  constructor(config?: Phaser.Types.Scenes.SettingsConfig & { recipes?: unknown[] });
+  battle: Battle<Spec, GameState, Outcome>;
+  getBattle(): Spec;
+  getBattleRules(): BattleRules<Spec, GameState, Outcome>;
   createBattleDisplay(): void;
-  getMenuOptions(state: BattleState, activeId: ParticipantId): BattleMenuOption[];
-  getTargetOptions(state: BattleState, activeId: ParticipantId, option: BattleMenuOption): BattleTargetOption[];
-  buildCommand(option: BattleMenuOption, target?: BattleTargetOption): BattleCommand;
-  isPlayerTurn(activeId: ParticipantId): boolean;
-  chooseAiCommand(state: BattleState, activeId: ParticipantId): BattleCommand | null;
   onBattleEvent(type: string, payload: unknown): void;
-  renderBattleState(state: BattleState): void;
+  renderBattleState(state: BattleState<GameState, Outcome>): void;
+  submitBattleCommand(command: BattleCommand): void;
 }
+
+export function createBattlePresentationRecipe(options?: Record<string, unknown>): {
+  id: string;
+  policies: Record<string, (scene: BattleScene) => void | (() => void)>;
+};

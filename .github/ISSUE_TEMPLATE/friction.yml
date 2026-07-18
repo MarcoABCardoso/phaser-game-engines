@@ -1,0 +1,12 @@
+name: Developer friction
+description: Report setup, authoring, debugging, or upgrade friction
+body:
+  - type: dropdown
+    attributes: { label: Area, options: [Setup, Content authoring, Extension points, Debugging, Performance, Upgrade, Documentation] }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: What were you trying to achieve? }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Where did the workflow become difficult? }
+    validations: { required: true }

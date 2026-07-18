@@ -16,10 +16,10 @@ export default class DialogTrigger extends Entity {
   }
 
   update(scene) {
-    if (this.fired || scene.dialogActive) return;
+    if (this.fired || scene.platformerDialogue?.active) return;
     if (this.trigger.update(scene.player).triggered) {
       this.fired = true;
-      scene.startDialog(this.spec.dialogId);
+      scene.platformerDialogue?.start(this.spec.dialogId);
     }
   }
 }

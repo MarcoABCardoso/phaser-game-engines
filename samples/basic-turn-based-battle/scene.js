@@ -1,4 +1,4 @@
-import { BattleScene } from '@phaser-game-engines/turn-based-battle';
+import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/turn-based-battle';
 import {
   battleSpec,
   findUnit,
@@ -14,6 +14,10 @@ function unitRow(unit, { showMp = false } = {}) {
 }
 
 export default class BasicBattleScene extends BattleScene {
+  constructor() {
+    super({ recipes: [createBattlePresentationRecipe()] });
+  }
+
   getBattle() {
     return battleSpec;
   }

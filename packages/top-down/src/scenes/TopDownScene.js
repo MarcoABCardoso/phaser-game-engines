@@ -4,24 +4,29 @@ import {
   advanceActionActivation,
   createLifecycle,
   createMechanicHost,
+  composeRecipes,
   createWorldRuntime,
   createInputIntent,
   executeContextualAction,
   lifecycleEvent,
   runCleanups,
   selectContextualAction,
-  validateRect,
 } from '@phaser-game-engines/core';
 import EntityManager from '../entities/EntityManager.js';
 import { BASE_ENTITY_TYPES } from '../entities/registry.js';
 import { facingFromVelocity, movementFromIntent } from '../systems/movement.js';
+import { validateTopDownLevel } from '../systems/content.js';
 
 /** Extend this scene and return a level with world, spawn, walls, and entitySpecs. */
 export default class TopDownScene extends Phaser.Scene {
   constructor(config = {}) {
     super(config);
+    this.recipeComposition = composeRecipes(config.recipes ?? []);
     this.entityTypes = config.entityTypes;
-    this.configuredMechanics = [...(config.mechanics ?? [])];
+    this.configuredMechanics = [
+      ...this.recipeComposition.mechanics,
+      ...(config.mechanics ?? []),
+    ];
     this.worldRuntimeOptions = config.worldRuntime ?? {};
     this.lifecycle = createLifecycle();
     this.mechanicHost = createMechanicHost(this);
@@ -44,6 +49,7 @@ export default class TopDownScene extends Phaser.Scene {
     this.transitioning = false;
     const types = {
       ...BASE_ENTITY_TYPES,
+      ...this.recipeComposition.entityTypes,
       ...(this.level.entityTypes ?? {}),
       ...(this.entityTypes ?? {}),
     };
@@ -53,16 +59,7 @@ export default class TopDownScene extends Phaser.Scene {
       EntityStoreType: EntityManager,
       clock: this.worldRuntimeOptions.clock ?? (() => this.time.now),
     });
-    this.worldRuntime.validateLevel(this.level, {
-      validateExtension: (level, { path, fail }) => {
-        if (level.walls !== undefined && !Array.isArray(level.walls)) {
-          fail(`${path}.walls`, 'expected an array.');
-        }
-        (level.walls ?? []).forEach((wall, index) => {
-          validateRect(wall, { path: `${path}.walls[${index}]` });
-        });
-      },
-    });
+    validateTopDownLevel(this.level, { types: this.worldRuntime.registry });
     for (const mechanic of this.getMechanics()) this.mechanicHost.install(mechanic);
 
     const { width, height } = this.level.world;
@@ -133,6 +130,7 @@ export default class TopDownScene extends Phaser.Scene {
   /**
    * Phaser keyboard adapter for the engine's device-independent input contract.
    * Games may override this to provide gamepad, touch, AI, network, or replay input.
+   * @returns {import('@phaser-game-engines/core').InputIntentSource}
    */
   readInputIntent() {
     const left = this.keys.left.isDown || this.cursors.left.isDown;
@@ -166,17 +164,11 @@ export default class TopDownScene extends Phaser.Scene {
 
     this.contextualActions = [];
     this.currentContextualAction = null;
-    this.nearInteraction = null; // compatibility view for existing HUD subclasses
     this.entities.update(this, time, delta);
 
     const context = this.contextualActionContext(time, delta);
     this.currentContextualAction = selectContextualAction(this.contextualActions, context);
     if (this.currentContextualAction) {
-      this.nearInteraction = {
-        prompt: this.currentContextualAction.label,
-        entity: this.currentContextualAction.source,
-        action: this.currentContextualAction,
-      };
       const activation = advanceActionActivation(
         this.currentContextualAction,
         this.contextualActionActivation,
@@ -194,7 +186,7 @@ export default class TopDownScene extends Phaser.Scene {
     this.prompt.setText(
       this.messageUntil > time
         ? this.message
-        : (this.nearInteraction?.prompt ?? this.statusText()),
+        : (this.currentContextualAction?.label ?? this.statusText()),
     );
     this.lifecycle.emit(lifecycleEvent.tick, { scene: this, time, delta });
   }
@@ -207,6 +199,7 @@ export default class TopDownScene extends Phaser.Scene {
     return action;
   }
 
+  /** @returns {{ scene: TopDownScene, player: any, intent: any, time: number, delta: number }} */
   contextualActionContext(time = this.time.now, delta = 0) {
     return {
       scene: this,

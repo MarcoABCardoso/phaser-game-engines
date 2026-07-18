@@ -1,16 +1,14 @@
 import Phaser from 'phaser';
 import {
-  ACTION_ADVENTURE_ENTITY_TYPES,
   TopDownScene,
-  createActionAdventureMechanic,
+  createActionAdventureRecipe,
 } from '@phaser-game-engines/top-down';
 import { basicTopDownLevel } from './level.js';
 
 class BasicTopDownScene extends TopDownScene {
   constructor() {
     super({
-      entityTypes: ACTION_ADVENTURE_ENTITY_TYPES,
-      mechanics: [createActionAdventureMechanic()],
+      recipes: [createActionAdventureRecipe()],
     });
   }
 

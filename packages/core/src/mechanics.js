@@ -48,5 +48,9 @@ export function createMechanicHost(host) {
     return installed.has(mechanic);
   }
 
-  return Object.freeze({ install, remove, clear, has });
+  function list() {
+    return [...installed.keys()].map((mechanic) => mechanic.id ?? mechanic.name ?? 'anonymous');
+  }
+
+  return Object.freeze({ install, remove, clear, has, list });
 }

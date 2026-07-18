@@ -1,0 +1,39 @@
+# Changelog
+
+This project follows semantic versioning. Until `1.0`, minor releases may
+contain documented breaking changes.
+
+## Unreleased
+
+### Added
+
+- Node-safe `/headless` entry points for all packages.
+- Generated TypeScript declarations for core, platformer, and top-down public
+  exports, plus declaration consumer checks.
+- Package tarball consumer verification and a Node 22/24 CI matrix.
+- Consistent sample command aliases and support/release documentation.
+- A project generator with tested JavaScript and TypeScript starters for each
+  supported genre.
+- JSON Schemas, headless genre validators, content migration/validation tooling,
+  a Tiled object-layer adapter, Vite validation, and asset/animation manifests.
+- Shared recipe composition with ownership/conflict diagnostics and named policy
+  replacement.
+- Precision/action platformer recipes, exploration/action-adventure top-down
+  recipes, and an accessible keyboard/gamepad battle presentation recipe.
+- Independent platformer health, melee, checkpoint, dialogue, failure, landing,
+  and traversal-tuning mechanics.
+- Composable session snapshots, save-slot adapters, replay divergence tools,
+  simulation harnesses, debug overlays, bug-report bundles, and budget helpers.
+- A locally buildable searchable documentation site plus versioning, security,
+  contribution, support, and issue-reporting policies.
+
+### Changed
+
+- Package export maps now identify declaration files explicitly.
+- `PlatformerScene`, `TopDownScene`, and `BattleScene` now consume explicit
+  recipes; base scenes no longer carry inactive gameplay or menu policy.
+- The platformer compatibility scene and its game-specific boss entity were
+  removed. The project intentionally does not preserve prototype compatibility
+  before `1.0`.
+- The top-down action-adventure combination is now a recipe rather than a
+  separately wired registry and mechanic.

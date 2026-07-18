@@ -5,6 +5,10 @@ eight-direction movement, solid walls, camera following, generic entities,
 contextual interactions, and portals. Health, inventory, persistence, combat,
 pickups, and enemies are optional policy.
 
+Use `@phaser-game-engines/top-down/headless` for movement and geometry helpers
+in Node tests or custom runtimes without evaluating Phaser. The package root
+includes the Phaser scene adapter.
+
 ```js
 import { TopDownScene } from '@phaser-game-engines/top-down';
 
@@ -64,8 +68,8 @@ scene.offerContextualAction({
 });
 ```
 
-Equal priorities preserve entity offer order. `nearInteraction` remains as a
-compatibility view for existing HUD subclasses.
+Equal priorities preserve entity offer order. The selected action is available
+as `currentContextualAction` for a HUD.
 
 ## Lifecycle events
 
@@ -89,24 +93,23 @@ state lives at `scene.actionAdventure`, never on the base scene.
 
 ```js
 import {
-  ACTION_ADVENTURE_ENTITY_TYPES,
   TopDownScene,
-  createActionAdventureMechanic,
+  createActionAdventureRecipe,
 } from '@phaser-game-engines/top-down';
 
 class ActionScene extends TopDownScene {
   constructor() {
     super({
-      entityTypes: ACTION_ADVENTURE_ENTITY_TYPES,
-      mechanics: [createActionAdventureMechanic({ maxHealth: 6 })],
+      recipes: [createActionAdventureRecipe({ maxHealth: 6 })],
     });
   }
 }
 ```
 
 Recipe callbacks such as `onAttack`, `onCollect`, `onEnemyDefeated`, and
-`onPlayerDefeated` are supplied in the mechanic options. Removing the mechanic
-unsubscribes its input listener and removes its scene resource.
+`onPlayerDefeated` are supplied in the recipe options. The separate
+`createExplorationRecipe()` changes movement/status policy without installing
+combat or inventory.
 
 ## Capabilities and mechanics
 

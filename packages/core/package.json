@@ -3,22 +3,32 @@
   "version": "0.1.0",
   "description": "Headless contracts shared by Phaser game-engine packages.",
   "type": "module",
+  "types": "./types/index.d.ts",
   "exports": {
-    ".": "./src/index.js",
-    "./input.js": "./src/input.js",
-    "./actions.js": "./src/actions.js",
-    "./lifecycle.js": "./src/lifecycle.js",
-    "./capabilities.js": "./src/capabilities.js",
-    "./mechanics.js": "./src/mechanics.js",
-    "./geometry.js": "./src/geometry.js",
-    "./resources.js": "./src/resources.js",
-    "./schema.js": "./src/schema.js",
-    "./serialization.js": "./src/serialization.js",
-    "./determinism.js": "./src/determinism.js",
-    "./recording.js": "./src/recording.js",
-    "./debug.js": "./src/debug.js",
-    "./world.js": "./src/world.js"
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./headless": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./*.js": {
+      "types": "./types/*.d.ts",
+      "default": "./src/*.js"
+    },
+    "./schemas/*.json": "./schemas/*.json"
   },
-  "files": ["src", "README.md"],
+  "files": ["src", "types", "schemas", "README.md"],
+  "sideEffects": false,
+  "keywords": ["phaser", "game-engine", "headless", "deterministic"],
+  "homepage": "https://github.com/MarcoABCardoso/phaser-game-engines#readme",
+  "bugs": "https://github.com/MarcoABCardoso/phaser-game-engines/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarcoABCardoso/phaser-game-engines.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": { "access": "public" },
   "engines": { "node": ">=22" }
 }

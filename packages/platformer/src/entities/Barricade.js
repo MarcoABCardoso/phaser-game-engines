@@ -30,7 +30,13 @@ export default class Barricade extends Entity {
   inAttackRange(scene) {
     if (this.broken) return false;
     // In reach horizontally (reach px past either edge) and roughly level with it.
-    return pointInRect(scene.player.x, scene.player.y, this.wall, scene.attackReach, 10);
+    return pointInRect(
+      scene.player.x,
+      scene.player.y,
+      this.wall,
+      scene.platformerAttack?.reach ?? 0,
+      10,
+    );
   }
 
   onHit(scene, damage) {

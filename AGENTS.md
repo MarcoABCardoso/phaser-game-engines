@@ -8,6 +8,10 @@ This is an npm workspace for small, reusable Phaser 3 game-engine packages. A pa
 - `@phaser-game-engines/top-down`
 - `@phaser-game-engines/turn-based-battle`
 
+Developer tooling also includes `@phaser-game-engines/create-game`, a small
+project generator, and `@phaser-game-engines/content-tools`, the headless
+validation/migration CLI. They are not runtime engine packages.
+
 The `samples/` directory contains intentionally small Phaser applications that demonstrate consuming each package. It is not a game-content layer.
 
 ## Working conventions
@@ -41,15 +45,23 @@ Optional hooks are `onBattleStart`, `onTurnStart`, `onTurnEnd`, and `validateCom
 
 Do not reintroduce assumptions that participants have `hp`, `mp`, attacks, damage, healing, types, or status effects. Those belong to an adapter or a separate optional rules package. `systems/state.js` only offers generic data patches (`set`, `increment`, `append`, `remove`).
 
-`BattleScene` is an optional Phaser adapter. Subclasses supply rules, menu options, targets, commands, and rendering. The battle sample is an FF-style example of game-owned HP/MP rules, not a prescribed engine model.
+`BattleScene` is an optional Phaser lifecycle adapter and carries no menu policy.
+`createBattlePresentationRecipe` owns keyboard/gamepad menus, target selection,
+and pacing. Subclasses or recipe callbacks supply choices, commands, and
+rendering. The battle sample's HP/MP rules remain game-owned.
+
+All scene recipes use the core `defineRecipe`/`composeRecipes` contract. Recipes
+declare exclusive ownership and may expose named policies. Base scenes must not
+retain inactive compatibility methods for recipe-owned behavior.
 
 ## Current objectives and likely next work
 
-- Preserve the generic battle-controller contract while improving its extensibility.
-- Add examples/tests for materially different rulesets (for example Pokémon-style PP/types or timing/action-command modifiers) before adding reusable mechanics.
-- If a reusable mechanic is proposed, make it an opt-in adapter/helper with no required game-state schema.
-- Improve sample presentation only in sample/subclass code; do not move its HP/MP display rules into `BattleScene`.
-- Consider documenting event payload schemas and adding tests for event sequence, custom phases, reactions/interrupts, and non-elimination outcomes.
+- Add real-browser scene lifecycle coverage and reproducible performance baselines.
+- Pilot prereleases in independently maintained games before declaring `1.0`.
+- Keep recipe mechanics independently removable and test cleanup of listeners,
+  timers, bodies, and display objects.
+- Improve sample presentation only in sample/recipe code; do not move domain
+  rules into base scenes.
 
 ## Verification
 

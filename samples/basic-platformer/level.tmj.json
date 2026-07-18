@@ -1,0 +1,34 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "orientation": "orthogonal",
+  "width": 30,
+  "height": 18,
+  "tilewidth": 32,
+  "tileheight": 30,
+  "layers": [
+    {
+      "name": "Start marker",
+      "type": "objectgroup",
+      "properties": [{ "name": "engineRole", "type": "string", "value": "spawn" }],
+      "objects": [{ "id": 1, "name": "player", "x": 92, "y": 420, "point": true }]
+    },
+    {
+      "name": "Ground geometry",
+      "type": "objectgroup",
+      "properties": [{ "name": "engineRole", "type": "string", "value": "solids" }],
+      "objects": [{ "id": 2, "x": 0, "y": 480, "width": 960, "height": 60 }]
+    },
+    {
+      "name": "Traversal platforms",
+      "type": "objectgroup",
+      "properties": [{ "name": "engineRole", "type": "string", "value": "platforms" }],
+      "objects": [
+        { "id": 3, "name": "step-1", "x": 190, "y": 410, "width": 130, "height": 20, "properties": [{ "name": "kind", "type": "string", "value": "step" }] },
+        { "id": 4, "name": "step-2", "x": 400, "y": 340, "width": 150, "height": 20, "properties": [{ "name": "kind", "type": "string", "value": "platform" }] },
+        { "id": 5, "name": "thin-1", "x": 650, "y": 270, "width": 160, "height": 14, "properties": [{ "name": "kind", "type": "string", "value": "thin" }] }
+      ]
+    },
+    { "name": "entities", "type": "objectgroup", "objects": [] }
+  ]
+}

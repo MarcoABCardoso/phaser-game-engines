@@ -1,0 +1,28 @@
+{
+  "name": "@phaser-game-engines/create-game",
+  "version": "0.1.0",
+  "description": "Create minimal Phaser Game Engines starter projects.",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "bin": {
+    "create-phaser-game-engines": "./bin/create-game.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "files": ["bin", "src", "README.md"],
+  "sideEffects": false,
+  "keywords": ["phaser", "game", "starter", "project-generator"],
+  "homepage": "https://github.com/MarcoABCardoso/phaser-game-engines/tree/main/packages/create-game#readme",
+  "bugs": "https://github.com/MarcoABCardoso/phaser-game-engines/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarcoABCardoso/phaser-game-engines.git",
+    "directory": "packages/create-game"
+  },
+  "publishConfig": { "access": "public" },
+  "engines": { "node": ">=22" }
+}

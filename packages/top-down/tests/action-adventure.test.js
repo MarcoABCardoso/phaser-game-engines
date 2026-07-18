@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createCapabilities, createLifecycle, lifecycleEvent } from '@phaser-game-engines/core';
-import { createActionAdventureMechanic } from '../src/recipes/action-adventure.js';
+import { createActionAdventureRecipe } from '../src/recipes/action-adventure.js';
 
 describe('action-adventure recipe', () => {
   it('owns combat state and removes its listener and scene resource', () => {
@@ -20,7 +20,8 @@ describe('action-adventure recipe', () => {
       statusText: () => '',
       time: { now: 100 },
     };
-    const remove = createActionAdventureMechanic({ maxHealth: 3 })(scene);
+    const mechanic = createActionAdventureRecipe({ maxHealth: 3 }).policies.actionAdventure;
+    const remove = mechanic(scene);
 
     expect(scene.health).toBeUndefined();
     expect(scene.actionAdventure.health).toBe(3);

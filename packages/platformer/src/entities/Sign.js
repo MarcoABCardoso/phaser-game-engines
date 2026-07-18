@@ -46,8 +46,8 @@ export default class Sign extends Entity {
       label: this.spec.label ?? 'Read sign',
       priority: this.spec.priority ?? 0,
       source: this,
-      available: () => !scene.dialogActive,
-      execute: () => scene.startDialog(this.spec.dialogId),
+      available: () => !scene.platformerDialogue?.active,
+      execute: () => scene.platformerDialogue?.start(this.spec.dialogId),
     });
   }
 

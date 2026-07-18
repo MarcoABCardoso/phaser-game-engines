@@ -1,10 +1,9 @@
 // Public API for the Phaser platformer engine. Subpath exports remain available
 // for consumers that need a specific entity or pure system.
 export { default as PlatformerScene } from './scenes/PlatformerScene.js';
-export { default as ActionPlatformerScene } from './scenes/ActionPlatformerScene.js';
 export { default as Entity } from './entities/Entity.js';
 export { default as EntityManager } from './entities/EntityManager.js';
-export { BASE_ENTITY_TYPES, ACTION_PLATFORMER_ENTITY_TYPES } from './entities/registry.js';
+export { BASE_ENTITY_TYPES } from './entities/registry.js';
 export {
   createTraversalController,
   createLocomotionController,
@@ -16,3 +15,15 @@ export {
   createAreaTransitionController,
 } from './controllers/index.js';
 export { createLandingConsequenceMechanic } from './mechanics/landing-consequences.js';
+export { createHealthMechanic } from './mechanics/health.js';
+export { createMeleeAttackMechanic } from './mechanics/melee-attack.js';
+export { createCheckpointMechanic } from './mechanics/checkpoints.js';
+export { createDialogueMechanic } from './mechanics/dialogue.js';
+export { createFailureMechanic } from './mechanics/failure.js';
+export { createTraversalTuningMechanic } from './mechanics/traversal-tuning.js';
+export { createPrecisionPlatformerRecipe } from './recipes/precision-platformer.js';
+export {
+  ACTION_PLATFORMER_ENTITY_TYPES,
+  createActionPlatformerRecipe,
+} from './recipes/action-platformer.js';
+export { validatePlatformerLevel } from './systems/content.js';

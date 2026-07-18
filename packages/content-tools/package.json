@@ -1,0 +1,30 @@
+{
+  "name": "@phaser-game-engines/content-tools",
+  "version": "0.1.0",
+  "description": "Headless content validation and migration tools for Phaser Game Engines.",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "bin": { "pge-content": "./bin/pge-content.js" },
+  "exports": {
+    ".": { "types": "./src/index.d.ts", "default": "./src/index.js" },
+    "./tiled": { "types": "./src/tiled.d.ts", "default": "./src/tiled.js" },
+    "./vite": { "types": "./src/vite.d.ts", "default": "./src/vite.js" }
+  },
+  "files": ["bin", "src", "README.md"],
+  "sideEffects": false,
+  "keywords": ["phaser", "json", "validation", "game-content"],
+  "homepage": "https://github.com/MarcoABCardoso/phaser-game-engines/tree/main/packages/content-tools#readme",
+  "bugs": "https://github.com/MarcoABCardoso/phaser-game-engines/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarcoABCardoso/phaser-game-engines.git",
+    "directory": "packages/content-tools"
+  },
+  "publishConfig": { "access": "public" },
+  "dependencies": {
+    "@phaser-game-engines/core": "0.1.0",
+    "@phaser-game-engines/platformer": "0.1.0",
+    "@phaser-game-engines/top-down": "0.1.0"
+  },
+  "engines": { "node": ">=22" }
+}

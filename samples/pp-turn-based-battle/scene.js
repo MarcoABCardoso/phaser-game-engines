@@ -1,4 +1,4 @@
-import { BattleScene } from '@phaser-game-engines/turn-based-battle';
+import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/turn-based-battle';
 import {
   availableMoves,
   battleSpec,
@@ -19,6 +19,10 @@ function creatureSummary(creature) {
 }
 
 export default class PpBattleScene extends BattleScene {
+  constructor() {
+    super({ recipes: [createBattlePresentationRecipe()] });
+  }
+
   getBattle() {
     return battleSpec;
   }

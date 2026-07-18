@@ -1,0 +1,12 @@
+name: Bug report
+description: Report a reproducible engine or tooling defect
+body:
+  - type: textarea
+    attributes: { label: Reproduction, description: Include the smallest project, command, or test that demonstrates the issue. }
+    validations: { required: true }
+  - type: input
+    attributes: { label: Versions, description: Package, Phaser, Node, browser, and OS versions. }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Expected and actual behavior }
+    validations: { required: true }
