@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TopDownScene } from '@phaser-game-engines/top-down';
+import { TopDownScene } from '@phaser-game-engines/toolkit/top-down';
 import { installSurveyHud } from './hud.js';
 import { specimenCount, surveyLevel } from './level.js';
 

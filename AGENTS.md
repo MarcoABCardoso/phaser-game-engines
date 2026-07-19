@@ -2,29 +2,34 @@
 
 ## Purpose
 
-This is an npm workspace for small, reusable Phaser 3 game-engine packages. A package must be generic enough for a game to consume without importing game-specific source code. Current packages are:
+This is an npm workspace for a small, reusable Phaser 3 toolkit. Public runtime
+surfaces are subpath exports of `@phaser-game-engines/toolkit`:
 
-- `@phaser-game-engines/platformer`
-- `@phaser-game-engines/top-down`
-- `@phaser-game-engines/turn-based-battle`
+- `@phaser-game-engines/toolkit/platformer`
+- `@phaser-game-engines/toolkit/top-down`
+- `@phaser-game-engines/toolkit/battle`
 
-Developer tooling also includes `@phaser-game-engines/create-game`, a small
-project generator, and `@phaser-game-engines/content-tools`, the headless
-validation/migration CLI. They are not runtime engine packages.
+Developer tooling includes `@phaser-game-engines/create-game`, a small project
+generator, and the toolkit's `/content` subpath plus `pge-content` binary. The
+generator remains separate to support the `npm create` convention.
 
-The `samples/` directory contains intentionally small Phaser applications that demonstrate consuming each package. It is not a game-content layer.
+The `samples/` directory contains intentionally small Phaser applications that
+demonstrate consuming toolkit subpaths. It is not a game-content layer.
 
 ## Working conventions
 
 - The repository uses ESM JavaScript (`"type": "module"`), Phaser 3, Vite, and Vitest.
-- Packages expose their public API from `src/index.js` and maintain subpath exports for intended extension points.
+- The toolkit exposes public APIs through its manifest and maintains subpath
+  exports for intended extension points.
 - Keep engine behavior data-driven and extension-oriented: use subclass hooks, registries, providers, or rule adapters rather than imports from a particular game.
 - Put deterministic logic in small pure modules and cover it with Vitest. Phaser scenes should adapt input, presentation, and lifecycle to that logic.
 - Check `git status --short` before editing. Do not overwrite unrelated user changes.
 
 ## Turn-based battle engine: current design
 
-`packages/turn-based-battle` was deliberately refactored away from Final Fantasy-specific combat rules. It is a generic phase/turn state machine, not an HP/MP combat implementation.
+`packages/toolkit/modules/turn-based-battle` was deliberately refactored away
+from Final Fantasy-specific combat rules. It is a generic phase/turn state
+machine, not an HP/MP combat implementation.
 
 `BattleController` owns:
 

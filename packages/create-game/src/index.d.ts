@@ -23,5 +23,6 @@ export const genres: readonly Genre[];
 export const languages: readonly Language[];
 export const inputAdapters: readonly InputAdapter[];
 export const recipes: Readonly<Record<Genre, readonly Recipe[]>>;
+export const packageVersion: string;
 export const usage: string;
 export function createProject(options: CreateProjectOptions): CreatedProject;

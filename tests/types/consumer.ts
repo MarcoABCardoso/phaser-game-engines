@@ -6,27 +6,27 @@ import {
   createSaveStore,
   createWorldRuntime,
   replaceRecipePolicy,
-} from '@phaser-game-engines/core/headless';
-import { createManualClock } from '@phaser-game-engines/core/determinism.js';
-import { validateAssetManifest, type AssetManifest } from '@phaser-game-engines/core/assets.js';
+} from '@phaser-game-engines/toolkit/core/headless';
+import { createManualClock } from '@phaser-game-engines/toolkit/core/determinism.js';
+import { validateAssetManifest, type AssetManifest } from '@phaser-game-engines/toolkit/core/assets.js';
 import {
   PlatformerScene,
   createHealthMechanic,
   createPrecisionPlatformerRecipe,
-} from '@phaser-game-engines/platformer';
-import { createTraversalController } from '@phaser-game-engines/platformer/headless';
-import type { PlatformerLevel } from '@phaser-game-engines/platformer/systems/content.js';
-import { TopDownScene, createExplorationRecipe } from '@phaser-game-engines/top-down';
-import { movementFromIntent } from '@phaser-game-engines/top-down/headless';
-import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/turn-based-battle';
+} from '@phaser-game-engines/toolkit/platformer';
+import { createTraversalController } from '@phaser-game-engines/toolkit/platformer/headless';
+import type { PlatformerLevel } from '@phaser-game-engines/toolkit/platformer/systems/content.js';
+import { TopDownScene, createExplorationRecipe } from '@phaser-game-engines/toolkit/top-down';
+import { movementFromIntent } from '@phaser-game-engines/toolkit/top-down/headless';
+import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/toolkit/battle';
 import {
   Battle,
   type BattleRules,
   type BattleCommand,
-} from '@phaser-game-engines/turn-based-battle/headless';
+} from '@phaser-game-engines/toolkit/battle/headless';
 import { createProject, type Genre } from '@phaser-game-engines/create-game';
-import { validateContent, type ContentKind } from '@phaser-game-engines/content-tools';
-import { convertTiledMap, type TiledMap } from '@phaser-game-engines/content-tools/tiled';
+import { validateContent, type ContentKind } from '@phaser-game-engines/toolkit/content';
+import { convertTiledMap, type TiledMap } from '@phaser-game-engines/toolkit/content/tiled';
 
 const intent = createInputIntent({ move: { x: 1, y: 0 }, actions: { jump: true } });
 const velocity: { x: number; y: number } = movementFromIntent(intent.move, 200);

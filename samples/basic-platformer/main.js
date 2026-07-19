@@ -3,8 +3,8 @@ import {
   PlatformerScene,
   createPrecisionPlatformerRecipe,
   createTraversalTuningMechanic,
-} from '@phaser-game-engines/platformer';
-import { replaceRecipePolicy } from '@phaser-game-engines/core';
+} from '@phaser-game-engines/toolkit/platformer';
+import { replaceRecipePolicy } from '@phaser-game-engines/toolkit/core';
 import { basicLevel } from './level.js';
 
 class BasicPlatformerScene extends PlatformerScene {

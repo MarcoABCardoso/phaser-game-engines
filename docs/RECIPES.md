@@ -6,7 +6,7 @@ game-specific state and presentation in the game.
 ## Custom entity type
 
 ```js
-import { Entity } from '@phaser-game-engines/top-down';
+import { Entity } from '@phaser-game-engines/toolkit/top-down';
 
 class Beacon extends Entity {
   spawn(scene) {
@@ -57,8 +57,8 @@ Installers return cleanup. They should not claim unrelated scene state.
 ## Named policy replacement
 
 ```js
-import { replaceRecipePolicy } from '@phaser-game-engines/core';
-import { createActionPlatformerRecipe, createHealthMechanic } from '@phaser-game-engines/platformer';
+import { replaceRecipePolicy } from '@phaser-game-engines/toolkit/core';
+import { createActionPlatformerRecipe, createHealthMechanic } from '@phaser-game-engines/toolkit/platformer';
 
 const action = createActionPlatformerRecipe();
 const customized = replaceRecipePolicy(
@@ -75,7 +75,7 @@ same entity type.
 ## Guarded area transition
 
 ```js
-import { createAreaTransitionController } from '@phaser-game-engines/platformer/headless';
+import { createAreaTransitionController } from '@phaser-game-engines/toolkit/platformer/headless';
 
 const transition = createAreaTransitionController();
 if (transition.begin('cave')) {

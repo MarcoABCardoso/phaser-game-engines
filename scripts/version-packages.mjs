@@ -4,16 +4,21 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const packageDirectories = ['core', 'platformer', 'top-down', 'turn-based-battle', 'create-game', 'content-tools'];
-const manifests = packageDirectories.map((directory) => {
+const packageDirectories = ['toolkit', 'create-game'];
+const rootManifest = {
+  path: join(root, 'package.json'),
+  value: JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')),
+};
+const packageManifests = packageDirectories.map((directory) => {
   const path = join(root, 'packages', directory, 'package.json');
   return { path, value: JSON.parse(readFileSync(path, 'utf8')) };
 });
+const manifests = [rootManifest, ...packageManifests];
 const requestedVersion = process.argv[2];
 
 if (requestedVersion === '--check') {
   const versions = new Set(manifests.map(({ value }) => value.version));
-  if (versions.size !== 1) fail(`Workspace package versions differ: ${[...versions].join(', ')}`);
+  if (versions.size !== 1) fail(`Workspace manifest versions differ: ${[...versions].join(', ')}`);
   const [version] = versions;
   for (const { value } of manifests) {
     for (const [name, range] of Object.entries(value.dependencies ?? {})) {
@@ -22,7 +27,7 @@ if (requestedVersion === '--check') {
       }
     }
   }
-  console.log(`Workspace package versions are aligned at ${version}.`);
+  console.log(`Root and publishable package versions are aligned at ${version}.`);
   process.exit(0);
 }
 
@@ -46,7 +51,7 @@ const lock = spawnSync(process.execPath, [
   npmCli, 'install', '--package-lock-only', '--ignore-scripts', '--offline',
 ], { cwd: root, encoding: 'utf8' });
 if (lock.status !== 0) fail(lock.stderr || lock.stdout || 'Could not update package-lock.json.');
-console.log(`Updated all publishable packages to ${requestedVersion}.`);
+console.log(`Updated the root and all publishable packages to ${requestedVersion}.`);
 
 function fail(message) {
   console.error(message);

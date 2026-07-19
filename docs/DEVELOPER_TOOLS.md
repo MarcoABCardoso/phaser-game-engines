@@ -1,6 +1,6 @@
 # Developer tools
 
-`@phaser-game-engines/core` provides opt-in tools that remain separate from
+`@phaser-game-engines/toolkit/core` provides opt-in tools that remain separate from
 production game rules:
 
 - `captureSessionSnapshot` and `restoreSessionSnapshot` compose explicitly

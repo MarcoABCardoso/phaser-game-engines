@@ -1,26 +1,26 @@
 # Public API policy
 
-The `exports` map in each package manifest is the authoritative public module
-boundary. Files that cannot be reached through that map are implementation
+The `exports` map in each public package manifest is the authoritative module
+boundary. Files that cannot be reached through those maps are implementation
 details and may change without a migration path.
 
 ## Entry-point categories
 
-### Package roots
+### Toolkit subpaths
 
-The package root is the normal browser entry point. The core root is completely
-headless. The platformer, top-down, and turn-based-battle roots also export
-optional Phaser scene adapters and therefore evaluate Phaser.
+The toolkit root and `/core` are completely headless. The `/platformer`,
+`/top-down`, and `/battle` subpaths export optional Phaser scene adapters and
+therefore evaluate Phaser.
 
 ### Headless entry points
 
-Every package supports `/headless`. These entry points are safe in Node and do
-not evaluate Phaser:
+Every runtime area has an explicit headless entry point that is safe in Node and
+does not evaluate Phaser:
 
-- `@phaser-game-engines/core/headless`
-- `@phaser-game-engines/platformer/headless`
-- `@phaser-game-engines/top-down/headless`
-- `@phaser-game-engines/turn-based-battle/headless`
+- `@phaser-game-engines/toolkit/core/headless`
+- `@phaser-game-engines/toolkit/platformer/headless`
+- `@phaser-game-engines/toolkit/top-down/headless`
+- `@phaser-game-engines/toolkit/battle/headless`
 
 They are the preferred imports for tests, simulations, developer tools, custom
 renderers, and server-side rule evaluation.
@@ -29,13 +29,13 @@ renderers, and server-side rule evaluation.
 
 Documented `controllers`, `entities`, `mechanics`, `recipes`, `scenes`, and
 `systems` subpaths are supported extension points. They expose smaller pieces
-for games that do not want a package root. New code should use a root or
+for games that do not want a genre root. New code should use a genre or
 `/headless` import when it provides the required API; subpaths are intended for
 deliberate composition.
 
 ## Stability before 1.0
 
-All exported APIs are supported, but the packages remain prerelease. A minor
+All exported APIs are supported, but the toolkit remains prerelease. A minor
 release may change an export, TypeScript type, lifecycle payload, content schema,
 snapshot, or recipe behavior. Such changes require a changelog entry and a
 migration example.

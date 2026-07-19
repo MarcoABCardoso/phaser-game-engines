@@ -1,4 +1,4 @@
-import { lifecycleEvent } from '@phaser-game-engines/core';
+import { lifecycleEvent } from '@phaser-game-engines/toolkit/core';
 
 export function installSurveyHud(scene, specimenCount) {
   let progressText;

@@ -1,5 +1,5 @@
 import tiledMap from './level.tmj.json';
-import { convertTiledMap } from '@phaser-game-engines/content-tools/tiled';
+import { convertTiledMap } from '@phaser-game-engines/toolkit/content/tiled';
 
 export const basicLevel = convertTiledMap(tiledMap, {
   kind: 'platformer',

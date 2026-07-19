@@ -2,6 +2,7 @@
   "name": "@phaser-game-engines/create-game",
   "version": "0.1.0",
   "description": "Create minimal Phaser Game Engines starter projects.",
+  "license": "MIT",
   "type": "module",
   "types": "./src/index.d.ts",
   "bin": {
@@ -24,5 +25,5 @@
     "directory": "packages/create-game"
   },
   "publishConfig": { "access": "public" },
-  "engines": { "node": ">=22" }
+  "engines": { "node": ">=20.19.0" }
 }

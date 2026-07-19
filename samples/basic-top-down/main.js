@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   TopDownScene,
   createActionAdventureRecipe,
-} from '@phaser-game-engines/top-down';
+} from '@phaser-game-engines/toolkit/top-down';
 import { basicTopDownLevel } from './level.js';
 
 class BasicTopDownScene extends TopDownScene {

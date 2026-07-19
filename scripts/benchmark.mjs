@@ -5,7 +5,7 @@ import {
   captureSessionSnapshot,
   entitiesInRect,
   measureBudget,
-} from '@phaser-game-engines/core';
+} from '@phaser-game-engines/toolkit/core';
 
 class BenchmarkEntity extends WorldEntity {
   update() { this.ticks = (this.ticks ?? 0) + 1; }

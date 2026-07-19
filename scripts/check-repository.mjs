@@ -17,13 +17,23 @@ for (const document of ['README.md', 'CONTRIBUTING.md', 'RELEASING.md']) {
   }
 }
 
-for (const { directory, headless } of [
-  { directory: 'core', headless: true },
-  { directory: 'platformer', headless: true },
-  { directory: 'top-down', headless: true },
-  { directory: 'turn-based-battle', headless: true },
-  { directory: 'create-game', headless: false },
-  { directory: 'content-tools', headless: false },
+for (const { directory, requiredExports } of [
+  {
+    directory: 'toolkit',
+    requiredExports: [
+      './core/headless',
+      './platformer',
+      './platformer/headless',
+      './top-down',
+      './top-down/headless',
+      './battle',
+      './battle/headless',
+      './content',
+      './content/tiled',
+      './content/vite',
+    ],
+  },
+  { directory: 'create-game', requiredExports: [] },
 ]) {
   const packagePath = join(root, 'packages', directory, 'package.json');
   const manifest = readJson(packagePath);
@@ -32,7 +42,9 @@ for (const { directory, headless } of [
   }
   if (manifest.private) failures.push(`${manifest.name}: publishable package cannot be private.`);
   if (!manifest.exports?.['.']) failures.push(`${manifest.name}: missing root export.`);
-  if (headless && !manifest.exports?.['./headless']) failures.push(`${manifest.name}: missing headless export.`);
+  for (const specifier of requiredExports) {
+    if (!manifest.exports?.[specifier]) failures.push(`${manifest.name}: missing ${specifier} export.`);
+  }
   verifyExportTargets(manifest, dirname(packagePath));
 }
 

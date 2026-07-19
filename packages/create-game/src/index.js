@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
 
 export const genres = Object.freeze(['platformer', 'top-down', 'battle']);
@@ -9,8 +9,12 @@ export const recipes = Object.freeze({
   'top-down': ['minimal', 'action-adventure'],
   battle: ['minimal'],
 });
+export const packageVersion = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+).version;
 
 export const usage = `Usage:
+  npm create @phaser-game-engines/game -- <directory> [options]
   create-phaser-game-engines <directory> [options]
 
 Options:
@@ -19,6 +23,7 @@ Options:
   --recipe <name>                      Optional composition (default: minimal)
   --input keyboard|gamepad|touch       Input adapter (default: keyboard)
   --package-source <repository>        Use packages from a local workspace
+  --version                            Show the generator version
   --help                               Show this help`;
 
 export function createProject({
@@ -28,7 +33,7 @@ export function createProject({
   recipe = 'minimal',
   input = 'keyboard',
   packageSource,
-  packageVersion = '0.1.0',
+  packageVersion: requestedPackageVersion = packageVersion,
 } = {}) {
   if (!targetDirectory) throw new TypeError('targetDirectory is required.');
   if (!genres.includes(genre)) throw new TypeError(`Unsupported genre: ${genre}.`);
@@ -46,7 +51,17 @@ export function createProject({
   mkdirSync(join(target, 'src'), { recursive: true });
   const extension = language;
   const projectName = packageName(basename(target));
-  const files = starterFiles({ target, projectName, genre, language, extension, recipe, input, packageSource, packageVersion });
+  const files = starterFiles({
+    target,
+    projectName,
+    genre,
+    language,
+    extension,
+    recipe,
+    input,
+    packageSource,
+    packageVersion: requestedPackageVersion,
+  });
   for (const [name, contents] of Object.entries(files)) {
     const path = join(target, name);
     mkdirSync(resolve(path, '..'), { recursive: true });
@@ -60,23 +75,18 @@ function packageName(value) {
   return normalized || 'phaser-game';
 }
 
-function dependency(packageSource, target, directory, version) {
+function toolkitDependency(packageSource, target, version) {
   if (!packageSource) return `^${version}`;
-  const path = relative(target, join(packageSource, 'packages', directory)).replaceAll('\\', '/');
+  const path = relative(target, join(packageSource, 'packages', 'toolkit')).replaceAll('\\', '/');
   return `file:${path || '.'}`;
 }
 
 function starterFiles(options) {
   const { target, projectName, genre, language, extension, recipe, input, packageSource, packageVersion } = options;
-  const engineDirectory = genre === 'battle' ? 'turn-based-battle' : genre;
-  const engineName = `@phaser-game-engines/${engineDirectory}`;
   const dependencies = {
-    [engineName]: dependency(packageSource, target, engineDirectory, packageVersion),
+    '@phaser-game-engines/toolkit': toolkitDependency(packageSource, target, packageVersion),
     phaser: '^3.90.0',
   };
-  if (input !== 'keyboard') {
-    dependencies['@phaser-game-engines/core'] = dependency(packageSource, target, 'core', packageVersion);
-  }
   const devDependencies = { vite: '^8.1.5', vitest: '^4.1.10' };
   if (language === 'ts') devDependencies.typescript = '^7.0.2';
 
@@ -128,7 +138,7 @@ function platformerFiles(ext, input) {
   const adapter = realTimeInput(input, 'jump');
   return {
     [`src/main.${ext}`]: `import Phaser from 'phaser';
-import { PlatformerScene } from '@phaser-game-engines/platformer';
+import { PlatformerScene } from '@phaser-game-engines/toolkit/platformer';
 ${adapter.imports}${adapter.declaration}class GameScene extends PlatformerScene {
 ${adapter.method}  getLevel() { return { world: { width: 960, height: 540 }, spawn: { x: 80, y: 420 }, floorSegments: [{ x: 0, y: 500, w: 960, h: 40 }], platforms: [], entitySpecs: [] }; }
 }
@@ -136,7 +146,7 @@ ${adapter.setup}const controls = document.querySelector('#controls');
 if (controls) controls.textContent = 'Move: arrows/A-D. Jump: Space/Up.';
 new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#12151d', physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 1000 } } }, scene: [GameScene] });`,
     [`src/game.test.${ext}`]: `import { expect, test } from 'vitest';
-import { createTraversalController } from '@phaser-game-engines/platformer/headless';
+import { createTraversalController } from '@phaser-game-engines/toolkit/platformer/headless';
 test('traversal starts from deterministic state', () => expect(createTraversalController().snapshot().facingDir).toBe(1));`,
   };
 }
@@ -147,7 +157,7 @@ function topDownFiles(ext, recipe, input) {
   const constructor = recipe === 'action-adventure' ? `  constructor() { super({ recipes: [createActionAdventureRecipe()] }); }\n` : '';
   return {
     [`src/main.${ext}`]: `import Phaser from 'phaser';
-import { TopDownScene${recipeImports} } from '@phaser-game-engines/top-down';
+import { TopDownScene${recipeImports} } from '@phaser-game-engines/toolkit/top-down';
 ${adapter.imports}${adapter.declaration}class GameScene extends TopDownScene {
 ${constructor}${adapter.method}  getLevel() { return { world: { width: 960, height: 540 }, spawn: { x: 80, y: 80 }, walls: [], entitySpecs: [] }; }
 }
@@ -155,7 +165,7 @@ ${adapter.setup}const controls = document.querySelector('#controls');
 if (controls) controls.textContent = 'Move: arrows/WASD. Interact: E.';
 new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#18212d', physics: { default: 'arcade' }, scene: [GameScene] });`,
     [`src/game.test.${ext}`]: `import { expect, test } from 'vitest';
-import { movementFromIntent } from '@phaser-game-engines/top-down/headless';
+import { movementFromIntent } from '@phaser-game-engines/toolkit/top-down/headless';
 test('movement is deterministic', () => expect(movementFromIntent({ x: 1, y: 0 }, 200)).toEqual({ x: 200, y: 0 }));`,
   };
 }
@@ -164,14 +174,14 @@ function realTimeInput(input, action) {
   if (input === 'keyboard') return { imports: '', declaration: '', method: '', setup: '' };
   if (input === 'gamepad') {
     return {
-      imports: `import { createGamepadInputAdapter } from '@phaser-game-engines/core';\n`,
+      imports: `import { createGamepadInputAdapter } from '@phaser-game-engines/toolkit/core';\n`,
       declaration: `const inputAdapter = createGamepadInputAdapter();\n`,
       method: `  readInputIntent() { return inputAdapter.read(); }\n`,
       setup: '',
     };
   }
   return {
-    imports: `import { createTouchInputAdapter } from '@phaser-game-engines/core';\n`,
+    imports: `import { createTouchInputAdapter } from '@phaser-game-engines/toolkit/core';\n`,
     declaration: `const inputAdapter = createTouchInputAdapter({ actions: ['${action}'] });\n`,
     method: `  readInputIntent() { return inputAdapter.read(); }\n`,
     setup: touchSetup(action),
@@ -180,7 +190,7 @@ function realTimeInput(input, action) {
 
 function battleFiles(ext) {
   const typedImport = ext === 'ts'
-    ? `import type { BattleRules } from '@phaser-game-engines/turn-based-battle/headless';\n`
+    ? `import type { BattleRules } from '@phaser-game-engines/toolkit/battle/headless';\n`
     : '';
   const typedDeclaration = ext === 'ts'
     ? ': BattleRules<{}, { turns: number }, { kind: string }>'
@@ -200,14 +210,14 @@ function battleFiles(ext) {
   getOutcome: (${stateParameter}) => state.turns >= 1 ? { kind: 'complete' } : null,
 };`,
     [`src/main.${ext}`]: `import Phaser from 'phaser';
-import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/turn-based-battle';
+import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/toolkit/battle';
 import { rules } from './rules.js';
 class GameScene extends BattleScene${sceneType} { constructor() { super({ recipes: [createBattlePresentationRecipe()] }); } getBattle() { return {}; } getBattleRules() { return rules; } isPlayerTurn() { return false; } chooseAiCommand(${actorParameters}) { return { id: 'wait', actorId }; } }
 const controls = document.querySelector('#controls');
 if (controls) controls.textContent = 'The sample resolves one game-owned command.';
 new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 760, height: 480, backgroundColor: '#171525', scene: [GameScene] });`,
     [`src/game.test.${ext}`]: `import { expect, test } from 'vitest';
-import { Battle } from '@phaser-game-engines/turn-based-battle/headless';
+import { Battle } from '@phaser-game-engines/toolkit/battle/headless';
 import { rules } from './rules.js';
 test('rules finish independently of Phaser', () => { const battle = new Battle({}, { rules }); battle.start(); battle.submitCommand({ id: 'wait', actorId: 'player' }); expect(battle.state.machine.phase).toBe('finished'); });`,
   };

@@ -11,12 +11,8 @@ const temporaryRoot = mkdtempSync(join(tmpdir(), 'phaser-game-engines-'));
 const packDirectory = join(temporaryRoot, 'packages');
 const consumerDirectory = join(temporaryRoot, 'consumer');
 const packageNames = [
-  '@phaser-game-engines/core',
-  '@phaser-game-engines/platformer',
-  '@phaser-game-engines/top-down',
-  '@phaser-game-engines/turn-based-battle',
+  '@phaser-game-engines/toolkit',
   '@phaser-game-engines/create-game',
-  '@phaser-game-engines/content-tools',
 ];
 
 try {
@@ -43,14 +39,14 @@ try {
 
   writeFileSync(join(consumerDirectory, 'smoke.mjs'), `
 const [core, platformer, topDown, battle, creator, contentTools, tiledTools, viteTools] = await Promise.all([
-  import('@phaser-game-engines/core/headless'),
-  import('@phaser-game-engines/platformer/headless'),
-  import('@phaser-game-engines/top-down/headless'),
-  import('@phaser-game-engines/turn-based-battle/headless'),
+  import('@phaser-game-engines/toolkit/core/headless'),
+  import('@phaser-game-engines/toolkit/platformer/headless'),
+  import('@phaser-game-engines/toolkit/top-down/headless'),
+  import('@phaser-game-engines/toolkit/battle/headless'),
   import('@phaser-game-engines/create-game'),
-  import('@phaser-game-engines/content-tools'),
-  import('@phaser-game-engines/content-tools/tiled'),
-  import('@phaser-game-engines/content-tools/vite'),
+  import('@phaser-game-engines/toolkit/content'),
+  import('@phaser-game-engines/toolkit/content/tiled'),
+  import('@phaser-game-engines/toolkit/content/vite'),
 ]);
 if (typeof core.createWorldRuntime !== 'function') throw new Error('core headless export failed');
 if (typeof platformer.createTraversalController !== 'function') throw new Error('platformer headless export failed');
@@ -65,20 +61,20 @@ console.log('Packed headless exports load from a clean consumer project.');
 
   writeFileSync(join(consumerDirectory, 'index.html'), '<script type="module" src="/main.js"></script>\n');
   writeFileSync(join(consumerDirectory, 'main.js'), `
-import { PlatformerScene } from '@phaser-game-engines/platformer';
-import { TopDownScene } from '@phaser-game-engines/top-down';
-import { BattleScene } from '@phaser-game-engines/turn-based-battle';
-import { convertTiledMap } from '@phaser-game-engines/content-tools/tiled';
+import { PlatformerScene } from '@phaser-game-engines/toolkit/platformer';
+import { TopDownScene } from '@phaser-game-engines/toolkit/top-down';
+import { BattleScene } from '@phaser-game-engines/toolkit/battle';
+import { convertTiledMap } from '@phaser-game-engines/toolkit/content/tiled';
 console.log(PlatformerScene, TopDownScene, BattleScene, convertTiledMap);
 `);
   writeFileSync(join(consumerDirectory, 'consumer.ts'), `
-import { createWorldRuntime } from '@phaser-game-engines/core/headless';
-import { createTraversalController } from '@phaser-game-engines/platformer/headless';
-import { movementFromIntent } from '@phaser-game-engines/top-down/headless';
-import { Battle, type BattleRules } from '@phaser-game-engines/turn-based-battle/headless';
+import { createWorldRuntime } from '@phaser-game-engines/toolkit/core/headless';
+import { createTraversalController } from '@phaser-game-engines/toolkit/platformer/headless';
+import { movementFromIntent } from '@phaser-game-engines/toolkit/top-down/headless';
+import { Battle, type BattleRules } from '@phaser-game-engines/toolkit/battle/headless';
 import { createProject, type Genre } from '@phaser-game-engines/create-game';
-import { validateContent, type ContentKind } from '@phaser-game-engines/content-tools';
-import { convertTiledMap, type TiledMap } from '@phaser-game-engines/content-tools/tiled';
+import { validateContent, type ContentKind } from '@phaser-game-engines/toolkit/content';
+import { convertTiledMap, type TiledMap } from '@phaser-game-engines/toolkit/content/tiled';
 const rules: BattleRules<{}, { ids: string[] }, string> = {
   createInitialState: () => ({ ids: ['a'] }),
   getTurnOrder: state => state.ids,
@@ -104,6 +100,34 @@ void (null as TiledMap | null);
   ], consumerDirectory);
   const smoke = run(process.execPath, ['smoke.mjs'], consumerDirectory);
   process.stdout.write(smoke.stdout);
+  const contentHelp = run(process.execPath, [
+    join(
+      consumerDirectory,
+      'node_modules',
+      '@phaser-game-engines',
+      'toolkit',
+      'modules',
+      'content-tools',
+      'bin',
+      'pge-content.js',
+    ),
+    '--help',
+  ], consumerDirectory);
+  if (!contentHelp.stdout.includes('pge-content validate')) {
+    throw new Error('Packed content CLI help failed.');
+  }
+  const generatorVersion = run(process.execPath, [
+    join(
+      consumerDirectory,
+      'node_modules',
+      '@phaser-game-engines',
+      'create-game',
+      'bin',
+      'create-game.js',
+    ),
+    '--version',
+  ], consumerDirectory);
+  if (!generatorVersion.stdout.trim()) throw new Error('Packed generator version failed.');
   run(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.json'], consumerDirectory);
   run(process.execPath, [join(root, 'node_modules', 'vite', 'bin', 'vite.js'), 'build'], consumerDirectory);
   console.log('Packed browser roots type-check and build in a clean Vite project.');

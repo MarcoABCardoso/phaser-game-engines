@@ -5,12 +5,16 @@ contain documented breaking changes.
 
 ## Unreleased
 
+No changes yet.
+
+## [0.1.0] - 2026-07-18
+
 ### Added
 
-- Node-safe `/headless` entry points for all packages.
+- Node-safe `/headless` entry points for every runtime area.
 - Generated TypeScript declarations for core, platformer, and top-down public
   exports, plus declaration consumer checks.
-- Package tarball consumer verification and a Node 22/24 CI matrix.
+- Package tarball consumer verification and a Node 20.19/22/24 CI matrix.
 - Consistent sample command aliases and support/release documentation.
 - A project generator with tested JavaScript and TypeScript starters for each
   supported genre.
@@ -29,6 +33,9 @@ contain documented breaking changes.
 
 ### Changed
 
+- Consolidated the runtime, genre, and content-tool packages into
+  `@phaser-game-engines/toolkit` subpaths. The project generator remains a
+  separate package to support `npm create @phaser-game-engines/game`.
 - Package export maps now identify declaration files explicitly.
 - `PlatformerScene`, `TopDownScene`, and `BattleScene` now consume explicit
   recipes; base scenes no longer carry inactive gameplay or menu policy.

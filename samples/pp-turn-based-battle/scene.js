@@ -1,4 +1,4 @@
-import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/turn-based-battle';
+import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/toolkit/battle';
 import {
   availableMoves,
   battleSpec,

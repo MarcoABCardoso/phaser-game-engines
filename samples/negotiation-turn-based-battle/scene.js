@@ -1,4 +1,4 @@
-import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/turn-based-battle';
+import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/toolkit/battle';
 import { approaches, negotiationSpec } from './battle.js';
 import { negotiationRules } from './rules.js';
 

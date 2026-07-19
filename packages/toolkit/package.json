@@ -1,0 +1,171 @@
+{
+  "name": "@phaser-game-engines/toolkit",
+  "version": "0.1.0",
+  "description": "Headless and Phaser 3 foundations for platformer, top-down, and turn-based games.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./modules/core/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./modules/core/types/index.d.ts",
+      "default": "./modules/core/src/index.js"
+    },
+    "./core": {
+      "types": "./modules/core/types/index.d.ts",
+      "default": "./modules/core/src/index.js"
+    },
+    "./core/headless": {
+      "types": "./modules/core/types/index.d.ts",
+      "default": "./modules/core/src/index.js"
+    },
+    "./core/*.js": {
+      "types": "./modules/core/types/*.d.ts",
+      "default": "./modules/core/src/*.js"
+    },
+    "./core/schemas/*.json": "./modules/core/schemas/*.json",
+    "./platformer": {
+      "types": "./modules/platformer/types/index.d.ts",
+      "default": "./modules/platformer/src/index.js"
+    },
+    "./platformer/headless": {
+      "types": "./modules/platformer/types/headless.d.ts",
+      "default": "./modules/platformer/src/headless.js"
+    },
+    "./platformer/controllers": {
+      "types": "./modules/platformer/types/controllers/index.d.ts",
+      "default": "./modules/platformer/src/controllers/index.js"
+    },
+    "./platformer/controllers/*.js": {
+      "types": "./modules/platformer/types/controllers/*.d.ts",
+      "default": "./modules/platformer/src/controllers/*.js"
+    },
+    "./platformer/entities/*.js": {
+      "types": "./modules/platformer/types/entities/*.d.ts",
+      "default": "./modules/platformer/src/entities/*.js"
+    },
+    "./platformer/mechanics/*.js": {
+      "types": "./modules/platformer/types/mechanics/*.d.ts",
+      "default": "./modules/platformer/src/mechanics/*.js"
+    },
+    "./platformer/recipes/*.js": {
+      "types": "./modules/platformer/types/recipes/*.d.ts",
+      "default": "./modules/platformer/src/recipes/*.js"
+    },
+    "./platformer/scenes/*.js": {
+      "types": "./modules/platformer/types/scenes/*.d.ts",
+      "default": "./modules/platformer/src/scenes/*.js"
+    },
+    "./platformer/systems/*.js": {
+      "types": "./modules/platformer/types/systems/*.d.ts",
+      "default": "./modules/platformer/src/systems/*.js"
+    },
+    "./platformer/schemas/*.json": "./modules/platformer/schemas/*.json",
+    "./top-down": {
+      "types": "./modules/top-down/types/index.d.ts",
+      "default": "./modules/top-down/src/index.js"
+    },
+    "./top-down/headless": {
+      "types": "./modules/top-down/types/headless.d.ts",
+      "default": "./modules/top-down/src/headless.js"
+    },
+    "./top-down/entities/*.js": {
+      "types": "./modules/top-down/types/entities/*.d.ts",
+      "default": "./modules/top-down/src/entities/*.js"
+    },
+    "./top-down/recipes/*.js": {
+      "types": "./modules/top-down/types/recipes/*.d.ts",
+      "default": "./modules/top-down/src/recipes/*.js"
+    },
+    "./top-down/scenes/*.js": {
+      "types": "./modules/top-down/types/scenes/*.d.ts",
+      "default": "./modules/top-down/src/scenes/*.js"
+    },
+    "./top-down/systems/*.js": {
+      "types": "./modules/top-down/types/systems/*.d.ts",
+      "default": "./modules/top-down/src/systems/*.js"
+    },
+    "./top-down/schemas/*.json": "./modules/top-down/schemas/*.json",
+    "./battle": {
+      "types": "./modules/turn-based-battle/src/index.d.ts",
+      "default": "./modules/turn-based-battle/src/index.js"
+    },
+    "./battle/headless": {
+      "types": "./modules/turn-based-battle/src/headless.d.ts",
+      "default": "./modules/turn-based-battle/src/headless.js"
+    },
+    "./battle/recipes/*.js": {
+      "types": "./modules/turn-based-battle/types/recipes/*.d.ts",
+      "default": "./modules/turn-based-battle/src/recipes/*.js"
+    },
+    "./battle/scenes/*.js": {
+      "types": "./modules/turn-based-battle/types/scenes/*.d.ts",
+      "default": "./modules/turn-based-battle/src/scenes/*.js"
+    },
+    "./battle/systems/*.js": {
+      "types": "./modules/turn-based-battle/types/systems/*.d.ts",
+      "default": "./modules/turn-based-battle/src/systems/*.js"
+    },
+    "./content": {
+      "types": "./modules/content-tools/src/index.d.ts",
+      "default": "./modules/content-tools/src/index.js"
+    },
+    "./content/tiled": {
+      "types": "./modules/content-tools/src/tiled.d.ts",
+      "default": "./modules/content-tools/src/tiled.js"
+    },
+    "./content/vite": {
+      "types": "./modules/content-tools/src/vite.d.ts",
+      "default": "./modules/content-tools/src/vite.js"
+    }
+  },
+  "bin": {
+    "pge-content": "./modules/content-tools/bin/pge-content.js"
+  },
+  "files": [
+    "modules/core/src",
+    "modules/core/types",
+    "modules/core/schemas",
+    "modules/platformer/src",
+    "modules/platformer/types",
+    "modules/platformer/schemas",
+    "modules/top-down/src",
+    "modules/top-down/types",
+    "modules/top-down/schemas",
+    "modules/turn-based-battle/src",
+    "modules/turn-based-battle/types",
+    "modules/content-tools/bin",
+    "modules/content-tools/src",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "phaser",
+    "game-engine",
+    "platformer",
+    "top-down",
+    "turn-based",
+    "headless"
+  ],
+  "homepage": "https://github.com/MarcoABCardoso/phaser-game-engines#readme",
+  "bugs": "https://github.com/MarcoABCardoso/phaser-game-engines/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarcoABCardoso/phaser-game-engines.git",
+    "directory": "packages/toolkit"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "phaser": "^3.90.0"
+  },
+  "peerDependenciesMeta": {
+    "phaser": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

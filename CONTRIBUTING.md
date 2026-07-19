@@ -1,6 +1,6 @@
 # Contributing
 
-Use Node 22 or 24 and install dependencies with `npm ci`.
+Use Node 20.19 or newer and install dependencies with `npm ci`.
 
 Run `npm run verify` before submitting a change. Deterministic behavior belongs
 in small Phaser-free modules with Vitest coverage; scenes should adapt input,
@@ -12,4 +12,3 @@ consumers before it is promoted into shared infrastructure.
 
 See `AGENTS.md` for repository-specific architecture and `ROADMAP.md` for the
 current product priorities.
-

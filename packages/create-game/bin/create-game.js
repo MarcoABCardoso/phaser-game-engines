@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path';
-import { createProject, usage } from '../src/index.js';
+import { createProject, packageVersion, usage } from '../src/index.js';
 
 try {
   const options = parseArguments(process.argv.slice(2));
   if (options.help) {
     console.log(usage);
+    process.exit(0);
+  }
+  if (options.version) {
+    console.log(packageVersion);
     process.exit(0);
   }
   const result = createProject(options);
@@ -22,6 +26,7 @@ function parseArguments(args) {
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === '--help' || argument === '-h') return { help: true };
+    if (argument === '--version' || argument === '-v') return { version: true };
     if (argument === '--genre') options.genre = requiredValue(args, ++index, argument);
     else if (argument === '--language') options.language = requiredValue(args, ++index, argument);
     else if (argument === '--recipe') options.recipe = requiredValue(args, ++index, argument);
