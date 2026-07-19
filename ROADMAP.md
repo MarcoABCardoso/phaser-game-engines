@@ -82,10 +82,11 @@ Priority: immediate. This is the gate for all useful external feedback.
 - [x] Confirm the npm scope and package names. The `phaser-game-engines` npm
   organization is owned by `macardoso95`; the public packages are
   `@phaser-game-engines/toolkit` and `@phaser-game-engines/create-game`.
-- [ ] Publish a provenance-enabled `0.x` prerelease for the toolkit and project
-  generator with aligned versions. The first registry publication may be made
-  manually to establish both packages; provenance requires a supported cloud CI
-  runner and remains part of this item until trusted publishing is configured.
+- [x] Publish aligned `0.1.0` packages for the toolkit and project generator.
+  Both public packages resolve from npm under the `next` tag and passed a clean
+  registry install, representative headless imports, and installed CLI checks.
+- [ ] Configure trusted publishing from a supported cloud CI runner so future
+  prereleases carry npm provenance without a long-lived publishing token.
 - [x] Audit manifests and release presentation: remove duplicate export entries,
   reconcile the private root version with package versions, verify repository
   links, and make prerelease status unambiguous.
@@ -94,14 +95,16 @@ Priority: immediate. This is the gate for all useful external feedback.
   packages should not inherit CLI-only constraints unnecessarily. Manifests,
   documentation, and CI now cover Node 20.19; completion awaits the first CI run
   on that version.
-- [ ] Make the generator runnable through one memorable public command and add
+- [x] Make the generator runnable through one memorable public command and add
   `--help`, version reporting, non-interactive operation, and actionable
-  install/network failure messages. The CLI implementation and tests are
-  complete; the public command must still be exercised after publication.
+  install/network failure messages. The published
+  `npm create @phaser-game-engines/game` command and installed version entry
+  point have both been exercised from a clean consumer project.
 - [ ] Automate prerelease tags, changelog generation, tarball inspection,
   provenance, and a post-publish smoke test that installs from the registry.
-  A read-only release-readiness check is complete; publishing automation waits
-  for the license and npm decisions.
+  A read-only release-readiness check and the first manual registry smoke test
+  are complete; the next step is trusted CI publishing and an automated
+  post-publish run.
 - [ ] Publish a minimal hosted landing page that gives the package choice,
   install command, support status, and links to version-matched documentation.
 
