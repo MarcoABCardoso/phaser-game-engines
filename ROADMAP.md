@@ -24,7 +24,7 @@ workspace now contains:
 - content validation, migration, Tiled conversion, schemas, asset manifests,
   and Vite integration;
 - six sample applications, three genre tutorials, package-selection and recipe
-  guides, and a locally buildable documentation site;
+  guides, and a hosted documentation landing page;
 - package-tarball consumer checks, declaration checks, sample builds, CI, and
   196 passing tests across 36 files as of July 2026.
 
@@ -33,17 +33,15 @@ separated from Phaser, game-specific policy is mostly kept out of base scenes,
 and the turn-based package demonstrates schema independence with contrasting
 rulesets.
 
-The collection is not yet an efficient choice for an outside developer,
-however:
+The collection is now installable and testable from the public registry, but
+its product experience is not yet proven with outside developers:
 
-- there is no public prerelease, so the documented standalone installation path
-  cannot yet be used;
 - the examples prove APIs but do not yet provide polished, reusable vertical
   slices of making and finishing a game;
 - browser scene lifecycle, cleanup, input, and end-to-end game loops are not
   exercised in CI;
-- the documentation site searches a small set of pages but renders their raw
-  Markdown and is neither hosted nor tied to package versions;
+- the hosted documentation site gives developers a clear entry point, but its
+  deeper pages still render raw Markdown and lack version selection;
 - powerful facilities such as saves, replay, debug inspection, content tooling,
   and recipes exist as separate APIs, but generated projects do not make them
   part of one coherent daily workflow;
@@ -83,35 +81,35 @@ Priority: immediate. This is the gate for all useful external feedback.
   organization is owned by `macardoso95`; the public packages are
   `@phaser-game-engines/toolkit` and `@phaser-game-engines/create-game`.
 - [x] Publish aligned `0.1.0` packages for the toolkit and project generator.
-  Both public packages resolve from npm under the `next` tag and passed a clean
-  registry install, representative headless imports, and installed CLI checks.
-- [ ] Configure trusted publishing from a supported cloud CI runner so future
-  prereleases carry npm provenance without a long-lived publishing token. The
-  staged OIDC workflow is implemented; completion requires configuring it as
-  the trusted publisher for both npm packages and successfully staging the next
-  release.
+  Both public packages passed a clean registry install, representative headless
+  imports, and installed CLI checks; `next` now points to verified `0.1.1`.
+- [x] Configure trusted publishing from a supported cloud CI runner so future
+  prereleases carry npm provenance without a long-lived publishing token. Both
+  packages staged `0.1.1` through GitHub Actions OIDC as trusted automation,
+  with publishing restricted to the staged workflow and human 2FA approval.
 - [x] Audit manifests and release presentation: remove duplicate export entries,
   reconcile the private root version with package versions, verify repository
   links, and make prerelease status unambiguous.
-- [ ] Test the oldest practical Node version for consumers and require newer
+- [x] Test the oldest practical Node version for consumers and require newer
   Node versions only where the tooling actually needs them. Browser runtime
   packages should not inherit CLI-only constraints unnecessarily. Manifests,
-  documentation, and CI cover Node 20.19. The iterator-helper failure from the
-  first run is fixed; completion awaits a green pushed matrix run.
+  documentation, and the pushed CI matrix cover Node 20.19, 22, and 24. The
+  iterator-helper incompatibility found by Node 20 was fixed before release.
 - [x] Make the generator runnable through one memorable public command and add
   `--help`, version reporting, non-interactive operation, and actionable
   install/network failure messages. The published
   `npm create @phaser-game-engines/game` command and installed version entry
   point have both been exercised from a clean consumer project.
-- [ ] Automate prerelease tags, changelog generation, tarball inspection,
+- [x] Automate prerelease tags, changelog generation, tarball inspection,
   provenance, and a post-publish smoke test that installs from the registry.
-  Release preparation, staged tarball inspection, OIDC publishing, and an
-  exact-version smoke workflow covering all 14 starters are implemented.
-  Completion requires exercising the workflows on the next prerelease.
-- [ ] Publish a minimal hosted landing page that gives the package choice,
+  Release preparation, staged tarball inspection, OIDC publishing, and the
+  exact-version smoke workflow were exercised on `0.1.1`; the registry run
+  passed all 14 generated starter variants and representative production
+  previews.
+- [x] Publish a minimal hosted landing page that gives the package choice,
   install command, support status, and links to version-matched documentation.
-  The responsive page and GitHub Pages workflow build locally; completion
-  requires enabling Pages and observing a successful deployment.
+  The responsive page is deployed at
+  <https://marcoabcardoso.github.io/phaser-game-engines/> through GitHub Pages.
 
 Exit criteria:
 
@@ -122,10 +120,13 @@ Exit criteria:
 - A failed release cannot leave workspace package versions or documentation out
   of sync.
 
-The exact `0.1.0` registry packages now pass the automated export, CLI, and
-14-variant starter build/test checks, and a production preview is served for
-each genre. The remaining exit evidence is a green Node matrix, a staged OIDC
-release with provenance, its post-publish workflow, and the hosted Pages URL.
+Release 0 completed on July 19, 2026. The exact `0.1.1` registry packages pass
+automated export and installed-CLI checks, all 14 JavaScript and TypeScript
+starter variants, and a production preview for each genre. CI is green on Node
+20.19, 22, and 24; package versions, changelog entries, and documentation are
+prepared together; the release was staged through trusted GitHub Actions OIDC,
+approved with maintainer 2FA, and verified from the public registry. Release 1
+is now the active milestone.
 
 ## Release 1 — Turn starters into productive game slices
 
