@@ -1,6 +1,6 @@
-# platformer starter
+# top-down starter
 
-Generated as a JS recommended platformer project using the precision-platformer recipe and keyboard input.
+Generated as a JS recommended top-down project using the exploration recipe and keyboard input.
 
 Run `npm install`, then `npm run dev`. Use `npm run verify` before shipping; it runs headless rules tests and a production build.
 

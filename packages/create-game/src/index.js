@@ -180,7 +180,7 @@ Run \`npm install\`, then \`npm run dev\`. Use \`npm run verify\` before shippin
 ${template === 'recommended' ? 'The game loop is title → controls → play → result → restart.' : 'This minimal template is an import and movement proof, not a complete game loop.'} ${template === 'recommended' ? 'Content, rules, presentation, input, and scene orchestration have explicit owners.' : ''}${Object.entries(features).filter(([, enabled]) => enabled).length ? ` Optional working seams: ${Object.entries(features).filter(([, enabled]) => enabled).map(([name]) => name).join(', ')}.` : ''}
 ${projectGuide}
 ${deploy === 'none' ? '' : `\nDeployment instructions are in \`DEPLOYMENT.md\`.`}
-`;
+`.trimEnd();
 }
 
 function deploymentFiles(deploy) {

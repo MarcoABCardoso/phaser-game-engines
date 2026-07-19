@@ -50,6 +50,14 @@ describe('project generator', () => {
     },
   );
 
+  it('uses the hosted toolkit package and ordinary Vite command by default', () => {
+    const target = join(temporaryRoot(), 'hosted-toolkit-default');
+    createProject({ targetDirectory: target, genre: 'top-down', template: 'recommended' });
+    const manifest = JSON.parse(readFileSync(join(target, 'package.json'), 'utf8'));
+    expect(manifest.dependencies['@phaser-game-engines/toolkit']).toBe(`^${packageVersion}`);
+    expect(manifest.scripts.dev).toBe('vite');
+  });
+
   it('supports the opt-in top-down action-adventure recipe', () => {
     const target = join(temporaryRoot(), 'action-game');
     createProject({ targetDirectory: target, genre: 'top-down', recipe: 'action-adventure' });
@@ -70,6 +78,15 @@ describe('project generator', () => {
     expect(readFileSync(join(target, 'README.md'), 'utf8')).toContain('title → controls → play → result → restart');
   });
 
+  it.each(['top-down', 'battle'])('stops active flow scenes before the %s browser button starts play', (genre) => {
+    const target = join(temporaryRoot(), `browser-start-${genre}`);
+    createProject({ targetDirectory: target, genre, template: 'recommended' });
+    const main = readFileSync(join(target, 'src/main.js'), 'utf8');
+    expect(main).toContain("for (const key of ['title', 'play', 'result'])");
+    expect(main).toContain('if (game.scene.isActive(key)) game.scene.stop(key)');
+    expect(main).toContain('start: startGame');
+  });
+
   it.each(['platformer', 'top-down'])('keeps %s stage outcomes out of entities', (genre) => {
     const target = join(temporaryRoot(), `outcome-owner-${genre}`);
     createProject({ targetDirectory: target, genre, template: 'recommended' });
@@ -86,6 +103,19 @@ describe('project generator', () => {
     expect(entity).not.toContain('update(');
     expect(entity).not.toContain('scene.start');
     expect(rules).toContain('export function getStageOutcome');
+  });
+
+  it('uses the top-down Arcade body center for contact completion', () => {
+    const target = join(temporaryRoot(), 'top-down-contact');
+    createProject({ targetDirectory: target, genre: 'top-down', template: 'recommended' });
+    const scene = readFileSync(join(target, 'src/scenes/GameScene.js'), 'utf8');
+    expect(scene).toContain('body?.center ?? this.player');
+    expect(scene).toContain('this.evaluateStageOutcome(playerPosition)');
+    expect(scene).toContain('onGoalContact(goal)');
+    expect(scene).toContain('this.evaluateStageOutcome(goal.spec)');
+    const entity = readFileSync(join(target, 'src/entities/GoalEntity.js'), 'utf8');
+    expect(entity).toContain('scene.physics.add.overlap');
+    expect(entity).toContain('scene.onGoalContact?.(this)');
   });
 
   it.each(['platformer', 'top-down'])('injects explicit %s controls for every device', (genre) => {
@@ -136,6 +166,14 @@ describe('project generator', () => {
     expect(styles).toContain('export const pauseTextStyle');
   });
 
+  it('derives top-down movement presentation from Arcade velocity', () => {
+    const target = join(temporaryRoot(), 'top-down-moving-presentation');
+    createProject({ targetDirectory: target, genre: 'top-down', template: 'recommended' });
+    const presentation = readFileSync(join(target, 'src/presentation/presentation.js'), 'utf8');
+    expect(presentation).toContain('scene.player?.body?.velocity');
+    expect(presentation).toContain('Math.hypot');
+  });
+
   it('generates working optional seams and their focused tests', () => {
     const target = join(temporaryRoot(), 'full-tooling');
     const result = createProject({ targetDirectory: target, template: 'recommended', save: true, debug: true, replay: true });
@@ -183,6 +221,25 @@ describe('project generator', () => {
     const target = join(temporaryRoot(), `battle-${input}`);
     createProject({ targetDirectory: target, genre: 'battle', template: 'recommended', input });
     expect(readFileSync(join(target, 'src/scenes/GameScene.js'), 'utf8')).toContain('performAction');
+  });
+
+  it('renders recommended battle state from the controller game field', () => {
+    const target = join(temporaryRoot(), 'battle-state-shape');
+    createProject({ targetDirectory: target, genre: 'battle', template: 'recommended' });
+    const scene = readFileSync(join(target, 'src/scenes/GameScene.js'), 'utf8');
+    expect(scene).toContain('state.game.playerResolve');
+    expect(scene).toContain('state.game.rivalResolve');
+    expect(scene).not.toContain('state.data');
+  });
+
+  it('generates distinct recommended battle actions', () => {
+    const target = join(temporaryRoot(), 'battle-actions');
+    createProject({ targetDirectory: target, genre: 'battle', template: 'recommended' });
+    const rules = readFileSync(join(target, 'src/rules/game-rules.js'), 'utf8');
+    const scene = readFileSync(join(target, 'src/scenes/GameScene.js'), 'utf8');
+    expect(rules).toContain("{ id: 'focus', actorId }");
+    expect(rules).toContain("{ id: 'overload', actorId }");
+    expect(scene).toContain('Overload (-1 self, -2 rival)');
   });
 
   it('uses local workspace dependencies when requested', () => {

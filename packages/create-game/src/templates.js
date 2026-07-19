@@ -19,7 +19,7 @@ export function recommendedFiles({ genre, extension: ext, input, recipe, feature
     [`src/presentation/presentation.${ext}`]: presentationSource(ext),
     [`src/presentation/styles.${ext}`]: presentationStylesSource(ext),
     [`src/input/controls.${ext}`]: controlsSource(input, genre, ext),
-    [`src/tests/rules.test.${ext}`]: rulesTestSource(genre),
+    [`src/tests/rules.test.${ext}`]: rulesTestSource(genre, ext),
     'public/assets/README.md': assetsReadme(),
     'src/style.css': browserStyles(),
   };
@@ -51,8 +51,15 @@ const game = new Phaser.Game({
   input: { gamepad: true }, scene: [TitleScene, GameScene, ResultScene],
 });
 
+function startGame() {
+  for (const key of ['title', 'play', 'result']) {
+    if (game.scene.isActive(key)) game.scene.stop(key);
+  }
+  game.scene.start('play');
+}
+
 installBrowserControls({
-  start: () => game.scene.start('play'),
+  start: startGame,
   action: () => game.scene.${ext === 'ts' ? `getScene<GameScene>('play')` : `getScene('play')`}?.performAction?.(),
 });
 `;
@@ -124,7 +131,7 @@ export const level = defineLevel({
   entitySpecs: [{ schemaVersion: 1, type: 'signal-goal', id: 'signal', x: 850, y: 270 }],
 });
 `;
-  return `export const battleSpec = { playerResolve: 2, rivalResolve: 2, turn: 0 };
+  return `export const battleSpec = { playerResolve: 3, rivalResolve: 3, turn: 0 };
 `;
 }
 
@@ -143,28 +150,45 @@ function rulesSource(genre, ext) {
 ${ext === 'js' ? '' : ''}export const rules${type(ext, ': BattleRules<{ playerResolve: number, rivalResolve: number, turn: number }, { playerResolve: number, rivalResolve: number, turn: number }, { kind: string }>')} = {
   createInitialState: (spec${type(ext, ': { playerResolve: number, rivalResolve: number, turn: number }')}) => ({ ...spec }),
   getTurnOrder: () => ['player', 'rival'],
-  getAvailableCommands: (_state${type(ext, ': unknown')}, actorId${type(ext, ': string | number')}) => [{ id: 'focus', actorId }],
-  resolveCommand: (state${type(ext, ': { playerResolve: number, rivalResolve: number, turn: number }')}, command${type(ext, ': { actorId?: string | number }')}) => ({ state: command.actorId === 'player'
-    ? { ...state, rivalResolve: state.rivalResolve - 1, turn: state.turn + 1 }
-    : { ...state, playerResolve: state.playerResolve - 1, turn: state.turn + 1 } }),
+  getAvailableCommands: (_state${type(ext, ': unknown')}, actorId${type(ext, ': string | number')}) => [
+    { id: 'focus', actorId },
+    { id: 'overload', actorId },
+  ],
+  resolveCommand: (state${type(ext, ': { playerResolve: number, rivalResolve: number, turn: number }')}, command${type(ext, ": { id: string, actorId?: string | number }")}) => {
+    const actorKey = command.actorId === 'player' ? 'playerResolve' : 'rivalResolve';
+    const targetKey = command.actorId === 'player' ? 'rivalResolve' : 'playerResolve';
+    const next = { ...state, turn: state.turn + 1 };
+    next[targetKey] -= command.id === 'overload' ? 2 : 1;
+    if (command.id === 'overload') next[actorKey] -= 1;
+    return { state: next };
+  },
   getOutcome: (state${type(ext, ': { playerResolve: number, rivalResolve: number }')}) => state.rivalResolve <= 0 ? { kind: 'won' }
-    : state.playerResolve < 0 ? { kind: 'lost' } : null,
+    : state.playerResolve <= 0 ? { kind: 'lost' } : null,
 };
 `;
 }
 
 function goalEntitySource(genre, ext) {
   const pkg = genre === 'platformer' ? 'platformer' : 'top-down';
+  const topDownTypeFields = genre === 'top-down' && ext === 'ts'
+    ? '\n  overlap?: Phaser.Physics.Arcade.Collider;' : '';
+  const topDownSpawn = genre === 'top-down' ? `
+    scene.physics.add.existing(this.marker, true);
+    this.overlap = scene.physics.add.overlap(
+      scene.player,
+      this.marker,
+      () => scene.onGoalContact?.(this),
+    );` : '';
+  const topDownDestroy = genre === 'top-down' ? '\n    this.overlap?.destroy();' : '';
   return `${ext === 'ts' ? `import type Phaser from 'phaser';\n` : ''}import { Entity } from '@phaser-game-engines/toolkit/${pkg}';
 
 export class GoalEntity extends ${ext === 'ts' ? '(Entity as any)' : 'Entity'} {
-  ${ext === 'ts' ? 'marker?: Phaser.GameObjects.Star;\n  declare spec: { id: string, x: number, y: number };' : ''}
-  spawn(scene${type(ext, ': any')}) {
-    this.marker = scene.add.star(this.spec.x, this.spec.y, 6, 12, 28, 0xffd166).setDepth(5);
+${ext === 'ts' ? `  marker?: Phaser.GameObjects.Star;${topDownTypeFields}\n  declare spec: { id: string, x: number, y: number };\n` : ''}  spawn(scene${type(ext, ': any')}) {
+    this.marker = scene.add.star(this.spec.x, this.spec.y, 6, 12, 28, 0xffd166).setDepth(5);${topDownSpawn}
   }
 
   destroy() {
-    this.marker?.destroy();
+    this.marker?.destroy();${topDownDestroy}
   }
 }
 `;
@@ -193,8 +217,7 @@ import { installHud, installPauseMenu, playCue, updatePlayerPresentation } from 
 import { getStageOutcome } from '../rules/game-rules.js';
 ${sessionImport}
 export class GameScene extends ${EngineScene} {
-  ${ext === 'ts' ? 'hud!: ReturnType<typeof installHud>;\n  goal!: GoalEntity;' : ''}
-  stageFinished = false;
+${ext === 'ts' ? '  hud!: ReturnType<typeof installHud>;\n  goal!: GoalEntity;\n' : ''}  stageFinished = false;
 
   constructor() {
     super({
@@ -226,9 +249,20 @@ export class GameScene extends ${EngineScene} {
 
   // Game orchestration: gather runtime facts, ask the pure rule, then apply its outcome.
   onTick(time${type(ext, ': number')}, _delta${type(ext, ': number')}) {
-    ${record}
-    updatePlayerPresentation(this, time);
-    const outcome = getStageOutcome({ player: this.player${type(ext, '!')}, goal: this.goal.spec });
+${record ? `    ${record}\n` : ''}    updatePlayerPresentation(this, time);
+    const playerPosition = ${ext === 'ts'
+    ? '(this.player!.body as { center?: { x: number, y: number } })?.center ?? this.player!'
+    : 'this.player.body?.center ?? this.player'};
+    this.evaluateStageOutcome(playerPosition);
+  }
+
+  // Top-down goals also report Arcade overlap, so contact cannot be missed between ticks.
+  onGoalContact(goal${type(ext, ': GoalEntity')}) {
+    if (goal === this.goal) this.evaluateStageOutcome(goal.spec);
+  }
+
+  evaluateStageOutcome(playerPosition${type(ext, ': { x: number, y: number }')}) {
+    const outcome = getStageOutcome({ player: playerPosition, goal: this.goal.spec });
     if (outcome) this.finishStage(outcome);
   }
 
@@ -240,8 +274,7 @@ export class GameScene extends ${EngineScene} {
   finishStage(outcome${type(ext, ": { kind: 'won' }")}) {
     if (this.stageFinished) return;
     this.stageFinished = true;
-    ${save}
-    playCue(this, 'win');
+${save ? `    ${save}\n` : ''}    playCue(this, 'win');
     this.scene.start('result', { won: outcome.kind === 'won' });
   }
 }
@@ -255,17 +288,21 @@ import { rules } from '../rules/game-rules.js';
 import { addHelp, playCue } from '../presentation/presentation.js';
 ${sessionImport}
 export class GameScene extends BattleScene${type(ext, '<{ playerResolve: number, rivalResolve: number, turn: number }, { playerResolve: number, rivalResolve: number, turn: number }, { kind: string }>')} {
-  ${ext === 'ts' ? 'status!: Phaser.GameObjects.Text;' : ''}
-  constructor() { super({ key: 'play', recipes: [createBattlePresentationRecipe({ reducedMotion: true })] }); }
+${ext === 'ts' ? '  status!: Phaser.GameObjects.Text;\n' : ''}  constructor() { super({ key: 'play', recipes: [createBattlePresentationRecipe({ reducedMotion: true })] }); }
   getBattle() { return battleSpec; }
   getBattleRules() { return rules; }
   isPlayerTurn(id${type(ext, ': string | number')}) { return id === 'player'; }
-  getMenuOptions(_state${type(ext, ': unknown')}, actorId${type(ext, ': string | number')}) { return [{ label: 'Focus signal', command: { id: 'focus', actorId } }]; }
+  getMenuOptions(_state${type(ext, ': unknown')}, _actorId${type(ext, ': string | number')}) {
+    return this.battle${type(ext, '!')}.availableCommands().map((command${type(ext, ': any')}) => ({
+      label: command.id === 'overload' ? 'Overload (-1 self, -2 rival)' : 'Focus (-1 rival)',
+      command,
+    }));
+  }
   getTargetOptions() { return []; }
   chooseAiCommand(_state${type(ext, ': unknown')}, actorId${type(ext, ': string | number')}) { return { id: 'focus', actorId }; }
   createBattleDisplay() { this.status = addHelp(this, 'Reduce the rival signal to zero.'); }
   renderBattleState(state${type(ext, ': any')}) {
-    this.status.setText('Your signal: ' + state.data.playerResolve + '\\nRival signal: ' + state.data.rivalResolve);
+    this.status.setText('Your signal: ' + state.game.playerResolve + '\\nRival signal: ' + state.game.rivalResolve);
     if (state.machine.phase === 'finished') { ${save} playCue(this, 'win'); this.time.delayedCall(250, () => this.scene.start('result', { won: state.machine.outcome?.kind === 'won' })); }
   }
   performAction() { if (this.battle?.state.machine.phase === 'command-selection' && this.battle.state.machine.activeId === 'player') this.submitBattleCommand({ id: 'focus', actorId: 'player' }); }
@@ -421,7 +458,11 @@ export function installHud(scene${type(ext, ': Phaser.Scene')}, objective${type(
 }
 
 export function updatePlayerPresentation(scene${type(ext, ': any')}, _time${type(ext, ': number')}) {
-  scene.player?.setFillStyle?.(scene.playerMoving ? 0x72ddf7 : 0x6bb8ff);
+  const velocity = scene.player?.body?.velocity;
+  const moving = typeof scene.playerMoving === 'boolean'
+    ? scene.playerMoving
+    : Math.hypot(velocity?.x ?? 0, velocity?.y ?? 0) > 1;
+  scene.player?.setFillStyle?.(moving ? 0x72ddf7 : 0x6bb8ff);
 }
 
 export function playCue(_scene${type(ext, ': Phaser.Scene')}, name${type(ext, ': string')}) {
@@ -502,12 +543,12 @@ function sessionSource(ext, features) {
   return lines.join('\n');
 }
 
-function rulesTestSource(genre) {
+function rulesTestSource(genre, ext) {
   if (genre === 'battle') return `import { expect, test } from 'vitest';
 import { Battle } from '@phaser-game-engines/toolkit/battle/headless';
 import { battleSpec } from '../content/level.js';
 import { rules } from '../rules/game-rules.js';
-test('game-owned rules reach a deterministic result', () => { const battle = new Battle(battleSpec, { rules }); battle.start(); battle.submitCommand({ id: 'focus', actorId: 'player' }); battle.submitCommand({ id: 'focus', actorId: 'rival' }); battle.submitCommand({ id: 'focus', actorId: 'player' }); expect(battle.state.machine.outcome).toEqual({ kind: 'won' }); });
+test('game-owned rules expose distinct choices and reach a deterministic result', () => { const battle = new Battle(battleSpec, { rules }); battle.start(); expect(battle.availableCommands().map((command${type(ext, ': any')}) => command.id)).toEqual(['focus', 'overload']); battle.submitCommand({ id: 'overload', actorId: 'player' }); battle.submitCommand({ id: 'focus', actorId: 'rival' }); battle.submitCommand({ id: 'focus', actorId: 'player' }); expect(battle.state.machine.outcome).toEqual({ kind: 'won' }); });
 `;
   const validator = genre === 'platformer' ? 'validatePlatformerLevel' : 'validateTopDownLevel';
   const pkg = genre === 'platformer' ? 'platformer' : 'top-down';
