@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -98,6 +98,13 @@ void (null as TiledMap | null);
   run(process.execPath, [
     npmCli, 'install', '--ignore-scripts', '--no-audit', '--no-fund', '--offline',
   ], consumerDirectory);
+  const binSuffix = process.platform === 'win32' ? '.cmd' : '';
+  for (const command of ['pge-content', 'create-phaser-game-engines']) {
+    const installedBin = join(consumerDirectory, 'node_modules', '.bin', `${command}${binSuffix}`);
+    if (!existsSync(installedBin)) {
+      throw new Error(`Packed package did not install the ${command} executable.`);
+    }
+  }
   const smoke = run(process.execPath, ['smoke.mjs'], consumerDirectory);
   process.stdout.write(smoke.stdout);
   const contentHelp = run(process.execPath, [

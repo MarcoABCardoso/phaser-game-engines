@@ -119,7 +119,7 @@
     }
   },
   "bin": {
-    "pge-content": "./modules/content-tools/bin/pge-content.js"
+    "pge-content": "modules/content-tools/bin/pge-content.js"
   },
   "files": [
     "modules/core/src",

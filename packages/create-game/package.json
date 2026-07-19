@@ -6,7 +6,7 @@
   "type": "module",
   "types": "./src/index.d.ts",
   "bin": {
-    "create-phaser-game-engines": "./bin/create-game.js"
+    "create-phaser-game-engines": "bin/create-game.js"
   },
   "exports": {
     ".": {
@@ -14,9 +14,18 @@
       "default": "./src/index.js"
     }
   },
-  "files": ["bin", "src", "README.md"],
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
   "sideEffects": false,
-  "keywords": ["phaser", "game", "starter", "project-generator"],
+  "keywords": [
+    "phaser",
+    "game",
+    "starter",
+    "project-generator"
+  ],
   "homepage": "https://github.com/MarcoABCardoso/phaser-game-engines/tree/main/packages/create-game#readme",
   "bugs": "https://github.com/MarcoABCardoso/phaser-game-engines/issues",
   "repository": {
@@ -24,6 +33,10 @@
     "url": "git+https://github.com/MarcoABCardoso/phaser-game-engines.git",
     "directory": "packages/create-game"
   },
-  "publishConfig": { "access": "public" },
-  "engines": { "node": ">=20.19.0" }
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }
