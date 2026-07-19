@@ -3,20 +3,84 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phaser Game Engines documentation</title>
+    <meta name="description" content="Small, reusable Phaser 3 game-engine foundations and a project generator for developers who want to reach a playable game quickly.">
+    <title>Phaser Game Engines</title>
     <style>
-      :root { color-scheme: dark; font: 17px/1.55 system-ui, sans-serif; background:#0d1117; color:#e6edf3 }
-      body { max-width: 1100px; margin:auto; padding:2rem } input { width:100%; box-sizing:border-box; padding:.8rem; font:inherit; background:#161b22; color:inherit; border:1px solid #30363d; border-radius:8px }
-      nav { display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0 } button { padding:.5rem .75rem; color:inherit; background:#21262d; border:1px solid #30363d; border-radius:6px; cursor:pointer } button:focus-visible { outline:3px solid #58a6ff }
-      pre { white-space:pre-wrap; background:#161b22; padding:1.25rem; border-radius:8px } .hidden { display:none }
+      :root { color-scheme: dark; font: 17px/1.6 Inter, ui-sans-serif, system-ui, sans-serif; background:#09111f; color:#e8eef8; --panel:#111d30; --line:#263a58; --muted:#a7b6cb; --accent:#72e6bb; --accent-dark:#173e39 }
+      * { box-sizing:border-box } body { margin:0; background:radial-gradient(circle at 80% 0%, #173151 0, transparent 34rem), #09111f; color:#e8eef8 }
+      a { color:inherit } .shell { width:min(1120px, calc(100% - 2rem)); margin:auto }
+      header { padding:5rem 0 3.5rem } .eyebrow { color:var(--accent); font-size:.8rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase }
+      h1 { max-width:800px; margin:.7rem 0 1rem; font-size:clamp(2.7rem, 7vw, 5.6rem); line-height:.98; letter-spacing:-.055em }
+      .lede { max-width:720px; margin:0; color:var(--muted); font-size:clamp(1.05rem, 2vw, 1.3rem) }
+      .actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:2rem } .button { display:inline-flex; padding:.72rem 1rem; border:1px solid var(--line); border-radius:999px; text-decoration:none; font-weight:750; background:#13233a }
+      .button.primary { border-color:var(--accent); background:var(--accent); color:#071713 }
+      section { padding:1.5rem 0 3rem } h2 { margin:0 0 .4rem; font-size:clamp(1.6rem, 3vw, 2.25rem) } .section-intro { margin:0 0 1.4rem; color:var(--muted) }
+      .grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem } .card { padding:1.5rem; border:1px solid var(--line); border-radius:18px; background:linear-gradient(145deg, rgba(19,35,58,.96), rgba(12,24,41,.96)) }
+      .card h3 { margin:0 0 .35rem; font-size:1.3rem } .card p { color:var(--muted) } code { font:600 .9rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace }
+      .command { display:flex; gap:.75rem; align-items:center; justify-content:space-between; overflow:auto; margin-top:1rem; padding:.8rem 1rem; border:1px solid #315277; border-radius:10px; background:#07111f }
+      .copy { flex:none; padding:.35rem .55rem; border:1px solid var(--line); border-radius:7px; background:#172943; color:inherit; cursor:pointer }
+      .status { display:grid; grid-template-columns:auto 1fr; gap:.6rem .9rem; align-items:start; padding:1.2rem 1.35rem; border:1px solid #315b51; border-radius:14px; background:var(--accent-dark) }
+      .dot { width:.7rem; height:.7rem; margin-top:.5rem; border-radius:50%; background:var(--accent); box-shadow:0 0 18px var(--accent) }
+      .docs { padding-top:1rem } label { display:block; margin-bottom:.4rem; font-weight:700 } input { width:100%; padding:.85rem 1rem; border:1px solid var(--line); border-radius:10px; background:#0d192a; color:inherit; font:inherit }
+      nav { display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0 } nav button { padding:.5rem .75rem; color:inherit; background:#15263e; border:1px solid var(--line); border-radius:8px; cursor:pointer } nav button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent) }
+      button:focus-visible, a:focus-visible, input:focus-visible { outline:3px solid #8abfff; outline-offset:3px }
+      .document { padding:1.25rem; border:1px solid var(--line); border-radius:14px; background:#0d192a } pre { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font:inherit }
+      footer { display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between; padding:2rem 0 3rem; border-top:1px solid var(--line); color:var(--muted) }
+      footer nav { margin:0 } footer a { color:#d7e6fa }
+      @media (max-width:720px) { header { padding-top:3.5rem } .grid { grid-template-columns:1fr } .command { align-items:flex-start } }
     </style>
   </head>
   <body>
-    <h1>Phaser Game Engines</h1>
-    <p>Searchable guides and public API notes for the current workspace version.</p>
-    <label for="search">Search documentation</label><input id="search" type="search" autocomplete="off">
-    <nav id="navigation" aria-label="Documentation pages"></nav>
-    <main><h2 id="title"></h2><pre id="content"></pre></main>
+    <div class="shell">
+      <header>
+        <div class="eyebrow">Phaser 3 foundations · prerelease <span id="version"></span></div>
+        <h1>Build the game, not the plumbing.</h1>
+        <p class="lede">Reusable platformer, top-down, and turn-based foundations with headless rules, tested starter projects, content tooling, and extension points that leave your game in charge.</p>
+        <div class="actions">
+          <a class="button primary" href="#start">Create a game</a>
+          <a class="button" href="#documentation">Read the guides</a>
+          <a class="button" href="https://github.com/MarcoABCardoso/phaser-game-engines">View on GitHub</a>
+        </div>
+      </header>
+
+      <main>
+        <section id="start" aria-labelledby="start-title">
+          <h2 id="start-title">Choose the shortest path</h2>
+          <p class="section-intro">Start a new game or add the toolkit to an existing Phaser project.</p>
+          <div class="grid">
+            <article class="card">
+              <h3>Generate a starter</h3>
+              <p>Create a small runnable project with a genre, language, and input adapter selected up front.</p>
+              <div class="command"><code>npm create @phaser-game-engines/game -- my-game --genre platformer</code><button class="copy" type="button" data-copy="npm create @phaser-game-engines/game -- my-game --genre platformer">Copy</button></div>
+            </article>
+            <article class="card">
+              <h3>Use the toolkit</h3>
+              <p>Import only the core, genre, recipe, headless, or content subpaths your game needs.</p>
+              <div class="command"><code>npm install @phaser-game-engines/toolkit phaser</code><button class="copy" type="button" data-copy="npm install @phaser-game-engines/toolkit phaser">Copy</button></div>
+            </article>
+          </div>
+        </section>
+
+        <section aria-labelledby="status-title">
+          <h2 id="status-title">Support status</h2>
+          <div class="status"><span class="dot" aria-hidden="true"></span><div><strong>Public 0.x prerelease.</strong> The toolkit is installable and tested across Node 20.19, 22, and 24. APIs may still change with documented migration notes before 1.0.</div></div>
+        </section>
+
+        <section class="docs" id="documentation" aria-labelledby="docs-title">
+          <h2 id="docs-title">Documentation for <span id="docs-version"></span></h2>
+          <p class="section-intro">Find the supported extension point before reaching into package source.</p>
+          <label for="search">Search documentation</label>
+          <input id="search" type="search" autocomplete="off" placeholder="Try recipes, saves, platformer, or content">
+          <nav id="navigation" aria-label="Documentation pages"></nav>
+          <article class="document"><h3 id="title"></h3><pre id="content"></pre></article>
+        </section>
+      </main>
+
+      <footer>
+        <span>MIT licensed · built for developers finishing Phaser games.</span>
+        <nav aria-label="Project links"><a href="https://www.npmjs.com/org/phaser-game-engines">npm</a><a href="https://github.com/MarcoABCardoso/phaser-game-engines/blob/main/SUPPORT.md">Support</a><a href="https://github.com/MarcoABCardoso/phaser-game-engines/blob/main/CHANGELOG.md">Changelog</a></nav>
+      </footer>
+    </div>
     <script type="module" src="/site.js"></script>
   </body>
 </html>

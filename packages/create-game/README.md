@@ -18,3 +18,6 @@ Real-time starters accept `--input keyboard`, `--input gamepad`, or
 panel; games can replace its presentation without changing the intent adapter.
 Repository contributors can add `--package-source <repository-root>` to generate
 a project using local workspace packages before they are published.
+
+See the [versioned documentation](https://marcoabcardoso.github.io/phaser-game-engines/)
+for genre selection, tutorials, support status, and toolkit extension points.

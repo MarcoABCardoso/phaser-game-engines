@@ -8,7 +8,8 @@ The toolkit is currently prerelease software. See [SUPPORT.md](./SUPPORT.md)
 for the compatibility policy and [ROADMAP.md](./ROADMAP.md) for the work toward
 a stable developer toolkit.
 
-The supported entry-point policy is documented in
+Browse the [hosted documentation](https://marcoabcardoso.github.io/phaser-game-engines/),
+or read the supported entry-point policy in
 [docs/PUBLIC_API.md](./docs/PUBLIC_API.md).
 New users can start with [the package-selection guide](./docs/CHOOSING_A_PACKAGE.md)
 and the [platformer](./docs/tutorials/platformer.md),
@@ -47,10 +48,9 @@ npm run create:game -- my-game --genre platformer --language js --package-source
 ```
 
 Choose `platformer`, `top-down`, or `battle`, and `js` or `ts`. The local
-`--package-source .` option is for workspace development; after the packages are
-published, use
-`npm create @phaser-game-engines/game -- my-game --genre platformer` to consume
-released package versions.
+`--package-source .` option is for workspace development. Developers consuming
+the public release use
+`npm create @phaser-game-engines/game -- my-game --genre platformer`.
 
 ## Develop this workspace
 
@@ -86,8 +86,9 @@ headless entry point.
 Build every sample with `npm run build:samples`. The large-bundle warning from
 Vite reflects Phaser's baseline bundle and is currently expected.
 
-Run the searchable documentation site with `npm run dev:docs`, or verify its
-production bundle with `npm run build:docs`.
+Run the searchable documentation site with `npm run dev:docs`, verify its
+production bundle with `npm run build:docs`, or use the
+[hosted site](https://marcoabcardoso.github.io/phaser-game-engines/).
 
 ## Architecture boundary
 
@@ -104,5 +105,4 @@ schemas or lifecycle hooks.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for verification and architecture
 expectations. [RELEASING.md](./RELEASING.md) records the prerelease checklist;
-public npm publishing remains intentionally blocked until the repository owner
-selects a license and configures the npm scope.
+releases are staged through GitHub Actions and approved on npm with 2FA.

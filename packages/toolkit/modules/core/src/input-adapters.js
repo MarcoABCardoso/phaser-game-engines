@@ -102,12 +102,12 @@ export function createTouchInputAdapter({ actions = [], labels = {} } = {}) {
 
   function read() {
     const states = edgeActions(
-      { ...Object.fromEntries(down.keys().map((name) => [name, [name]])) },
+      Object.fromEntries(Array.from(down.keys(), (name) => [name, [name]])),
       (name) => down.get(name) === true,
       previous,
     );
     previous = new Map(Object.entries(states).map(([name, state]) => [name, state.down]));
-    const prompts = Object.fromEntries(down.keys().map((name) => [name, labels[name] ?? name]));
+    const prompts = Object.fromEntries(Array.from(down.keys(), (name) => [name, labels[name] ?? name]));
     return createInputIntent({ move, actions: states, meta: { device: 'touch', prompts } });
   }
 

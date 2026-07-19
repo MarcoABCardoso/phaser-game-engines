@@ -1,0 +1,59 @@
+name: Stage npm release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact committed package version to stage
+        required: true
+        type: string
+      tag:
+        description: npm distribution tag
+        required: true
+        default: next
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Use a staged-publishing-capable npm
+        run: npm install --global npm@11.16.0
+      - run: npm ci
+      - name: Match the workflow version to the committed release
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: node scripts/check-release-version.mjs "$RELEASE_VERSION"
+      - run: npm run check:release
+      - run: npm run verify
+      - name: Inspect toolkit tarball
+        run: npm pack --dry-run --workspace @phaser-game-engines/toolkit
+      - name: Inspect generator tarball
+        run: npm pack --dry-run --workspace @phaser-game-engines/create-game
+      - name: Stage toolkit
+        working-directory: packages/toolkit
+        run: npm stage publish --tag "$RELEASE_TAG"
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+      - name: Stage generator
+        working-directory: packages/create-game
+        run: npm stage publish --tag "$RELEASE_TAG"
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+      - name: Approval instructions
+        run: echo "Both packages are staged. Review and approve both in npm before running the registry smoke workflow." >> "$GITHUB_STEP_SUMMARY"

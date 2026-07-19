@@ -7,6 +7,22 @@ contain documented breaking changes.
 
 No changes yet.
 
+## [0.1.1] - 2026-07-19
+
+### Added
+
+- Trusted staged-publishing, exact-version registry verification, and GitHub
+  Pages workflows for repeatable prereleases.
+- Automated release preparation that aligns versions and promotes curated
+  `Unreleased` notes into a dated changelog section.
+- A public-facing documentation landing page with package choice, installation,
+  support status, and version-linked guides.
+
+### Fixed
+
+- Touch input adapters no longer rely on iterator helpers unavailable in the
+  supported Node 20.19 runtime.
+
 ## [0.1.0] - 2026-07-18
 
 ### Added

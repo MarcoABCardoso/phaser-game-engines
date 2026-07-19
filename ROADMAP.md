@@ -86,15 +86,18 @@ Priority: immediate. This is the gate for all useful external feedback.
   Both public packages resolve from npm under the `next` tag and passed a clean
   registry install, representative headless imports, and installed CLI checks.
 - [ ] Configure trusted publishing from a supported cloud CI runner so future
-  prereleases carry npm provenance without a long-lived publishing token.
+  prereleases carry npm provenance without a long-lived publishing token. The
+  staged OIDC workflow is implemented; completion requires configuring it as
+  the trusted publisher for both npm packages and successfully staging the next
+  release.
 - [x] Audit manifests and release presentation: remove duplicate export entries,
   reconcile the private root version with package versions, verify repository
   links, and make prerelease status unambiguous.
 - [ ] Test the oldest practical Node version for consumers and require newer
   Node versions only where the tooling actually needs them. Browser runtime
   packages should not inherit CLI-only constraints unnecessarily. Manifests,
-  documentation, and CI now cover Node 20.19; completion awaits the first CI run
-  on that version.
+  documentation, and CI cover Node 20.19. The iterator-helper failure from the
+  first run is fixed; completion awaits a green pushed matrix run.
 - [x] Make the generator runnable through one memorable public command and add
   `--help`, version reporting, non-interactive operation, and actionable
   install/network failure messages. The published
@@ -102,11 +105,13 @@ Priority: immediate. This is the gate for all useful external feedback.
   point have both been exercised from a clean consumer project.
 - [ ] Automate prerelease tags, changelog generation, tarball inspection,
   provenance, and a post-publish smoke test that installs from the registry.
-  A read-only release-readiness check and the first manual registry smoke test
-  are complete; the next step is trusted CI publishing and an automated
-  post-publish run.
+  Release preparation, staged tarball inspection, OIDC publishing, and an
+  exact-version smoke workflow covering all 14 starters are implemented.
+  Completion requires exercising the workflows on the next prerelease.
 - [ ] Publish a minimal hosted landing page that gives the package choice,
   install command, support status, and links to version-matched documentation.
+  The responsive page and GitHub Pages workflow build locally; completion
+  requires enabling Pages and observing a successful deployment.
 
 Exit criteria:
 
@@ -116,6 +121,11 @@ Exit criteria:
   headless import, and sample smoke checks.
 - A failed release cannot leave workspace package versions or documentation out
   of sync.
+
+The exact `0.1.0` registry packages now pass the automated export, CLI, and
+14-variant starter build/test checks, and a production preview is served for
+each genre. The remaining exit evidence is a green Node matrix, a staged OIDC
+release with provenance, its post-publish workflow, and the hosted Pages URL.
 
 ## Release 1 — Turn starters into productive game slices
 

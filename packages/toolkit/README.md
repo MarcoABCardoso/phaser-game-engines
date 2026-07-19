@@ -17,5 +17,6 @@ Public subpaths are grouped under `core`, `platformer`, `top-down`, `battle`,
 and `content`. Headless imports do not evaluate Phaser. The `pge-content` binary
 provides offline content validation and migration.
 
-See the repository README and versioned documentation for package selection,
-tutorials, schemas, recipes, and the complete public API policy.
+See the [versioned documentation](https://marcoabcardoso.github.io/phaser-game-engines/)
+for package selection, tutorials, schemas, recipes, and the complete public API
+policy.

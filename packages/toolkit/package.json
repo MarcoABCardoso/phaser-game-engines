@@ -1,6 +1,6 @@
 {
   "name": "@phaser-game-engines/toolkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Headless and Phaser 3 foundations for platformer, top-down, and turn-based games.",
   "license": "MIT",
   "type": "module",
