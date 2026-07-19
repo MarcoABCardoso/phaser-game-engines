@@ -1,4 +1,13 @@
 import Phaser from 'phaser';
+export type SceneControls = {
+    read(context?: {
+        scene: PlatformerScene;
+        time?: number;
+        delta?: number;
+    }): import('@phaser-game-engines/toolkit/core').InputIntentSource;
+    reset?(): unknown;
+};
+/** @typedef {{ read(context?: { scene: PlatformerScene, time?: number, delta?: number }): import('@phaser-game-engines/toolkit/core').InputIntentSource, reset?(): unknown }} SceneControls */
 export default class PlatformerScene extends Phaser.Scene {
     recipeComposition: Readonly<{
         ids: readonly any[];
@@ -10,6 +19,7 @@ export default class PlatformerScene extends Phaser.Scene {
     }>;
     configuredMechanics: any[];
     entityTypes: any;
+    controls: SceneControls | null;
     worldRuntimeOptions: any;
     simulationGates: Set<any>;
     lifecycle: Readonly<{
@@ -110,7 +120,11 @@ export default class PlatformerScene extends Phaser.Scene {
         prompt: any;
         action: any;
     } | undefined;
-    constructor(config?: {});
+    /** @param {{ controls?: SceneControls, [key: string]: any }} config */
+    constructor(config?: {
+        controls?: SceneControls;
+        [key: string]: any;
+    });
     create(): void;
     init(): void;
     getLevel(): void;
@@ -175,8 +189,9 @@ export default class PlatformerScene extends Phaser.Scene {
     /** Override to supply gamepad, touch, AI, network, or replay input.
      * @returns {import('@phaser-game-engines/toolkit/core').InputIntentSource}
      */
-    readInputIntent(): import('@phaser-game-engines/toolkit/core').InputIntentSource;
-    onTick(): void;
+    readInputIntent(time: any, delta: any): import('@phaser-game-engines/toolkit/core').InputIntentSource;
+    /** @param {number} _time @param {number} _delta */
+    onTick(_time: number, _delta: number): void;
     onJump(): void;
     onAirJump(): void;
     onWallJump(): void;

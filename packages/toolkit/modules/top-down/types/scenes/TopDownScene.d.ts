@@ -1,4 +1,13 @@
 import Phaser from 'phaser';
+export type SceneControls = {
+    read(context?: {
+        scene: TopDownScene;
+        time?: number;
+        delta?: number;
+    }): import('@phaser-game-engines/toolkit/core').InputIntentSource;
+    reset?(): unknown;
+};
+/** @typedef {{ read(context?: { scene: TopDownScene, time?: number, delta?: number }): import('@phaser-game-engines/toolkit/core').InputIntentSource, reset?(): unknown }} SceneControls */
 /** Extend this scene and return a level with world, spawn, walls, and entitySpecs. */
 export default class TopDownScene extends Phaser.Scene {
     recipeComposition: Readonly<{
@@ -10,6 +19,7 @@ export default class TopDownScene extends Phaser.Scene {
         ownership: any;
     }>;
     entityTypes: any;
+    controls: SceneControls | null;
     configuredMechanics: any[];
     worldRuntimeOptions: any;
     lifecycle: Readonly<{
@@ -65,11 +75,19 @@ export default class TopDownScene extends Phaser.Scene {
     currentContextualAction: any;
     message: any;
     messageUntil: number | undefined;
-    constructor(config?: {});
+    /** @param {{ controls?: SceneControls, [key: string]: any }} config */
+    constructor(config?: {
+        controls?: SceneControls;
+        [key: string]: any;
+    });
     getLevel(): void;
     moveSpeed(): number;
     statusText(): string;
     getMechanics(): any[];
+    onEntitiesBuilt(): void;
+    onReady(): void;
+    /** @param {number} _time @param {number} _delta */
+    onTick(_time: number, _delta: number): void;
     create(): void;
     addSolid(rect: any, color?: number): Phaser.GameObjects.Rectangle;
     /**
@@ -77,7 +95,7 @@ export default class TopDownScene extends Phaser.Scene {
      * Games may override this to provide gamepad, touch, AI, network, or replay input.
      * @returns {import('@phaser-game-engines/toolkit/core').InputIntentSource}
      */
-    readInputIntent(): import('@phaser-game-engines/toolkit/core').InputIntentSource;
+    readInputIntent(time: any, delta: any): import('@phaser-game-engines/toolkit/core').InputIntentSource;
     update(time: any, delta: any): void;
     offerContextualAction(action: any): any;
     /** @returns {{ scene: TopDownScene, player: any, intent: any, time: number, delta: number }} */

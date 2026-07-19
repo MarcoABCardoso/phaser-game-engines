@@ -58,7 +58,10 @@ const PAL = {
   thin: 0x6c86a8, // one-way "thin" platform — lighter than a solid so it reads as pass-through
 };
 
+/** @typedef {{ read(context?: { scene: PlatformerScene, time?: number, delta?: number }): import('@phaser-game-engines/toolkit/core').InputIntentSource, reset?(): unknown }} SceneControls */
+
 export default class PlatformerScene extends Phaser.Scene {
+  /** @param {{ controls?: SceneControls, [key: string]: any }} config */
   constructor(config = {}) {
     super(config);
     this.recipeComposition = composeRecipes(config.recipes ?? []);
@@ -67,6 +70,10 @@ export default class PlatformerScene extends Phaser.Scene {
       ...(config.mechanics ?? []),
     ];
     this.entityTypes = config.entityTypes;
+    this.controls = config.controls ?? null;
+    if (this.controls && typeof this.controls.read !== 'function') {
+      throw new TypeError('Platformer scene controls must expose read(context).');
+    }
     this.worldRuntimeOptions = config.worldRuntime ?? {};
     this.simulationGates = new Set();
     this.lifecycle = createLifecycle();
@@ -77,6 +84,7 @@ export default class PlatformerScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       runCleanups([
         () => this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this }),
+        () => this.controls?.reset?.(),
         () => this.mechanicHost.clear(),
         () => this.entities?.destroyAll(this),
       ], 'Platformer scene shutdown failed.');
@@ -161,6 +169,7 @@ export default class PlatformerScene extends Phaser.Scene {
       primary: Phaser.Input.Keyboard.KeyCodes.F,
       interact: Phaser.Input.Keyboard.KeyCodes.E,
     });
+    this.controls?.reset?.();
 
     // Per-scene transient state (engine + game).
     this.resetTransient();
@@ -215,7 +224,8 @@ export default class PlatformerScene extends Phaser.Scene {
   /** Override to supply gamepad, touch, AI, network, or replay input.
    * @returns {import('@phaser-game-engines/toolkit/core').InputIntentSource}
    */
-  readInputIntent() {
+  readInputIntent(time, delta) {
+    if (this.controls) return this.controls.read({ scene: this, time, delta });
     const left = this.keys.left.isDown || this.keys.a.isDown;
     const right = this.keys.right.isDown || this.keys.d.isDown;
     const up = this.keys.up.isDown;
@@ -255,7 +265,8 @@ export default class PlatformerScene extends Phaser.Scene {
     };
   }
   // Frame hook + gameplay events the game reacts to.
-  onTick(/* time, delta */) {}
+  /** @param {number} _time @param {number} _delta */
+  onTick(_time, _delta) {}
   onJump() {}
   onAirJump() { this.onJump(); } // a mid-air (double) jump; by default counts like any jump
   onWallJump() { this.onJump(); } // a jump kicked off a wall; by default counts like any jump

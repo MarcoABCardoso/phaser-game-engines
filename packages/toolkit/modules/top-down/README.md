@@ -47,9 +47,12 @@ The default scene translates keyboard input into a device-independent intent:
 }
 ```
 
-Override `readInputIntent(time, delta)` to supply the same shape from gamepad,
-touch, AI, network, or recorded input. Movement supports analog values and is
-normalized to a unit vector by `@phaser-game-engines/toolkit/core`.
+Pass an adapter with `super({ controls })` to supply the same shape from
+keyboard, gamepad, touch, AI, network, or recorded input. A controls adapter
+must expose `read(context)` and may expose `reset()`. Movement supports analog
+values and is normalized to a unit vector by
+`@phaser-game-engines/toolkit/core`. When `controls` is omitted, the compact
+base scene retains its built-in Phaser keyboard mapping.
 
 ## Contextual actions
 
@@ -74,7 +77,7 @@ as `currentContextualAction` for a HUD.
 ## Lifecycle events
 
 Each scene exposes a Phaser-free `lifecycle` channel. It publishes `ready` after
-scene construction, `tick` after each active world update, and `shutdown` when
+the world, player, and entities are built, `tick` after each active world update, and `shutdown` when
 Phaser shuts the scene down. Subscribe from composable mechanics without
 claiming a subclass hook:
 
@@ -84,6 +87,17 @@ import { lifecycleEvent } from '@phaser-game-engines/toolkit/core';
 const stop = scene.lifecycle.on(lifecycleEvent.tick, ({ delta }) => mechanic.update(delta));
 scene.lifecycle.once(lifecycleEvent.shutdown, stop);
 ```
+
+For one game scene's orchestration, override `onEntitiesBuilt()` to cache
+entity handles, `onReady()` to install presentation, and `onTick(time, delta)`
+to evaluate game-owned rules. These hooks run immediately before their matching
+`ready` and `tick` lifecycle events. Entities should expose local state and
+resources; the scene should apply whole-stage outcomes such as saving or scene
+transitions.
+
+The player is a scene-owned actor, not an entry in the area entity store.
+Movement, colliders, and camera follow operate on that persistent Phaser object;
+world entities remain area-scoped and can be rebuilt independently.
 
 ## Action-adventure recipe
 

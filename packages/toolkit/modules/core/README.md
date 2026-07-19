@@ -39,9 +39,19 @@ at runtime with `setBindings()`, and every adapter exposes game-owned prompt
 labels through `getPrompt()` and `intent.meta.prompts`.
 
 ```js
-const input = createGamepadInputAdapter({ labels: { 0: 'A', 2: 'X' } });
-scene.readInputIntent = () => input.read();
+const controls = createGamepadInputAdapter({
+  bindings: {
+    move: { xAxis: 0, yAxis: 1 },
+    actions: { jump: [0], dash: [1] },
+  },
+});
+
+super({ controls });
 ```
+
+The shared contract is `controls.read(context)` plus optional `reset()`.
+Action names are game-owned; adding a binding automatically adds its normalized
+`pressed`, `down`, and `released` state to the returned intent.
 
 The touch adapter is presentation-neutral: on-screen controls call
 `setMove(x, y)` and `setAction(name, down)`. It does not create DOM or Phaser

@@ -33,6 +33,31 @@ own entities through its level's `entityTypes` map.
 Phaser is a peer dependency so the host game owns the Phaser version and
 runtime instance.
 
+## Ownership and stage outcomes
+
+`PlatformerScene` owns runtime scheduling, not a game's win or loss rules. A
+clear game-side flow is:
+
+```text
+PlatformerScene.update → GameScene.onTick → getStageOutcome → GameScene.finishStage
+```
+
+Keep outcome calculation in a pure game module. Use `onEntitiesBuilt()` to
+cache any relevant entity handles, `onReady()` to install presentation, and
+`onTick(time, delta)` to gather runtime facts and call the rule. The scene may
+then save, play feedback, or transition based on the returned outcome.
+
+An entity should own its local resources and behavior. It should not decide
+that the whole stage is finished or call `scene.start()` as a side effect of
+its update. This keeps the outcome rule headless and makes the game lifecycle
+visible in the scene that coordinates it.
+
+The player is deliberately not stored with area entities. `PlatformerScene`
+owns the player actor because traversal, Arcade colliders, camera follow, and
+area transitions all require the same object to persist while `EntityStore`
+tears down and rebuilds area-scoped objects. Games customize its Phaser object
+through `createPlayerObject(x, y)` and its presentation through scene hooks.
+
 ## Optional mechanics and recipes
 
 Pass mechanics as `new PlatformerScene({ mechanics: [...] })` or use
@@ -53,10 +78,29 @@ registrations, and overlapping ownership claims before resources are created.
 
 ## Input intents
 
-The default scene translates keyboard state into the shared, device-independent
-`@phaser-game-engines/toolkit/core` intent shape. Override
-`readInputIntent(time, delta)` to provide movement and named actions from a
-gamepad, touch controls, AI, network input, or replay:
+Pass a controls adapter to make input ownership explicit. The adapter needs a
+`read(context)` method returning the shared, device-independent
+`@phaser-game-engines/toolkit/core` intent shape and may expose `reset()`:
+
+```js
+import { createKeyboardInputAdapter } from '@phaser-game-engines/toolkit/core';
+
+const controls = createKeyboardInputAdapter({
+  bindings: {
+    move: { left: ['KeyA'], right: ['KeyD'] },
+    actions: { jump: ['Space'], dash: ['ShiftLeft'] },
+  },
+});
+
+class GameScene extends PlatformerScene {
+  constructor() { super({ controls }); }
+}
+```
+
+Keyboard, gamepad, touch, AI, network, and replay adapters all use the same
+scene dependency. When no adapter is supplied, the base scene retains its
+built-in Phaser keyboard controls for compact subclasses. An intent has this
+shape:
 
 ```js
 {

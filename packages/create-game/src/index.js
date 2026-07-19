@@ -143,13 +143,42 @@ function indexHtml(genre, extension) {
 }
 
 function starterReadme({ genre, language, template, recipe, input, features, deploy }) {
+  const projectGuide = template === 'recommended' ? `
+## Where to make changes
+
+| Change | File | Owner |
+| --- | --- | --- |
+| ${genre === 'battle' ? 'Initial battle state' : 'Layout, spawn, or goal position'} | \`src/content/level.${language}\` | Your game content |
+| Victory or defeat conditions | \`src/rules/game-rules.${language}\` | Your pure game rules |
+| Applying an outcome, saving, or changing scenes | \`src/scenes/GameScene.${language}\` | Your game orchestration |
+${genre === 'battle' ? '' : `| Goal appearance | \`src/entities/GoalEntity.${language}\` | Your entity presentation |\n`}| HUD, audio, or visual feedback | \`src/presentation/presentation.${language}\` | Your presentation |
+| Phaser text styles | \`src/presentation/styles.${language}\` | Your presentation theme |
+| Browser layout and controls | \`src/style.css\` | Your browser styles |
+| Controls | \`src/input/controls.${language}\` | Your input adapter |
+
+The toolkit owns movement, physics adaptation, entity scheduling, validation,
+and lifecycle timing. The generated \`GameScene\` connects those package hooks to
+your content, rules, and presentation.${genre === 'battle' ? '' : ` In particular, entities do not end the
+stage: \`GameScene.onTick()\` gathers runtime facts, calls
+\`getStageOutcome()\`, and applies the returned outcome once.`}
+
+The player is a persistent, scene-owned actor because movement, physics,
+camera follow, and area transitions all operate on it directly. Entries in
+\`entitySpecs\` are area-scoped world entities and are rebuilt when an area changes.
+
+\`src/input/controls.${language}\` exports the adapter passed to the scene as
+\`super({ controls })\`. Add or remap keyboard/gamepad names in
+\`bindings.actions\`. In touch projects, add an \`actionButtons\` entry to create
+both the named action and its on-screen button.
+` : '';
   return `# ${genre} starter
 
 Generated as a ${language.toUpperCase()} ${template} ${genre} project using the ${recipe} recipe and ${input} input.
 
 Run \`npm install\`, then \`npm run dev\`. Use \`npm run verify\` before shipping; it runs headless rules tests${language === 'ts' ? ', type checking,' : ''} and a production build.
 
-The game loop is title → controls → play → result → restart. Content, rules, presentation, input, and scenes are separate so normal changes stay game-owned.${Object.entries(features).filter(([, enabled]) => enabled).length ? ` Optional working seams: ${Object.entries(features).filter(([, enabled]) => enabled).map(([name]) => name).join(', ')}.` : ''}
+${template === 'recommended' ? 'The game loop is title → controls → play → result → restart.' : 'This minimal template is an import and movement proof, not a complete game loop.'} ${template === 'recommended' ? 'Content, rules, presentation, input, and scene orchestration have explicit owners.' : ''}${Object.entries(features).filter(([, enabled]) => enabled).length ? ` Optional working seams: ${Object.entries(features).filter(([, enabled]) => enabled).map(([name]) => name).join(', ')}.` : ''}
+${projectGuide}
 ${deploy === 'none' ? '' : `\nDeployment instructions are in \`DEPLOYMENT.md\`.`}
 `;
 }

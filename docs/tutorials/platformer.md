@@ -12,11 +12,12 @@ npm run dev
 ```
 
 The generated scene extends `PlatformerScene`, supplies plain level data, and
-inherits movement, jumping, camera, world lifecycle, and validation.
+inherits movement, jumping, camera, world lifecycle, entity scheduling, and
+validation. Its README includes a file-by-file ownership guide.
 
 ## 2. Change the level
 
-Open `src/main.js` in the generated project. Add another rectangle to
+Open `src/content/level.js` in the generated project. Add another rectangle to
 `floorSegments` or add a solid platform:
 
 ```js
@@ -28,18 +29,21 @@ platforms: [
 Content is validated before Phaser bodies are constructed. Invalid dimensions
 report the field path rather than failing later in the physics loop.
 
-## 3. Add a game rule
+## 3. Change the stage rule
 
-Override a fact-oriented hook without changing traversal:
+Edit `src/rules/game-rules.js`. The rule is pure and returns an outcome rather
+than changing Phaser scenes:
 
 ```js
-onLanding({ drop, impactVelocity }) {
-  if (drop > 240) this.setMessage(`Hard landing: ${Math.round(impactVelocity)}`);
+export function getStageOutcome({ player, goal }, radius = 48) {
+  const reachedGoal = Math.hypot(player.x - goal.x, player.y - goal.y) <= radius;
+  return reachedGoal ? { kind: 'won' } : null;
 }
 ```
 
-The controller reports landing facts. Whether they mean damage, noise, score,
-or nothing remains game policy.
+`GameScene.onTick()` gathers the player and goal positions, calls this rule,
+and passes a returned outcome to `finishStage()`. The goal entity only renders
+the marker; it does not own the stage lifecycle.
 
 ## 4. Test and ship
 

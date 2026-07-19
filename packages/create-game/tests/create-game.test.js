@@ -65,8 +65,75 @@ describe('project generator', () => {
     expect(result.files).toContain('src/content/level.js');
     expect(result.files).toContain('src/rules/game-rules.js');
     expect(result.files).toContain('src/presentation/presentation.js');
+    expect(result.files).toContain('src/presentation/styles.js');
     expect(result.files).toContain('public/assets/README.md');
     expect(readFileSync(join(target, 'README.md'), 'utf8')).toContain('title → controls → play → result → restart');
+  });
+
+  it.each(['platformer', 'top-down'])('keeps %s stage outcomes out of entities', (genre) => {
+    const target = join(temporaryRoot(), `outcome-owner-${genre}`);
+    createProject({ targetDirectory: target, genre, template: 'recommended' });
+
+    const scene = readFileSync(join(target, 'src/scenes/GameScene.js'), 'utf8');
+    const entity = readFileSync(join(target, 'src/entities/GoalEntity.js'), 'utf8');
+    const rules = readFileSync(join(target, 'src/rules/game-rules.js'), 'utf8');
+
+    expect(scene).toContain("import { getStageOutcome } from '../rules/game-rules.js'");
+    expect(scene).toContain('const outcome = getStageOutcome');
+    expect(scene).toContain('if (outcome) this.finishStage(outcome)');
+    expect(scene).toContain('if (this.stageFinished) return');
+    expect(scene).not.toContain('completeGame');
+    expect(entity).not.toContain('update(');
+    expect(entity).not.toContain('scene.start');
+    expect(rules).toContain('export function getStageOutcome');
+  });
+
+  it.each(['platformer', 'top-down'])('injects explicit %s controls for every device', (genre) => {
+    const root = temporaryRoot();
+    const keyboardTarget = join(root, `${genre}-keyboard-owner`);
+    const gamepadTarget = join(root, `${genre}-gamepad-owner`);
+    createProject({ targetDirectory: keyboardTarget, genre, template: 'recommended', input: 'keyboard' });
+    createProject({ targetDirectory: gamepadTarget, genre, template: 'recommended', input: 'gamepad' });
+
+    const keyboardScene = readFileSync(join(keyboardTarget, 'src/scenes/GameScene.js'), 'utf8');
+    const keyboardControls = readFileSync(join(keyboardTarget, 'src/input/controls.js'), 'utf8');
+    const gamepadScene = readFileSync(join(gamepadTarget, 'src/scenes/GameScene.js'), 'utf8');
+    const gamepadControls = readFileSync(join(gamepadTarget, 'src/input/controls.js'), 'utf8');
+
+    expect(keyboardScene).toContain("import { controls, controlsLabel } from '../input/controls.js'");
+    expect(keyboardScene).toContain('controls,');
+    expect(keyboardScene).not.toMatch(/\n  readInputIntent\(\)/);
+    expect(keyboardControls).toContain('createKeyboardInputAdapter');
+    expect(keyboardControls).toContain('export const bindings');
+    expect(keyboardControls).toContain('export const controls');
+    expect(gamepadScene).toContain('controls,');
+    expect(gamepadScene).not.toMatch(/\n  readInputIntent\(\)/);
+    expect(gamepadControls).toContain('createGamepadInputAdapter');
+  });
+
+  it.each(['platformer', 'top-down'])('derives %s touch buttons from action definitions', (genre) => {
+    const target = join(temporaryRoot(), `${genre}-touch-actions`);
+    createProject({ targetDirectory: target, genre, template: 'recommended', input: 'touch' });
+
+    const controls = readFileSync(join(target, 'src/input/controls.js'), 'utf8');
+    const html = readFileSync(join(target, 'index.html'), 'utf8');
+    expect(controls).toContain('export const actionButtons');
+    expect(controls).toContain('actions: actionButtons.map');
+    expect(controls).toContain('for (const definition of actionButtons)');
+    expect(html).toContain('<div id="touch-controls" hidden aria-label="Touch controls"></div>');
+    expect(html).not.toContain('data-action');
+  });
+
+  it('keeps Phaser text styles out of presentation behavior', () => {
+    const target = join(temporaryRoot(), 'presentation-styles');
+    createProject({ targetDirectory: target, genre: 'platformer', template: 'recommended' });
+    const presentation = readFileSync(join(target, 'src/presentation/presentation.js'), 'utf8');
+    const styles = readFileSync(join(target, 'src/presentation/styles.js'), 'utf8');
+
+    expect(presentation).toContain("from './styles.js'");
+    expect(presentation).not.toContain('fontFamily');
+    expect(styles).toContain('export const headingTextStyle');
+    expect(styles).toContain('export const pauseTextStyle');
   });
 
   it('generates working optional seams and their focused tests', () => {

@@ -17,12 +17,19 @@ import { BASE_ENTITY_TYPES } from '../entities/registry.js';
 import { facingFromVelocity, movementFromIntent } from '../systems/movement.js';
 import { validateTopDownLevel } from '../systems/content.js';
 
+/** @typedef {{ read(context?: { scene: TopDownScene, time?: number, delta?: number }): import('@phaser-game-engines/toolkit/core').InputIntentSource, reset?(): unknown }} SceneControls */
+
 /** Extend this scene and return a level with world, spawn, walls, and entitySpecs. */
 export default class TopDownScene extends Phaser.Scene {
+  /** @param {{ controls?: SceneControls, [key: string]: any }} config */
   constructor(config = {}) {
     super(config);
     this.recipeComposition = composeRecipes(config.recipes ?? []);
     this.entityTypes = config.entityTypes;
+    this.controls = config.controls ?? null;
+    if (this.controls && typeof this.controls.read !== 'function') {
+      throw new TypeError('Top-down scene controls must expose read(context).');
+    }
     this.configuredMechanics = [
       ...this.recipeComposition.mechanics,
       ...(config.mechanics ?? []),
@@ -36,11 +43,16 @@ export default class TopDownScene extends Phaser.Scene {
   moveSpeed() { return 210; }
   statusText() { return ''; }
   getMechanics() { return this.configuredMechanics; }
+  onEntitiesBuilt() {}
+  onReady() {}
+  /** @param {number} _time @param {number} _delta */
+  onTick(_time, _delta) {}
 
   create() {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       runCleanups([
         () => this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this }),
+        () => this.controls?.reset?.(),
         () => this.mechanicHost.clear(),
         () => this.entities?.destroyAll(this),
       ], 'Top-down scene shutdown failed.');
@@ -99,11 +111,13 @@ export default class TopDownScene extends Phaser.Scene {
       Phaser.Input.Keyboard.KeyCodes.RIGHT,
       Phaser.Input.Keyboard.KeyCodes.SPACE,
     ]);
+    this.controls?.reset?.();
 
     this.contextualActions = [];
     this.contextualActionActivation = null;
     this.entities = this.worldRuntime.entities;
     this.entities.build(this, this.level.entitySpecs);
+    this.onEntitiesBuilt();
     this.prompt = this.add.text(12, 12, '', {
       fontFamily: 'sans-serif',
       fontSize: '16px',
@@ -111,6 +125,7 @@ export default class TopDownScene extends Phaser.Scene {
       backgroundColor: '#00000099',
       padding: { x: 6, y: 4 },
     }).setScrollFactor(0).setDepth(100);
+    this.onReady();
     this.lifecycle.emit(lifecycleEvent.ready, { scene: this });
   }
 
@@ -132,7 +147,8 @@ export default class TopDownScene extends Phaser.Scene {
    * Games may override this to provide gamepad, touch, AI, network, or replay input.
    * @returns {import('@phaser-game-engines/toolkit/core').InputIntentSource}
    */
-  readInputIntent() {
+  readInputIntent(time, delta) {
+    if (this.controls) return this.controls.read({ scene: this, time, delta });
     const left = this.keys.left.isDown || this.cursors.left.isDown;
     const right = this.keys.right.isDown || this.cursors.right.isDown;
     const up = this.keys.up.isDown || this.cursors.up.isDown;
@@ -188,6 +204,7 @@ export default class TopDownScene extends Phaser.Scene {
         ? this.message
         : (this.currentContextualAction?.label ?? this.statusText()),
     );
+    this.onTick(time, delta);
     this.lifecycle.emit(lifecycleEvent.tick, { scene: this, time, delta });
   }
 

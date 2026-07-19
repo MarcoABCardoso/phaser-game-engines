@@ -17,10 +17,11 @@ export function recommendedFiles({ genre, extension: ext, input, recipe, feature
     [`src/content/level.${ext}`]: levelSource(genre),
     [`src/rules/game-rules.${ext}`]: rulesSource(genre, ext),
     [`src/presentation/presentation.${ext}`]: presentationSource(ext),
+    [`src/presentation/styles.${ext}`]: presentationStylesSource(ext),
     [`src/input/controls.${ext}`]: controlsSource(input, genre, ext),
     [`src/tests/rules.test.${ext}`]: rulesTestSource(genre),
     'public/assets/README.md': assetsReadme(),
-    'src/style.css': styles(),
+    'src/style.css': browserStyles(),
   };
   if (ext === 'ts') files['src/vite-env.d.ts'] = `/// <reference types="vite/client" />`;
   if (genre !== 'battle') files[`src/entities/GoalEntity.${ext}`] = goalEntitySource(genre, ext);
@@ -41,7 +42,7 @@ import './style.css';
 import { TitleScene } from './scenes/TitleScene.js';
 import { GameScene } from './scenes/GameScene.js';
 import { ResultScene } from './scenes/ResultScene.js';
-import { installControls } from './input/controls.js';
+import { installBrowserControls } from './input/controls.js';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO, parent: 'game', width: 960, height: 540,
@@ -50,7 +51,7 @@ const game = new Phaser.Game({
   input: { gamepad: true }, scene: [TitleScene, GameScene, ResultScene],
 });
 
-installControls({
+installBrowserControls({
   start: () => game.scene.start('play'),
   action: () => game.scene.${ext === 'ts' ? `getScene<GameScene>('play')` : `getScene('play')`}?.performAction?.(),
 });
@@ -62,7 +63,10 @@ function titleSceneSource(ext) {
 import { addHeading, addHelp } from '../presentation/presentation.js';
 
 export class TitleScene extends Phaser.Scene {
-  constructor() { super('title'); }
+  constructor() {
+    super('title');
+  }
+
   create() {
     addHeading(this, 'Signal Run');
     addHelp(this, 'Reach the signal. Learn the controls below, then start.');
@@ -81,7 +85,10 @@ function resultSceneSource(ext) {
 import { addHeading, addHelp } from '../presentation/presentation.js';
 
 export class ResultScene extends Phaser.Scene {
-  constructor() { super('result'); }
+  constructor() {
+    super('result');
+  }
+
   create(data${type(ext, ': { won?: boolean }')}) {
     addHeading(this, data.won === false ? 'Try again' : 'Signal reached!');
     addHelp(this, 'Press Enter, gamepad A, or tap to restart.');
@@ -122,8 +129,13 @@ export const level = defineLevel({
 }
 
 function rulesSource(genre, ext) {
-  if (genre !== 'battle') return `export function reachedGoal(player${type(ext, ': { x: number, y: number }')}, goal${type(ext, ': { x: number, y: number }')}, radius = 48) {
-  return Math.hypot(player.x - goal.x, player.y - goal.y) <= radius;
+  if (genre !== 'battle') return `export function getStageOutcome(
+  state${type(ext, ': { player: { x: number, y: number }, goal: { x: number, y: number } }')},
+  radius = 48,
+)${type(ext, ": { kind: 'won' } | null")} {
+  const { player, goal } = state;
+  const reachedGoal = Math.hypot(player.x - goal.x, player.y - goal.y) <= radius;
+  return reachedGoal ? { kind: 'won' } : null;
 }
 `;
   return `${ext === 'ts' ? `import type { BattleRules } from '@phaser-game-engines/toolkit/battle/headless';\n\n` : ''}
@@ -143,18 +155,17 @@ ${ext === 'js' ? '' : ''}export const rules${type(ext, ': BattleRules<{ playerRe
 
 function goalEntitySource(genre, ext) {
   const pkg = genre === 'platformer' ? 'platformer' : 'top-down';
-  const behavior = genre === 'platformer'
-    ? `if (Math.abs(scene.player.x - this.spec.x) < 42) scene.completeGame();`
-    : `if (Math.hypot(scene.player.x - this.spec.x, scene.player.y - this.spec.y) < 58) scene.offerContextualAction({ id: 'activate-signal', label: 'Press interact to activate signal', execute: () => scene.completeGame() });`;
   return `${ext === 'ts' ? `import type Phaser from 'phaser';\n` : ''}import { Entity } from '@phaser-game-engines/toolkit/${pkg}';
 
 export class GoalEntity extends ${ext === 'ts' ? '(Entity as any)' : 'Entity'} {
-  ${ext === 'ts' ? 'marker?: Phaser.GameObjects.Star; declare spec: { x: number, y: number };' : ''}
+  ${ext === 'ts' ? 'marker?: Phaser.GameObjects.Star;\n  declare spec: { id: string, x: number, y: number };' : ''}
   spawn(scene${type(ext, ': any')}) {
     this.marker = scene.add.star(this.spec.x, this.spec.y, 6, 12, 28, 0xffd166).setDepth(5);
   }
-  update(scene${type(ext, ': any')}) { ${behavior} }
-  destroy() { this.marker?.destroy(); }
+
+  destroy() {
+    this.marker?.destroy();
+  }
 }
 `;
 }
@@ -162,7 +173,7 @@ export class GoalEntity extends ${ext === 'ts' ? '(Entity as any)' : 'Entity'} {
 function gameSceneSource(genre, ext, input, recipe, features) {
   const sessionImport = features.save || features.debug || features.replay
     ? `import { session } from '../session.js';\n` : '';
-  const debugMechanic = features.debug ? `mechanics: [session.debugMechanic]` : '';
+  const debugMechanic = features.debug ? `\n      mechanics: [session.debugMechanic],` : '';
   const record = features.replay ? `session.recordIntent(this.inputIntent);` : '';
   const save = features.save ? `session.save({ completed: true });` : '';
   if (genre === 'battle') return battleSceneSource(ext, input, sessionImport, save);
@@ -173,22 +184,66 @@ function gameSceneSource(genre, ext, input, recipe, features) {
     : recipe === 'action-adventure' ? 'createActionAdventureRecipe'
       : recipe === 'exploration' ? 'createExplorationRecipe' : null;
   const imports = recipeName ? `, ${recipeName}` : '';
-  const recipes = recipeName ? `recipes: [${recipeName}()], ` : '';
-  return `import { ${EngineScene}${imports}, validate${isPlatformer ? 'Platformer' : 'TopDown'}Level } from '@phaser-game-engines/toolkit/${pkg}';
+  const recipes = recipeName ? `\n      recipes: [${recipeName}()],` : '';
+  return `import { ${EngineScene}${imports} } from '@phaser-game-engines/toolkit/${pkg}';
 import { level } from '../content/level.js';
 import { GoalEntity } from '../entities/GoalEntity.js';
-import { readIntent, controlsLabel } from '../input/controls.js';
+import { controls, controlsLabel } from '../input/controls.js';
 import { installHud, installPauseMenu, playCue, updatePlayerPresentation } from '../presentation/presentation.js';
+import { getStageOutcome } from '../rules/game-rules.js';
 ${sessionImport}
 export class GameScene extends ${EngineScene} {
-  ${ext === 'ts' ? 'hud!: ReturnType<typeof installHud>;' : ''}
-  constructor() { super({ key: 'play', ${recipes}entityTypes: { 'signal-goal': GoalEntity }, ${debugMechanic} }); }
-  getLevel() { validate${isPlatformer ? 'Platformer' : 'TopDown'}Level(level, { types: ${ext === 'ts' ? "({ 'signal-goal': GoalEntity } as any)" : "{ 'signal-goal': GoalEntity }"} }); return level; }
-  readInputIntent() { return readIntent(this) ?? super.readInputIntent(); }
-  create() { super.create(); this.hud = installHud(this, 'Objective: reach the gold signal'); this.hud.setControls(controlsLabel); installPauseMenu(this); }
-  update(time${type(ext, ': number')}, delta${type(ext, ': number')}) { super.update(time, delta); ${record} updatePlayerPresentation(this, time); }
-  performAction() {}
-  completeGame() { ${save} playCue(this, 'win'); this.scene.start('result', { won: true }); }
+  ${ext === 'ts' ? 'hud!: ReturnType<typeof installHud>;\n  goal!: GoalEntity;' : ''}
+  stageFinished = false;
+
+  constructor() {
+    super({
+      key: 'play',${recipes}
+      controls,
+      entityTypes: { 'signal-goal': GoalEntity },${debugMechanic}
+    });
+  }
+
+  // Toolkit content provider: the base scene validates and builds this level.
+  getLevel() {
+    return level;
+  }
+
+  // Toolkit lifecycle hook: cache the game-owned objective after entities spawn.
+  onEntitiesBuilt() {
+    const goal = this.entities?.get('signal');
+    if (!goal) throw new Error('Level must contain the signal goal entity.');
+    this.goal = goal${type(ext, ' as GoalEntity')};
+  }
+
+  // Toolkit lifecycle hook: install game-owned presentation for each scene run.
+  onReady() {
+    this.stageFinished = false;
+    this.hud = installHud(this, 'Objective: reach the gold signal');
+    this.hud.setControls(controlsLabel);
+    installPauseMenu(this);
+  }
+
+  // Game orchestration: gather runtime facts, ask the pure rule, then apply its outcome.
+  onTick(time${type(ext, ': number')}, _delta${type(ext, ': number')}) {
+    ${record}
+    updatePlayerPresentation(this, time);
+    const outcome = getStageOutcome({ player: this.player${type(ext, '!')}, goal: this.goal.spec });
+    if (outcome) this.finishStage(outcome);
+  }
+
+  // Browser controls call this seam; frame-based adapters read the action on the next tick.
+  performAction() {
+    // The selected adapter state is consumed by the next scene tick.
+  }
+
+  finishStage(outcome${type(ext, ": { kind: 'won' }")}) {
+    if (this.stageFinished) return;
+    this.stageFinished = true;
+    ${save}
+    playCue(this, 'win');
+    this.scene.start('result', { won: outcome.kind === 'won' });
+  }
 }
 `;
 }
@@ -219,32 +274,115 @@ export class GameScene extends BattleScene${type(ext, '<{ playerResolve: number,
 }
 
 function controlsSource(input, genre, ext) {
-  const action = genre === 'platformer' ? 'jump' : 'interact';
-  if (input === 'keyboard') return `export const controlsLabel = '${genre === 'battle' ? 'Enter/Z: act' : `Arrows/WASD: move · ${genre === 'platformer' ? 'Space/Up: jump' : 'E: interact'}`}';
-export function readIntent(_scene${type(ext, ': unknown')}) { return null; }
-export function installControls(actions${type(ext, ': { start: () => void, action: () => void }')}) { document.querySelector('#start-button')?.addEventListener('click', actions.start); }
+  const action = genre === 'platformer' ? 'jump' : genre === 'top-down' ? 'interact' : 'confirm';
+  const actionLabel = action[0].toUpperCase() + action.slice(1);
+  const movement = genre === 'battle' ? '{}' : `{
+    left: ['ArrowLeft', 'KeyA'],
+    right: ['ArrowRight', 'KeyD'],
+    up: ['ArrowUp', 'KeyW'],
+    down: ['ArrowDown', 'KeyS'],
+  }`;
+  const keyboardButtons = action === 'jump' ? "['Space', 'ArrowUp']"
+    : action === 'interact' ? "['KeyE']" : "['Enter', 'KeyZ']";
+  if (input === 'keyboard') return `import { createKeyboardInputAdapter } from '@phaser-game-engines/toolkit/core';
+
+// Add or remap actions here. The scene receives every named action in controls.read().
+export const bindings = {
+  move: ${movement},
+  actions: {
+    ${action}: ${keyboardButtons},
+  },
+};
+
+export const controls = createKeyboardInputAdapter({ bindings });
+const actionPrompts = Object.keys(bindings.actions)
+  .map((name) => name + ': ' + controls.getPrompt(name));
+export const controlsLabel = [${genre === 'battle' ? '' : "'Arrows/WASD: move', "}...actionPrompts].join(' · ');
+
+export function installBrowserControls(actions${type(ext, ': { start: () => void, action: (name?: string) => void }')}) {
+  document.querySelector('#start-button')?.addEventListener('click', actions.start);
+}
 `;
+
+  const gamepadMovement = genre === 'battle' ? '{}' : `{
+    xAxis: 0,
+    yAxis: 1,
+    left: [14],
+    right: [15],
+    up: [12],
+    down: [13],
+  }`;
   if (input === 'gamepad') return `import { createGamepadInputAdapter } from '@phaser-game-engines/toolkit/core';
-const adapter = createGamepadInputAdapter();
-export const controlsLabel = 'Gamepad: left stick/D-pad · A: ${action}';
-export function readIntent(_scene${type(ext, ': unknown')}) { return adapter.read(); }
-export function installControls(actions${type(ext, ': { start: () => void, action: () => void }')}) { document.querySelector('#start-button')?.addEventListener('click', actions.start); }
+
+// Button numbers use the standard browser Gamepad layout. Add named actions here.
+export const bindings = {
+  move: ${gamepadMovement},
+  actions: {
+    ${action}: [0],
+  },
+};
+
+export const controls = createGamepadInputAdapter({
+  bindings,
+  labels: { 0: 'A' },
+});
+const actionPrompts = Object.keys(bindings.actions)
+  .map((name) => name + ': ' + controls.getPrompt(name));
+export const controlsLabel = ['Gamepad${genre === 'battle' ? '' : ' left stick/D-pad'}', ...actionPrompts].join(' · ');
+
+export function installBrowserControls(actions${type(ext, ': { start: () => void, action: (name?: string) => void }')}) {
+  document.querySelector('#start-button')?.addEventListener('click', actions.start);
+}
 `;
+
+  const directions = genre === 'battle' ? '[]' : `[
+  { label: '←', x: -1, y: 0 },
+  { label: '→', x: 1, y: 0 },
+  { label: '↑', x: 0, y: -1 },
+  { label: '↓', x: 0, y: 1 },
+]`;
   return `import { createTouchInputAdapter } from '@phaser-game-engines/toolkit/core';
-const adapter = createTouchInputAdapter({ actions: ['${action}'] });
-export const controlsLabel = 'Touch: direction pad · ${action} button';
-export function readIntent(_scene${type(ext, ': unknown')}) { return adapter.read(); }
-export function installControls(actions${type(ext, ': { start: () => void, action: () => void }')}) {
+
+// Add an entry here to create both an input action and its on-screen button.
+export const actionButtons = [
+  { action: '${action}', label: '${actionLabel}' },
+];
+
+export const controls = createTouchInputAdapter({
+  actions: actionButtons.map(({ action }) => action),
+});
+export const controlsLabel = ['Touch${genre === 'battle' ? '' : ' direction pad'}', ...actionButtons.map(({ label }) => label)].join(' · ');
+
+const directions${type(ext, ': { label: string, x: number, y: number }[]')} = ${directions};
+
+export function installBrowserControls(actions${type(ext, ': { start: () => void, action: (name?: string) => void }')}) {
   const panel = document.querySelector${ext === 'ts' ? '<HTMLElement>' : ''}('#touch-controls');
   if (!panel) return;
   panel.hidden = false;
-  for (const button of panel.${ext === 'ts' ? `querySelectorAll<HTMLButtonElement>('[data-x]')` : `querySelectorAll('[data-x]')`}) {
-    const move = () => adapter.setMove(Number(button.dataset.x), Number(button.dataset.y));
-    button.addEventListener('pointerdown', move);
-    for (const event of ['pointerup', 'pointercancel', 'pointerleave']) button.addEventListener(event, () => adapter.setMove(0, 0));
+
+  for (const direction of directions) {
+    const button = document.createElement('button');
+    button.textContent = direction.label;
+    button.addEventListener('pointerdown', () => controls.setMove(direction.x, direction.y));
+    for (const event of ['pointerup', 'pointercancel', 'pointerleave']) {
+      button.addEventListener(event, () => controls.setMove(0, 0));
+    }
+    panel.append(button);
   }
-  panel.querySelector('[data-action]')?.addEventListener('pointerdown', () => { adapter.setAction('${action}', true); actions.action(); });
-  panel.querySelector('[data-action]')?.addEventListener('pointerup', () => adapter.setAction('${action}', false));
+
+  for (const definition of actionButtons) {
+    const button = document.createElement('button');
+    button.textContent = definition.label;
+    button.addEventListener('pointerdown', () => {
+      controls.setAction(definition.action, true);
+      actions.action(definition.action);
+    });
+    for (const event of ['pointerup', 'pointercancel', 'pointerleave']) {
+      button.addEventListener(event, () => controls.setAction(definition.action, false));
+    }
+    panel.append(button);
+  }
+
   document.querySelector('#start-button')?.addEventListener('click', actions.start);
 }
 `;
@@ -252,20 +390,98 @@ export function installControls(actions${type(ext, ': { start: () => void, actio
 
 function presentationSource(ext) {
   return `import Phaser from 'phaser';
+import {
+  headingTextStyle,
+  helpTextStyle,
+  hudTextStyle,
+  pauseTextStyle,
+} from './styles.js';
 
-export function addHeading(scene${type(ext, ': Phaser.Scene')}, text${type(ext, ': string')}) { return scene.add.text(480, 170, text, { fontFamily: 'system-ui', fontSize: '48px', color: '#ffd166' }).setOrigin(0.5); }
-export function addHelp(scene${type(ext, ': Phaser.Scene')}, text${type(ext, ': string')}) { return scene.add.text(480, 270, text, { fontFamily: 'system-ui', fontSize: '20px', color: '#e5e7eb', align: 'center' }).setOrigin(0.5); }
-export function installHud(scene${type(ext, ': Phaser.Scene')}, objective${type(ext, ': string')}) {
-  const text = scene.add.text(12, 12, objective, { fontFamily: 'system-ui', fontSize: '17px', color: '#fff', backgroundColor: '#0009', padding: { x: 8, y: 6 } }).setScrollFactor(0).setDepth(1000);
-  return { setControls(value${type(ext, ': string')}) { text.setText(objective + '\\n' + value); }, destroy() { text.destroy(); } };
+export function addHeading(scene${type(ext, ': Phaser.Scene')}, text${type(ext, ': string')}) {
+  return scene.add.text(480, 170, text, headingTextStyle).setOrigin(0.5);
 }
-export function updatePlayerPresentation(scene${type(ext, ': any')}, _time${type(ext, ': number')}) { scene.player?.setFillStyle?.(scene.playerMoving ? 0x72ddf7 : 0x6bb8ff); }
-export function playCue(_scene${type(ext, ': Phaser.Scene')}, name${type(ext, ': string')}) { console.info('[audio seam]', name); }
+
+export function addHelp(scene${type(ext, ': Phaser.Scene')}, text${type(ext, ': string')}) {
+  return scene.add.text(480, 270, text, helpTextStyle).setOrigin(0.5);
+}
+
+export function installHud(scene${type(ext, ': Phaser.Scene')}, objective${type(ext, ': string')}) {
+  const text = scene.add.text(12, 12, objective, hudTextStyle)
+    .setScrollFactor(0)
+    .setDepth(1000);
+
+  return {
+    setControls(value${type(ext, ': string')}) {
+      text.setText(objective + '\\n' + value);
+    },
+    destroy() {
+      text.destroy();
+    },
+  };
+}
+
+export function updatePlayerPresentation(scene${type(ext, ': any')}, _time${type(ext, ': number')}) {
+  scene.player?.setFillStyle?.(scene.playerMoving ? 0x72ddf7 : 0x6bb8ff);
+}
+
+export function playCue(_scene${type(ext, ': Phaser.Scene')}, name${type(ext, ': string')}) {
+  console.info('[audio seam]', name);
+}
+
 export function installPauseMenu(scene${type(ext, ': Phaser.Scene')}) {
-  const label = scene.add.text(480, 270, 'PAUSED\\nPress P to continue', { fontFamily: 'system-ui', fontSize: '28px', color: '#fff', backgroundColor: '#000c', align: 'center', padding: { x: 20, y: 14 } }).setOrigin(0.5).setScrollFactor(0).setDepth(2000).setVisible(false);
-  scene.input.keyboard?.on('keydown-P', () => { const paused = !scene.physics.world.isPaused; if (paused) scene.physics.pause(); else scene.physics.resume(); label.setVisible(paused); });
+  const label = scene.add.text(480, 270, 'PAUSED\\nPress P to continue', pauseTextStyle)
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setDepth(2000)
+    .setVisible(false);
+
+  const togglePause = () => {
+    const paused = !scene.physics.world.isPaused;
+    if (paused) scene.physics.pause();
+    else scene.physics.resume();
+    label.setVisible(paused);
+  };
+
+  scene.input.keyboard?.on('keydown-P', togglePause);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    scene.input.keyboard?.off('keydown-P', togglePause);
+  });
   return label;
 }
+`;
+}
+
+function presentationStylesSource(ext) {
+  const textStyleType = type(ext, ': Phaser.Types.GameObjects.Text.TextStyle');
+  return `${ext === 'ts' ? "import type Phaser from 'phaser';\n\n" : ''}export const headingTextStyle${textStyleType} = {
+  fontFamily: 'system-ui',
+  fontSize: '48px',
+  color: '#ffd166',
+};
+
+export const helpTextStyle${textStyleType} = {
+  fontFamily: 'system-ui',
+  fontSize: '20px',
+  color: '#e5e7eb',
+  align: 'center',
+};
+
+export const hudTextStyle${textStyleType} = {
+  fontFamily: 'system-ui',
+  fontSize: '17px',
+  color: '#ffffff',
+  backgroundColor: '#00000099',
+  padding: { x: 8, y: 6 },
+};
+
+export const pauseTextStyle${textStyleType} = {
+  fontFamily: 'system-ui',
+  fontSize: '28px',
+  color: '#ffffff',
+  backgroundColor: '#000000cc',
+  align: 'center',
+  padding: { x: 20, y: 14 },
+};
 `;
 }
 
@@ -298,8 +514,17 @@ test('game-owned rules reach a deterministic result', () => { const battle = new
   return `import { expect, test } from 'vitest';
 import { ${validator} } from '@phaser-game-engines/toolkit/${pkg}/headless';
 import { level } from '../content/level.js';
-import { reachedGoal } from '../rules/game-rules.js';
-test('content and objective are valid without Phaser', () => { expect(() => ${validator}(level, { types: { 'signal-goal': class {} } })).not.toThrow(); expect(reachedGoal({ x: 10, y: 10 }, { x: 10, y: 10 })).toBe(true); });
+import { getStageOutcome } from '../rules/game-rules.js';
+
+test('content is valid without Phaser', () => {
+  expect(() => ${validator}(level, { types: { 'signal-goal': class {} } })).not.toThrow();
+});
+
+test('game-owned rules decide whether the stage is complete', () => {
+  const goal = { x: 50, y: 50 };
+  expect(getStageOutcome({ player: { x: 10, y: 10 }, goal })).toBeNull();
+  expect(getStageOutcome({ player: { x: 50, y: 50 }, goal })).toEqual({ kind: 'won' });
+});
 `;
 }
 
@@ -308,8 +533,48 @@ function debugTestSource() { return `import { expect, test } from 'vitest'; impo
 function replayTestSource(ext) { return `import { expect, test } from 'vitest'; import { createManualClock, createSessionRecorder, replaySession } from '@phaser-game-engines/toolkit/core'; test('recorded input replays headlessly', () => { const clock = createManualClock(); const recorder = createSessionRecorder({ clock: clock${type(ext, ' as any')} }); recorder.recordIntent({ move: { x: 1, y: 0 } }); const seen${type(ext, ': number[]')} = []; replaySession(recorder.snapshot(), { onIntent: (intent${type(ext, ': any')}) => seen.push(intent.move.x) }); expect(seen).toEqual([1]); });`; }
 
 function assetsReadme() { return `# Presentation assets\n\nPut game-owned sprites, animation sheets, and audio here. Replace the shape/text hooks in \`src/presentation/presentation.*\`; no engine subclass or package source edit is required.\n`; }
-function styles() { return `:root{font-family:system-ui;color:#e5e7eb;background:#070b14}body{margin:0}main{max-width:960px;margin:auto;padding:12px}canvas{max-width:100%;height:auto}button{font:inherit;padding:.65rem 1rem;margin:.2rem;touch-action:none}#touch-controls[hidden]{display:none}`; }
+function browserStyles() {
+  return `:root {
+  font-family: system-ui;
+  color: #e5e7eb;
+  background: #070b14;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 960px;
+  margin: auto;
+  padding: 12px;
+}
+
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+button {
+  margin: 0.2rem;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  touch-action: none;
+}
+
+#touch-controls[hidden] {
+  display: none;
+}
+
+#touch-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+}
+`;
+}
 
 export function recommendedIndexHtml(genre, ext) {
-  return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${genre} signal run</title></head><body><main><div id="game"></div><button id="start-button">Start / restart</button><div id="touch-controls" hidden aria-label="Touch controls"><button data-x="-1" data-y="0">←</button><button data-x="1" data-y="0">→</button><button data-x="0" data-y="-1">↑</button><button data-x="0" data-y="1">↓</button><button data-action>Action</button></div></main><script type="module" src="/src/main.${ext}"></script></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${genre} signal run</title></head><body><main><div id="game"></div><button id="start-button">Start / restart</button><div id="touch-controls" hidden aria-label="Touch controls"></div></main><script type="module" src="/src/main.${ext}"></script></body></html>`;
 }
