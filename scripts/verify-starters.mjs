@@ -9,19 +9,26 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const temporaryRoot = mkdtempSync(join(tmpdir(), 'phaser-game-starters-'));
 
 try {
-  for (const genre of genres) {
-    for (const language of languages) {
-      const supportedInputs = genre === 'battle' ? ['keyboard'] : inputAdapters;
-      for (const input of supportedInputs) {
-        const project = join(temporaryRoot, `${genre}-${language}-${input}`);
-        createProject({ targetDirectory: project, genre, language, input, packageSource: root });
+  for (const template of ['minimal', 'recommended']) {
+    for (const genre of genres) {
+      for (const language of languages) {
+        const supportedInputs = template === 'minimal' && genre === 'battle' ? ['keyboard'] : inputAdapters;
+        for (const input of supportedInputs) {
+          const project = join(temporaryRoot, `${template}-${genre}-${language}-${input}`);
+          const includeFeatures = template === 'recommended' && genre === 'platformer' && input === 'keyboard';
+          createProject({
+            targetDirectory: project, genre, language, template, input,
+            save: includeFeatures, debug: includeFeatures, replay: includeFeatures,
+            packageSource: root,
+          });
         symlinkSync(join(root, 'node_modules'), join(project, 'node_modules'), 'junction');
         run(process.execPath, [join(root, 'node_modules', 'vite', 'bin', 'vite.js'), 'build'], project);
         run(process.execPath, [join(root, 'node_modules', 'vitest', 'vitest.mjs'), 'run'], project);
         if (language === 'ts') {
           run(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '--noEmit'], project);
         }
-        console.log(`Verified ${genre} ${language.toUpperCase()} ${input} starter.`);
+          console.log(`Verified ${template} ${genre} ${language.toUpperCase()} ${input} starter.`);
+        }
       }
     }
   }

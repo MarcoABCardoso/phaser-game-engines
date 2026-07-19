@@ -135,26 +135,37 @@ Priority: immediate after the first prerelease.
 The generator should create a small game developers want to modify, not merely
 a scene that proves an import works.
 
-- [ ] Redesign each generated starter around a visible objective and a complete
+- [x] Redesign each generated starter around a visible objective and a complete
   loop: start, learn controls, play, reach a result, restart, test, and build.
-- [ ] Keep a `minimal` template, and add one recommended template per genre that
+- [x] Keep a `minimal` template, and add one recommended template per genre that
   demonstrates the normal project structure for scenes, content, rules,
   presentation, tests, and assets.
-- [ ] Generate content into separate validated files rather than embedding the
+- [x] Generate content into separate validated files rather than embedding the
   entire level in the scene. Include an example custom entity or rule owned by
   the game.
-- [ ] Offer recipes and input choices interactively while preserving stable CLI
+- [x] Offer recipes and input choices interactively while preserving stable CLI
   flags for automation. Generated touch and gamepad projects must be playable,
   not just wired to an adapter.
-- [ ] Add opt-in save, debug, and replay choices to the generator. When selected,
+- [x] Add opt-in save, debug, and replay choices to the generator. When selected,
   they should already work in the starter and have one focused test.
-- [ ] Provide copyable presentation seams for sprites, animation, audio, HUD,
+- [x] Provide copyable presentation seams for sprites, animation, audio, HUD,
   menus, pause, and scene transitions without making placeholder art part of an
   engine package.
-- [ ] Add deployment presets or short verified guides for at least GitHub Pages
+- [x] Add deployment presets or short verified guides for at least GitHub Pages
   and one general static host, including correct Vite base-path handling.
 - [ ] Run five observed onboarding sessions and record time-to-run,
   time-to-change, errors, abandoned steps, and copied engine code.
+
+The generator implementation for Release 1 landed in July 2026. Recommended
+starters now provide a game-owned signal objective, title/play/result/restart
+loop, separated scenes/content/rules/presentation/input/assets, interactive and
+flag-driven configuration, playable keyboard/gamepad/touch paths, optional
+save/debug/replay seams with focused tests, and GitHub Pages/static-host
+deployment paths. The verification matrix builds and tests 32 minimal and
+recommended JavaScript/TypeScript/input variants. The external onboarding study
+remains deliberately open; its protocol and evidence table are in
+`docs/ONBOARDING_SESSIONS.md`, and the milestone exit criteria must not be marked
+complete until those sessions and browser journeys provide actual evidence.
 
 Exit criteria:
 

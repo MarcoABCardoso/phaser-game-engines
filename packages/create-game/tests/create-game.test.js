@@ -56,6 +56,48 @@ describe('project generator', () => {
     expect(readFileSync(join(target, 'src/main.js'), 'utf8')).toContain('createActionAdventureRecipe');
   });
 
+  it.each(genres)('creates a recommended %s vertical slice with separate content, rules, presentation, and scenes', (genre) => {
+    const target = join(temporaryRoot(), `recommended-${genre}`);
+    const result = createProject({ targetDirectory: target, genre, template: 'recommended' });
+    expect(result.template).toBe('recommended');
+    expect(result.files).toContain('src/scenes/TitleScene.js');
+    expect(result.files).toContain('src/scenes/ResultScene.js');
+    expect(result.files).toContain('src/content/level.js');
+    expect(result.files).toContain('src/rules/game-rules.js');
+    expect(result.files).toContain('src/presentation/presentation.js');
+    expect(result.files).toContain('public/assets/README.md');
+    expect(readFileSync(join(target, 'README.md'), 'utf8')).toContain('title → controls → play → result → restart');
+  });
+
+  it('generates working optional seams and their focused tests', () => {
+    const target = join(temporaryRoot(), 'full-tooling');
+    const result = createProject({ targetDirectory: target, template: 'recommended', save: true, debug: true, replay: true });
+    expect(result.files).toEqual(expect.arrayContaining([
+      'src/session.js', 'src/tests/save.test.js', 'src/tests/debug.test.js', 'src/tests/replay.test.js',
+    ]));
+    expect(readFileSync(join(target, 'src/session.js'), 'utf8')).toContain('createSaveStore');
+  });
+
+  it.each(['github-pages', 'static'])('adds the %s deployment path', (deploy) => {
+    const target = join(temporaryRoot(), `deploy-${deploy}`);
+    const result = createProject({ targetDirectory: target, template: 'recommended', deploy });
+    expect(result.files).toContain('DEPLOYMENT.md');
+    if (deploy === 'github-pages') {
+      expect(result.files).toContain('.github/workflows/deploy.yml');
+      expect(readFileSync(join(target, 'vite.config.js'), 'utf8')).toContain("base: mode === 'production' ? './' : '/'");
+    }
+  });
+
+  it('makes the recommended template the non-interactive CLI default while --template minimal remains stable', () => {
+    const root = temporaryRoot();
+    const recommended = runCli(join(root, 'recommended'), '--yes');
+    expect(recommended.status).toBe(0);
+    expect(readFileSync(join(root, 'recommended', 'src/scenes/TitleScene.js'), 'utf8')).toContain('TitleScene');
+    const minimal = runCli(join(root, 'minimal'), '--template', 'minimal', '--yes');
+    expect(minimal.status).toBe(0);
+    expect(readFileSync(join(root, 'minimal', 'src/main.js'), 'utf8')).toContain('class GameScene');
+  });
+
   it.each(inputAdapters)('generates the selected %s input integration', (input) => {
     const target = join(temporaryRoot(), `input-${input}`);
     createProject({ targetDirectory: target, genre: 'platformer', input });
@@ -68,6 +110,12 @@ describe('project generator', () => {
     expect(() => createProject({
       targetDirectory: join(temporaryRoot(), 'battle-touch'), genre: 'battle', input: 'touch',
     })).toThrow(/keyboard menu input only/);
+  });
+
+  it.each(['gamepad', 'touch'])('makes recommended battle playable with %s input', (input) => {
+    const target = join(temporaryRoot(), `battle-${input}`);
+    createProject({ targetDirectory: target, genre: 'battle', template: 'recommended', input });
+    expect(readFileSync(join(target, 'src/scenes/GameScene.js'), 'utf8')).toContain('performAction');
   });
 
   it('uses local workspace dependencies when requested', () => {

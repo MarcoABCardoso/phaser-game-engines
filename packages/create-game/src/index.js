@@ -1,13 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
+import { recommendedFiles, recommendedIndexHtml, recommendedRecipe } from './templates.js';
 
 export const genres = Object.freeze(['platformer', 'top-down', 'battle']);
 export const languages = Object.freeze(['js', 'ts']);
 export const inputAdapters = Object.freeze(['keyboard', 'gamepad', 'touch']);
+export const templates = Object.freeze(['minimal', 'recommended']);
+export const optionalFeatures = Object.freeze(['save', 'debug', 'replay']);
 export const recipes = Object.freeze({
-  platformer: ['minimal'],
-  'top-down': ['minimal', 'action-adventure'],
-  battle: ['minimal'],
+  platformer: ['minimal', 'precision-platformer'],
+  'top-down': ['minimal', 'exploration', 'action-adventure'],
+  battle: ['minimal', 'menu-presentation'],
 });
 export const packageVersion = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -20,8 +23,14 @@ export const usage = `Usage:
 Options:
   --genre platformer|top-down|battle   Starter genre (default: platformer)
   --language js|ts                     Source language (default: js)
-  --recipe <name>                      Optional composition (default: minimal)
+  --template minimal|recommended       Project depth (default: recommended)
+  --recipe <name>                      Genre composition (template default)
   --input keyboard|gamepad|touch       Input adapter (default: keyboard)
+  --save                               Include a working local save seam
+  --debug                              Include a development debug overlay
+  --replay                             Include input recording and replay
+  --deploy none|github-pages|static    Add a deployment preset or guide
+  --yes                                Accept defaults without prompts
   --package-source <repository>        Use packages from a local workspace
   --version                            Show the generator version
   --help                               Show this help`;
@@ -30,19 +39,27 @@ export function createProject({
   targetDirectory,
   genre = 'platformer',
   language = 'js',
-  recipe = 'minimal',
+  template = 'minimal',
+  recipe,
   input = 'keyboard',
+  save = false,
+  debug = false,
+  replay = false,
+  deploy = 'none',
   packageSource,
   packageVersion: requestedPackageVersion = packageVersion,
 } = {}) {
   if (!targetDirectory) throw new TypeError('targetDirectory is required.');
   if (!genres.includes(genre)) throw new TypeError(`Unsupported genre: ${genre}.`);
   if (!languages.includes(language)) throw new TypeError(`Unsupported language: ${language}.`);
+  if (!templates.includes(template)) throw new TypeError(`Unsupported template: ${template}.`);
+  recipe ??= template === 'recommended' ? recommendedRecipe(genre) : 'minimal';
   if (!recipes[genre].includes(recipe)) throw new TypeError(`Recipe ${recipe} is not available for ${genre}.`);
   if (!inputAdapters.includes(input)) throw new TypeError(`Unsupported input adapter: ${input}.`);
-  if (genre === 'battle' && input !== 'keyboard') {
+  if (template === 'minimal' && genre === 'battle' && input !== 'keyboard') {
     throw new TypeError('The minimal battle starter currently supports keyboard menu input only.');
   }
+  if (!['none', 'github-pages', 'static'].includes(deploy)) throw new TypeError(`Unsupported deployment preset: ${deploy}.`);
 
   const target = resolve(targetDirectory);
   if (existsSync(target) && readdirSync(target).length > 0) {
@@ -58,7 +75,10 @@ export function createProject({
     language,
     extension,
     recipe,
+    template,
     input,
+    features: { save: Boolean(save), debug: Boolean(debug), replay: Boolean(replay) },
+    deploy,
     packageSource,
     packageVersion: requestedPackageVersion,
   });
@@ -67,7 +87,7 @@ export function createProject({
     mkdirSync(resolve(path, '..'), { recursive: true });
     writeFileSync(path, contents.endsWith('\n') ? contents : `${contents}\n`);
   }
-  return Object.freeze({ targetDirectory: target, genre, language, recipe, input, files: Object.keys(files) });
+  return Object.freeze({ targetDirectory: target, genre, language, template, recipe, input, save: Boolean(save), debug: Boolean(debug), replay: Boolean(replay), deploy, files: Object.keys(files) });
 }
 
 function packageName(value) {
@@ -82,7 +102,7 @@ function toolkitDependency(packageSource, target, version) {
 }
 
 function starterFiles(options) {
-  const { target, projectName, genre, language, extension, recipe, input, packageSource, packageVersion } = options;
+  const { target, projectName, genre, language, extension, template, recipe, input, features, deploy, packageSource, packageVersion } = options;
   const dependencies = {
     '@phaser-game-engines/toolkit': toolkitDependency(packageSource, target, packageVersion),
     phaser: '^3.90.0',
@@ -96,19 +116,22 @@ function starterFiles(options) {
       private: true,
       version: '0.0.0',
       type: 'module',
-      scripts: { dev: 'vite', build: 'vite build', test: 'vitest run', ...(language === 'ts' ? { typecheck: 'tsc --noEmit' } : {}) },
+      scripts: { dev: 'vite', build: 'vite build', test: 'vitest run', verify: `npm test${language === 'ts' ? ' && npm run typecheck' : ''} && npm run build`, ...(language === 'ts' ? { typecheck: 'tsc --noEmit' } : {}), ...(deploy === 'github-pages' ? { deploy: 'vite build' } : {}) },
       dependencies,
       devDependencies,
     }, null, 2),
-    'index.html': indexHtml(genre, extension),
+    'index.html': template === 'recommended' ? recommendedIndexHtml(genre, extension) : indexHtml(genre, extension),
     '.gitignore': 'node_modules/\ndist/',
-    'README.md': starterReadme({ genre, language, recipe, input }),
+    'README.md': starterReadme({ genre, language, template, recipe, input, features, deploy }),
   };
   if (language === 'ts') common['tsconfig.json'] = JSON.stringify({ compilerOptions: {
     target: 'ES2022', useDefineForClassFields: true, module: 'ESNext', moduleResolution: 'Bundler',
     strict: true, noEmit: true, skipLibCheck: true,
   }, include: ['src/**/*.ts'] }, null, 2);
-  return { ...common, ...genreFiles(genre, extension, recipe, input) };
+  const generated = template === 'recommended'
+    ? recommendedFiles({ genre, extension, recipe, input, features })
+    : genreFiles(genre, extension, recipe, input);
+  return { ...common, ...generated, ...deploymentFiles(deploy) };
 }
 
 function indexHtml(genre, extension) {
@@ -119,13 +142,26 @@ function indexHtml(genre, extension) {
 </html>`;
 }
 
-function starterReadme({ genre, language, recipe, input }) {
+function starterReadme({ genre, language, template, recipe, input, features, deploy }) {
   return `# ${genre} starter
 
-Generated as a ${language.toUpperCase()} ${genre} project using the ${recipe} recipe and ${input} input.
+Generated as a ${language.toUpperCase()} ${template} ${genre} project using the ${recipe} recipe and ${input} input.
 
-Run \`npm install\`, then \`npm run dev\`. Run the headless logic test with \`npm test\`.
+Run \`npm install\`, then \`npm run dev\`. Use \`npm run verify\` before shipping; it runs headless rules tests${language === 'ts' ? ', type checking,' : ''} and a production build.
+
+The game loop is title → controls → play → result → restart. Content, rules, presentation, input, and scenes are separate so normal changes stay game-owned.${Object.entries(features).filter(([, enabled]) => enabled).length ? ` Optional working seams: ${Object.entries(features).filter(([, enabled]) => enabled).map(([name]) => name).join(', ')}.` : ''}
+${deploy === 'none' ? '' : `\nDeployment instructions are in \`DEPLOYMENT.md\`.`}
 `;
+}
+
+function deploymentFiles(deploy) {
+  if (deploy === 'none') return {};
+  if (deploy === 'github-pages') return {
+    'vite.config.js': `import { defineConfig } from 'vite';\nexport default defineConfig(({ mode }) => ({ base: mode === 'production' ? './' : '/' }));`,
+    '.github/workflows/deploy.yml': `name: Deploy game\non:\n  push:\n    branches: [main]\n  workflow_dispatch:\npermissions:\n  contents: read\n  pages: write\n  id-token: write\nconcurrency:\n  group: pages\n  cancel-in-progress: true\njobs:\n  deploy:\n    environment:\n      name: github-pages\n      url: \${{ steps.deployment.outputs.page_url }}\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with: { node-version: 22, cache: npm }\n      - run: npm ci\n      - run: npm run build\n      - uses: actions/upload-pages-artifact@v3\n        with: { path: dist }\n      - id: deployment\n        uses: actions/deploy-pages@v4`,
+    'DEPLOYMENT.md': '# Deploy to GitHub Pages\n\nPush to `main`, then enable **Settings → Pages → GitHub Actions**. The included workflow builds and deploys `dist/`; the relative Vite base works for repository subpaths.\n',
+  };
+  return { 'DEPLOYMENT.md': '# Deploy to a static host\n\nRun `npm run build`, then publish the generated `dist/` directory to Netlify, Cloudflare Pages, Render, or any static host. Build command: `npm run build`. Publish directory: `dist`. For a subpath deployment, add `vite.config.js` with `base: \'/your-path/\'`.\n' };
 }
 
 function genreFiles(genre, extension, recipe, input) {
