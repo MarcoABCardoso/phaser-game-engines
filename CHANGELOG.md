@@ -7,6 +7,23 @@ contain documented breaking changes.
 
 No changes yet.
 
+## [0.1.2] - 2026-07-21
+
+### Added
+
+- Generator-backed basic samples with an automated freshness check and explicit
+  local toolkit dependencies for workspace development.
+- A second generated battle command demonstrating a higher-risk rules choice.
+
+### Fixed
+
+- Recommended starters now stop active title/result scenes before browser
+  controls start play.
+- Generated top-down goals reliably finish on contact and movement presentation
+  reads Arcade velocity.
+- Generated battle scenes read game-owned state from the controller's public
+  state shape and start without a render failure.
+
 ## [0.1.1] - 2026-07-19
 
 ### Added
