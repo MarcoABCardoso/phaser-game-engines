@@ -111,7 +111,7 @@ return {
 };
 
 // Presenter
-function onBattleEvent(type, payload) {
+function pgeOnBattleEvent(type, payload) {
   if (type !== 'effectRequested') return;
   animate(payload.effect).then(() => battle.completeEffect());
 }

@@ -27,7 +27,7 @@ export class InventoryScene extends ToolkitInventoryScene {
 
   getInventory() { return campaign.inventory; }
 
-  createInventoryDisplay() {
+  pgeCreateInventoryDisplay() {
     this.cameras.main.setBackgroundColor('#0f172a');
     this.add.text(32, 24, 'Inventory', { fontFamily: 'sans-serif', fontSize: '30px', color: '#ffffff' });
     this.add.text(32, 66, 'Drag to equip · Double-click tonic to use · S: sort · I/Esc: close', {
@@ -44,7 +44,7 @@ export class InventoryScene extends ToolkitInventoryScene {
     });
   }
 
-  renderInventoryState(state) {
+  pgeRenderInventoryState(state) {
     const player = campaign.snapshot().player;
     const stats = campaign.playerStats();
     this.stats.setText([

@@ -17,8 +17,8 @@ export default class InventoryScene extends Phaser.Scene {
   }
 
   getInventory() { throw new Error('InventoryScene subclasses must implement getInventory()'); }
-  createInventoryDisplay() {}
-  renderInventoryState() {}
+  pgeCreateInventoryDisplay() {}
+  pgeRenderInventoryState() {}
 
   create() {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => runCleanups([
@@ -32,7 +32,7 @@ export default class InventoryScene extends Phaser.Scene {
     }
     this.unsubscribeInventory = this.inventory.subscribe?.(() => this.refresh());
     for (const mechanic of this.recipeComposition.mechanics) this.mechanicHost.install(mechanic);
-    this.createInventoryDisplay();
+    this.pgeCreateInventoryDisplay();
     this.refresh();
     this.lifecycle.emit(lifecycleEvent.ready, { scene: this });
   }
@@ -44,7 +44,7 @@ export default class InventoryScene extends Phaser.Scene {
 
   refresh() {
     const state = this.inventory.snapshot();
-    this.renderInventoryState(state);
+    this.pgeRenderInventoryState(state);
     this.lifecycle.emit('refresh', { scene: this, state });
   }
 }

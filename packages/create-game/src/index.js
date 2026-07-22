@@ -163,7 +163,7 @@ ${genre === 'battle' ? '' : `| Goal appearance | \`src/entities/GoalEntity.${lan
 The toolkit owns movement, physics adaptation, entity scheduling, validation,
 and lifecycle timing. The generated \`GameScene\` connects those package hooks to
 your content, rules, and presentation.${genre === 'battle' ? '' : ` In particular, entities do not end the
-stage: \`GameScene.onTick()\` gathers runtime facts, calls
+stage: \`GameScene.pgeOnTick()\` gathers runtime facts, calls
 \`getStageOutcome()\`, and applies the returned outcome once.`}
 
 The player is a persistent, scene-owned actor because movement, physics,

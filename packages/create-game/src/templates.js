@@ -233,14 +233,14 @@ ${ext === 'ts' ? '  hud!: ReturnType<typeof installHud>;\n  goal!: GoalEntity;\n
   }
 
   // Toolkit lifecycle hook: cache the game-owned objective after entities spawn.
-  onEntitiesBuilt() {
+  pgeOnEntitiesBuilt() {
     const goal = this.entities?.get('signal');
     if (!goal) throw new Error('Level must contain the signal goal entity.');
     this.goal = goal${type(ext, ' as GoalEntity')};
   }
 
   // Toolkit lifecycle hook: install game-owned presentation for each scene run.
-  onReady() {
+  pgeOnReady() {
     this.stageFinished = false;
     this.hud = installHud(this, 'Objective: reach the gold signal');
     this.hud.setControls(controlsLabel);
@@ -248,7 +248,7 @@ ${ext === 'ts' ? '  hud!: ReturnType<typeof installHud>;\n  goal!: GoalEntity;\n
   }
 
   // Game orchestration: gather runtime facts, ask the pure rule, then apply its outcome.
-  onTick(time${type(ext, ': number')}, _delta${type(ext, ': number')}) {
+  pgeOnTick(time${type(ext, ': number')}, _delta${type(ext, ': number')}) {
 ${record ? `    ${record}\n` : ''}    updatePlayerPresentation(this, time);
     const playerPosition = ${ext === 'ts'
     ? '(this.player!.body as { center?: { x: number, y: number } })?.center ?? this.player!'
@@ -300,8 +300,8 @@ ${ext === 'ts' ? '  status!: Phaser.GameObjects.Text;\n' : ''}  constructor() { 
   }
   getTargetOptions() { return []; }
   chooseAiCommand(_state${type(ext, ': unknown')}, actorId${type(ext, ': string | number')}) { return { id: 'focus', actorId }; }
-  createBattleDisplay() { this.status = addHelp(this, 'Reduce the rival signal to zero.'); }
-  renderBattleState(state${type(ext, ': any')}) {
+  pgeCreateBattleDisplay() { this.status = addHelp(this, 'Reduce the rival signal to zero.'); }
+  pgeRenderBattleState(state${type(ext, ': any')}) {
     this.status.setText('Your signal: ' + state.game.playerResolve + '\\nRival signal: ' + state.game.rivalResolve);
     if (state.machine.phase === 'finished') { ${save} playCue(this, 'win'); this.time.delayedCall(250, () => this.scene.start('result', { won: state.machine.outcome?.kind === 'won' })); }
   }

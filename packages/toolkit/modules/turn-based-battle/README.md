@@ -31,6 +31,11 @@ const rules = {
 
 `applyChanges` is an optional generic helper for `set`, `increment`, `append`, and `remove` state patches. It does not attach gameplay meaning to any field. The Phaser `BattleScene` is similarly optional and has no menu policy. Add `createBattlePresentationRecipe()` for command and target menus, remappable keyboard/gamepad navigation, AI/effect pacing, reduced motion, readable focus, and text scaling. Games still supply every command, target, rule, and state renderer.
 
+`BattleScene` calls the prefixed extension hooks `pgeCreateBattleDisplay()`,
+`pgeRenderBattleState(state)`, and `pgeOnBattleEvent(type, payload)`. The `pge`
+prefix distinguishes toolkit-invoked hooks from ordinary game-owned helpers and
+callable scene APIs.
+
 ```js
 class MyBattleScene extends BattleScene {
   constructor() {

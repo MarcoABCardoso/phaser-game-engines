@@ -47,8 +47,8 @@ export class InventoryScene<Item = unknown, Context = unknown> extends Phaser.Sc
   constructor(config?: Phaser.Types.Scenes.SettingsConfig & { recipes?: unknown[] });
   inventory: Inventory<Item, Context>;
   getInventory(): Inventory<Item, Context>;
-  createInventoryDisplay(): void;
-  renderInventoryState(state: InventoryState<Item>): void;
+  pgeCreateInventoryDisplay(): void;
+  pgeRenderInventoryState(state: InventoryState<Item>): void;
   moveInventoryItem(from: InventoryLocation, to: InventoryLocation): boolean;
   useInventoryItem(location: InventoryLocation, context?: Context): unknown;
   refresh(): void;

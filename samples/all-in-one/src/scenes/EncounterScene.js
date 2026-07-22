@@ -62,7 +62,7 @@ export class EncounterScene extends BattleScene {
     }
   }
 
-  createBattleDisplay() {
+  pgeCreateBattleDisplay() {
     this.cameras.main.setBackgroundColor('#172554');
     this.add.rectangle(480, 270, 960, 540, 0x172554);
     this.add.ellipse(760, 190, 360, 95, 0x334155, 0.65);
@@ -104,7 +104,7 @@ export class EncounterScene extends BattleScene {
     });
   }
 
-  renderBattleState(state) {
+  pgeRenderBattleState(state) {
     const { player, enemies } = state.game;
     const playerRatio = player.maxHp ? player.hp / player.maxHp : 0;
     this.playerHpFill.displayWidth = 240 * playerRatio;
@@ -122,7 +122,7 @@ export class EncounterScene extends BattleScene {
     this.status.setText(this.lastEvent);
   }
 
-  onBattleEvent(type, payload) {
+  pgeOnBattleEvent(type, payload) {
     if (type === 'damageDealt') {
       const attacker = payload.actorId === 'player' ? 'You' : this.battle.state.game.enemies[payload.actorId]?.label;
       const target = payload.targetId === 'player' ? 'you' : this.battle.state.game.enemies[payload.targetId]?.label;

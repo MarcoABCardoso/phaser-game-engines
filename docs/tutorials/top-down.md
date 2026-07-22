@@ -25,7 +25,7 @@ Add an interactable to the generated `entitySpecs` array:
 ```
 
 The entity advertises an action; it does not read a keyboard key. Override
-`onInteract(entity)` when the game needs behavior beyond the default message.
+`pgeOnInteract(entity)` when the game needs behavior beyond the default message.
 
 ## 3. Add policy only when needed
 
@@ -42,4 +42,3 @@ npm run build
 ```
 
 The logic test uses the headless movement export. Deploy `dist/` as static files.
-

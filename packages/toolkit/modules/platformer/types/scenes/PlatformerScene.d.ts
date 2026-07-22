@@ -126,7 +126,7 @@ export default class PlatformerScene extends Phaser.Scene {
         [key: string]: any;
     });
     create(): void;
-    init(): void;
+    pgeInit(): void;
     getLevel(): void;
     createTraversalController(): Readonly<{
         reset: (y?: number) => any;
@@ -164,9 +164,9 @@ export default class PlatformerScene extends Phaser.Scene {
         readonly active: boolean;
         readonly request: any;
     }>;
-    onReady(): void;
-    onEntitiesBuilt(): void;
-    onResetTransient(): void;
+    pgeOnReady(): void;
+    pgeOnEntitiesBuilt(): void;
+    pgeOnResetTransient(): void;
     jumpVelocity(): number;
     moveMaxSpeed(): number;
     moveAccel(): number;
@@ -179,7 +179,7 @@ export default class PlatformerScene extends Phaser.Scene {
     fastFallGravity(): number;
     wallSlideConfig(): null;
     ledgeGrabConfig(): null;
-    updatePlayerVisual(): void;
+    pgeUpdatePlayerVisual(): void;
     createPlayerObject(x: any, y: any): Phaser.GameObjects.Rectangle;
     spawnPoint(): any;
     currentDangerTier(): number;
@@ -191,16 +191,16 @@ export default class PlatformerScene extends Phaser.Scene {
      */
     readInputIntent(time: any, delta: any): import('@phaser-game-engines/toolkit/core').InputIntentSource;
     /** @param {number} _time @param {number} _delta */
-    onTick(_time: number, _delta: number): void;
-    onJump(): void;
-    onAirJump(): void;
-    onWallJump(): void;
-    onDash(): void;
-    onLedgeGrab(): void;
-    onMantle(): void;
-    onLanding(): void;
-    onSprint(): void;
-    onAreaEnter(): void;
+    pgeOnTick(_time: number, _delta: number): void;
+    pgeOnJump(): void;
+    pgeOnAirJump(): void;
+    pgeOnWallJump(): void;
+    pgeOnDash(): void;
+    pgeOnLedgeGrab(): void;
+    pgeOnMantle(): void;
+    pgeOnLanding(): void;
+    pgeOnSprint(): void;
+    pgeOnAreaEnter(): void;
     addSolid(rect: any, color: any): Phaser.GameObjects.Rectangle;
     buildWorld(): void;
     oneWayProcess(player: any, platform: any): boolean;

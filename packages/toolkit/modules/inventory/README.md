@@ -27,9 +27,12 @@ as `usable` or `equip:weapon` provide convenient defaults.
 
 Extend `InventoryScene`, return the persistent model from `getInventory()`, and
 install `createInventoryDragDropRecipe()` for pointer/touch controls. Override
-`createInventoryDisplay()` and `renderInventoryState()` to place stats, health,
+`pgeCreateInventoryDisplay()` and `pgeRenderInventoryState()` to place stats, health,
 descriptions, or any other game-owned data beside the slots. Supply `onActivate`
 to handle a double-click on an item, such as delegating to `inventory.use()`.
+
+The `pge` prefix marks methods that the toolkit invokes as scene extension
+hooks; unprefixed methods remain game-owned helpers or callable scene APIs.
 
 ```js
 class BagScene extends InventoryScene {

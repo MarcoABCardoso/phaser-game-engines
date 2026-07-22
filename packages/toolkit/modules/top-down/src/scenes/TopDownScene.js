@@ -43,10 +43,10 @@ export default class TopDownScene extends Phaser.Scene {
   moveSpeed() { return 210; }
   statusText() { return ''; }
   getMechanics() { return this.configuredMechanics; }
-  onEntitiesBuilt() {}
-  onReady() {}
+  pgeOnEntitiesBuilt() {}
+  pgeOnReady() {}
   /** @param {number} _time @param {number} _delta */
-  onTick(_time, _delta) {}
+  pgeOnTick(_time, _delta) {}
 
   create() {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -117,7 +117,7 @@ export default class TopDownScene extends Phaser.Scene {
     this.contextualActionActivation = null;
     this.entities = this.worldRuntime.entities;
     this.entities.build(this, this.level.entitySpecs);
-    this.onEntitiesBuilt();
+    this.pgeOnEntitiesBuilt();
     this.prompt = this.add.text(12, 12, '', {
       fontFamily: 'sans-serif',
       fontSize: '16px',
@@ -125,7 +125,7 @@ export default class TopDownScene extends Phaser.Scene {
       backgroundColor: '#00000099',
       padding: { x: 6, y: 4 },
     }).setScrollFactor(0).setDepth(100);
-    this.onReady();
+    this.pgeOnReady();
     this.lifecycle.emit(lifecycleEvent.ready, { scene: this });
   }
 
@@ -204,7 +204,7 @@ export default class TopDownScene extends Phaser.Scene {
         ? this.message
         : (this.currentContextualAction?.label ?? this.statusText()),
     );
-    this.onTick(time, delta);
+    this.pgeOnTick(time, delta);
     this.lifecycle.emit(lifecycleEvent.tick, { scene: this, time, delta });
   }
 
@@ -233,7 +233,7 @@ export default class TopDownScene extends Phaser.Scene {
 
   interact(entity) {
     if (entity.spec.message) this.showMessage(entity.spec.message);
-    this.onInteract(entity);
+    this.pgeOnInteract(entity);
   }
 
   showMessage(message, duration = 2500) {
@@ -252,9 +252,9 @@ export default class TopDownScene extends Phaser.Scene {
 
   enterArea(to, entry) {
     this.transitioning = true;
-    this.onEnterArea(to, entry);
+    this.pgeOnEnterArea(to, entry);
   }
 
-  onInteract() {}
-  onEnterArea() {}
+  pgeOnInteract() {}
+  pgeOnEnterArea() {}
 }

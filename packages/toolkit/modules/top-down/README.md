@@ -88,8 +88,10 @@ const stop = scene.lifecycle.on(lifecycleEvent.tick, ({ delta }) => mechanic.upd
 scene.lifecycle.once(lifecycleEvent.shutdown, stop);
 ```
 
-For one game scene's orchestration, override `onEntitiesBuilt()` to cache
-entity handles, `onReady()` to install presentation, and `onTick(time, delta)`
+Methods prefixed with `pge` are extension hooks invoked by the toolkit. Methods
+without that prefix remain ordinary game-owned helpers or callable scene APIs.
+For one game scene's orchestration, override `pgeOnEntitiesBuilt()` to cache
+entity handles, `pgeOnReady()` to install presentation, and `pgeOnTick(time, delta)`
 to evaluate game-owned rules. These hooks run immediately before their matching
 `ready` and `tick` lifecycle events. Entities should expose local state and
 resources; the scene should apply whole-stage outcomes such as saving or scene

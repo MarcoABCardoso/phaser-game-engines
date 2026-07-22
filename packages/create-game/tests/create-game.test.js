@@ -77,6 +77,15 @@ describe('project generator', () => {
     expect(result.files).toContain('src/presentation/styles.js');
     expect(result.files).toContain('public/assets/README.md');
     expect(readFileSync(join(target, 'README.md'), 'utf8')).toContain('title → controls → play → result → restart');
+    const gameScene = readFileSync(join(target, 'src/scenes/GameScene.js'), 'utf8');
+    if (genre === 'battle') {
+      expect(gameScene).toContain('pgeCreateBattleDisplay()');
+      expect(gameScene).toContain('pgeRenderBattleState(');
+    } else {
+      expect(gameScene).toContain('pgeOnEntitiesBuilt()');
+      expect(gameScene).toContain('pgeOnReady()');
+      expect(gameScene).toContain('pgeOnTick(');
+    }
   });
 
   it.each(['top-down', 'battle'])('stops active flow scenes before the %s browser button starts play', (genre) => {

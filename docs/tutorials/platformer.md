@@ -41,7 +41,7 @@ export function getStageOutcome({ player, goal }, radius = 48) {
 }
 ```
 
-`GameScene.onTick()` gathers the player and goal positions, calls this rule,
+`GameScene.pgeOnTick()` gathers the player and goal positions, calls this rule,
 and passes a returned outcome to `finishStage()`. The goal entity only renders
 the marker; it does not own the stage lifecycle.
 

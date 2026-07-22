@@ -32,7 +32,7 @@ import { validatePlatformerLevel } from '../systems/content.js';
 // to layer its ruleset on, so the engine has zero imports from the game or its content.
 //
 // The subclass supplies its world through getLevel() (see the LEVEL SCHEMA note there) and
-// wires its state up in init().
+// wires its state up in pgeInit().
 
 // --- Engine tuning (generic platformer feel; a game doesn't retune these) ---
 const ONE_WAY_GRACE = 8; // px slack for landing on a one-way ("thin") platform's top
@@ -90,7 +90,7 @@ export default class PlatformerScene extends Phaser.Scene {
       ], 'Platformer scene shutdown failed.');
     });
     // The subclass initialises game-owned state before anything reads it.
-    this.init();
+    this.pgeInit();
 
     // LEVEL SCHEMA (returned by getLevel()): {
     //   world: {width,height}, spawn: {x,y},
@@ -138,7 +138,7 @@ export default class PlatformerScene extends Phaser.Scene {
     // Every targetable/collectible/autonomous entity lives in one instantiated list; the
     // scene loops over it generically. Built after the player so entities can read it.
     this.entities.build(this, this.level.entitySpecs);
-    this.onEntitiesBuilt();
+    this.pgeOnEntitiesBuilt();
 
     this.physics.add.collider(this.player, this.solids);
     // Ride-on moving platforms live in their own dynamic group so they can move; one
@@ -174,19 +174,19 @@ export default class PlatformerScene extends Phaser.Scene {
     // Per-scene transient state (engine + game).
     this.resetTransient();
 
-    this.onReady();
+    this.pgeOnReady();
     this.lifecycle.emit(lifecycleEvent.ready, { scene: this });
   }
 
   // --- overridable HOOKS & PROVIDERS (generic defaults; a game overrides) -----
   // Lifecycle
-  init() {} // subclass: load game-owned state
+  pgeInit() {} // subclass: load game-owned state
   getLevel() { throw new Error('PlatformerScene.getLevel() must be overridden'); }
   createTraversalController() { return createHeadlessTraversalController(); }
   createAreaTransitionController() { return createHeadlessAreaTransitionController(); }
-  onReady() {} // subclass: launch HUD, install debug hooks
-  onEntitiesBuilt() {} // subclass: cache typed entity handles for its HUD
-  onResetTransient() {} // subclass: reset its own scene-local transient state
+  pgeOnReady() {} // subclass: launch HUD, install debug hooks
+  pgeOnEntitiesBuilt() {} // subclass: cache typed entity handles for its HUD
+  pgeOnResetTransient() {} // subclass: reset its own scene-local transient state
   // Movement parameters
   jumpVelocity() { return -420; }
   moveMaxSpeed() { return 160; }
@@ -202,7 +202,7 @@ export default class PlatformerScene extends Phaser.Scene {
   fastFallGravity() { return 0; } // extra downward gravity while holding down in the air (0 = off)
   wallSlideConfig() { return null; } // null = no wall slide/jump; else {slideSpeed,jumpPushX,lockMs}
   ledgeGrabConfig() { return null; } // null = no ledge grab; else {reach,band,cooldownMs}
-  updatePlayerVisual(/* time, onGround */) {}
+  pgeUpdatePlayerVisual(/* time, onGround */) {}
   createPlayerObject(x, y) {
     const r = this.add.rectangle(x, y, DEFAULT_BODY_W, DEFAULT_BODY_H, PAL.player);
     this.physics.add.existing(r);
@@ -266,16 +266,16 @@ export default class PlatformerScene extends Phaser.Scene {
   }
   // Frame hook + gameplay events the game reacts to.
   /** @param {number} _time @param {number} _delta */
-  onTick(_time, _delta) {}
-  onJump() {}
-  onAirJump() { this.onJump(); } // a mid-air (double) jump; by default counts like any jump
-  onWallJump() { this.onJump(); } // a jump kicked off a wall; by default counts like any jump
-  onDash(/* dir */) {}
-  onLedgeGrab() {} // caught a ledge and started hanging
-  onMantle() { this.onJump(); } // climbed up off a hung ledge
-  onLanding(/* fact */) {}
-  onSprint(/* dt */) {}
-  onAreaEnter(/* areaId, entryId */) {} // arrived in a freshly-loaded area (music, a toast…)
+  pgeOnTick(_time, _delta) {}
+  pgeOnJump() {}
+  pgeOnAirJump() { this.pgeOnJump(); } // a mid-air (double) jump; by default counts like any jump
+  pgeOnWallJump() { this.pgeOnJump(); } // a jump kicked off a wall; by default counts like any jump
+  pgeOnDash(/* dir */) {}
+  pgeOnLedgeGrab() {} // caught a ledge and started hanging
+  pgeOnMantle() { this.pgeOnJump(); } // climbed up off a hung ledge
+  pgeOnLanding(/* fact */) {}
+  pgeOnSprint(/* dt */) {}
+  pgeOnAreaEnter(/* areaId, entryId */) {} // arrived in a freshly-loaded area (music, a toast…)
 
   // --- world construction ---------------------------------------------------
 
@@ -366,7 +366,7 @@ export default class PlatformerScene extends Phaser.Scene {
     this.player.setAlpha(1);
 
     // The game resets its own per-run transient state (and seeds this run's vitals) here.
-    this.onResetTransient();
+    this.pgeOnResetTransient();
 
     // Match the body's speed cap to the freshly-seeded run (exhaustion etc. may change it).
     this.player.body.setMaxVelocity(this.moveMaxSpeed(), 2000);
@@ -412,7 +412,7 @@ export default class PlatformerScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.level.world.width, this.level.world.height);
     this.buildWorld();
     this.entities.build(this, this.level.entitySpecs);
-    this.onEntitiesBuilt();
+    this.pgeOnEntitiesBuilt();
   }
 
   // A mid-run AREA TRANSITION (a "loading screen"): fade out, swap to `areaId`, drop the
@@ -430,7 +430,7 @@ export default class PlatformerScene extends Phaser.Scene {
       this.player.body.reset(entry.x, entry.y);
       cam.centerOn(entry.x, entry.y);
       this.resetAreaTransient();
-      this.onAreaEnter(areaId, entryId);
+      this.pgeOnAreaEnter(areaId, entryId);
       cam.fadeIn(180, 6, 8, 12);
       this.areaTransitionController.complete();
       this.transitioning = false;
@@ -457,7 +457,7 @@ export default class PlatformerScene extends Phaser.Scene {
   // game marks permanently done rebuilds into its done state via each entity's spawn().
   resetObstacles() {
     this.entities.build(this, this.level.entitySpecs);
-    this.onEntitiesBuilt();
+    this.pgeOnEntitiesBuilt();
   }
 
   // --- input & movement ------------------------------------------------------
@@ -492,10 +492,10 @@ export default class PlatformerScene extends Phaser.Scene {
     this.lifecycle.emit('beforeContextualActions', { scene: this, time, delta });
     this.resolveContextualActions(time, delta);
     // The game advances its per-frame systems (map knowledge, danger clock…).
-    this.onTick(time, delta);
+    this.pgeOnTick(time, delta);
     this.lifecycle.emit(lifecycleEvent.tick, { scene: this, time, delta });
 
-    this.updatePlayerVisual(time, onGround);
+    this.pgeUpdatePlayerVisual(time, onGround);
 
     this.prevPlayerX = this.player.x;
   }
@@ -583,21 +583,21 @@ export default class PlatformerScene extends Phaser.Scene {
 
   handleTraversalEvent(event, time) {
     if (event.type === 'dash') {
-      this.onDash(event.dir);
+      this.pgeOnDash(event.dir);
     } else if (event.type === 'jump') {
-      if (event.kind === 'ground') this.onJump();
-      else if (event.kind === 'wall') this.onWallJump();
-      else if (event.kind === 'air') this.onAirJump();
+      if (event.kind === 'ground') this.pgeOnJump();
+      else if (event.kind === 'wall') this.pgeOnWallJump();
+      else if (event.kind === 'air') this.pgeOnAirJump();
     } else if (event.type === 'ledgeGrab') {
-      this.onLedgeGrab();
+      this.pgeOnLedgeGrab();
     } else if (event.type === 'mantle') {
-      this.onMantle();
+      this.pgeOnMantle();
     } else if (event.type === 'land') {
       const fact = { drop: event.drop, impactVelocity: event.impactVelocity };
       this.lifecycle.emit('landing', { scene: this, ...fact });
-      this.onLanding(fact);
+      this.pgeOnLanding(fact);
     } else if (event.type === 'sprint') {
-      this.onSprint(event.delta);
+      this.pgeOnSprint(event.delta);
     }
   }
 

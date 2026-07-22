@@ -133,9 +133,9 @@ export class BattleScene<Spec = unknown, GameState = unknown, Outcome = unknown>
   battle: Battle<Spec, GameState, Outcome>;
   getBattle(): Spec;
   getBattleRules(): BattleRules<Spec, GameState, Outcome>;
-  createBattleDisplay(): void;
-  onBattleEvent(type: string, payload: unknown): void;
-  renderBattleState(state: BattleState<GameState, Outcome>): void;
+  pgeCreateBattleDisplay(): void;
+  pgeOnBattleEvent(type: string, payload: unknown): void;
+  pgeRenderBattleState(state: BattleState<GameState, Outcome>): void;
   submitBattleCommand(command: BattleCommand): void;
 }
 

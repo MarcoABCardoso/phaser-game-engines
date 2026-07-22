@@ -21,7 +21,7 @@ import { PlatformerScene } from '@phaser-game-engines/toolkit/platformer';
 export default class MyGameScene extends PlatformerScene {
   getLevel() { return myLevel; }
   jumpVelocity() { return -460; }
-  onJump() { /* game-specific progression */ }
+  pgeOnJump() { /* game-specific progression */ }
 }
 ```
 
@@ -38,13 +38,16 @@ runtime instance.
 `PlatformerScene` owns runtime scheduling, not a game's win or loss rules. A
 clear game-side flow is:
 
+Methods prefixed with `pge` are extension hooks invoked by the toolkit. Methods
+without that prefix remain ordinary game-owned helpers or callable scene APIs.
+
 ```text
-PlatformerScene.update → GameScene.onTick → getStageOutcome → GameScene.finishStage
+PlatformerScene.update → GameScene.pgeOnTick → getStageOutcome → GameScene.finishStage
 ```
 
-Keep outcome calculation in a pure game module. Use `onEntitiesBuilt()` to
-cache any relevant entity handles, `onReady()` to install presentation, and
-`onTick(time, delta)` to gather runtime facts and call the rule. The scene may
+Keep outcome calculation in a pure game module. Use `pgeOnEntitiesBuilt()` to
+cache any relevant entity handles, `pgeOnReady()` to install presentation, and
+`pgeOnTick(time, delta)` to gather runtime facts and call the rule. The scene may
 then save, play feedback, or transition based on the returned outcome.
 
 An entity should own its local resources and behavior. It should not decide
@@ -143,9 +146,9 @@ system rather than competing to consume a keyboard edge.
 ## Lifecycle events
 
 Each scene exposes a Phaser-free `lifecycle` channel. It publishes `ready` after
-the existing `onReady` hook, `tick` after each active world update, and
+the existing `pgeOnReady` hook, `tick` after each active world update, and
 `shutdown` when Phaser shuts the scene down. This lets multiple mechanics
-compose without competing for `onReady` or `onTick` overrides:
+compose without competing for `pgeOnReady` or `pgeOnTick` overrides:
 
 ```js
 import { lifecycleEvent } from '@phaser-game-engines/toolkit/core';
@@ -197,7 +200,7 @@ applies the patch to its Arcade body and maps events to the existing hooks.
 
 Landing events contain `{ drop, impactVelocity }`; the controller never assigns
 damage or health semantics. The base scene applies no consequence. A game can
-implement `onLanding(fact)`, install `createLandingConsequenceMechanic`, or
+implement `pgeOnLanding(fact)`, install `createLandingConsequenceMechanic`, or
 observe the `landing` event without carrying HP state.
 
 `createAreaTransitionController()` separately provides a deterministic

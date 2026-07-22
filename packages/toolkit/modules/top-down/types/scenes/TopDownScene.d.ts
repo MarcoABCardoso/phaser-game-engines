@@ -84,10 +84,10 @@ export default class TopDownScene extends Phaser.Scene {
     moveSpeed(): number;
     statusText(): string;
     getMechanics(): any[];
-    onEntitiesBuilt(): void;
-    onReady(): void;
+    pgeOnEntitiesBuilt(): void;
+    pgeOnReady(): void;
     /** @param {number} _time @param {number} _delta */
-    onTick(_time: number, _delta: number): void;
+    pgeOnTick(_time: number, _delta: number): void;
     create(): void;
     addSolid(rect: any, color?: number): Phaser.GameObjects.Rectangle;
     /**
@@ -111,6 +111,6 @@ export default class TopDownScene extends Phaser.Scene {
     showMessage(message: any, duration?: number): void;
     panCameraTo(x: any, y: any, duration?: number): void;
     enterArea(to: any, entry: any): void;
-    onInteract(): void;
-    onEnterArea(): void;
+    pgeOnInteract(): void;
+    pgeOnEnterArea(): void;
 }

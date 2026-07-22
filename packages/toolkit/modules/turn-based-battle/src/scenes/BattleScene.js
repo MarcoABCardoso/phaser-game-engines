@@ -19,9 +19,9 @@ export default class BattleScene extends Phaser.Scene {
 
   getBattle() { throw new Error('BattleScene subclasses must implement getBattle()'); }
   getBattleRules() { throw new Error('BattleScene subclasses must implement getBattleRules()'); }
-  createBattleDisplay() {}
-  onBattleEvent() {}
-  renderBattleState() {}
+  pgeCreateBattleDisplay() {}
+  pgeOnBattleEvent() {}
+  pgeRenderBattleState() {}
 
   create() {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => runCleanups([
@@ -34,7 +34,7 @@ export default class BattleScene extends Phaser.Scene {
       emit: this.handleBattleEvent.bind(this),
     });
     for (const mechanic of this.recipeComposition.mechanics) this.mechanicHost.install(mechanic);
-    this.createBattleDisplay();
+    this.pgeCreateBattleDisplay();
     this.battle.start();
     this.refresh();
     this.lifecycle.emit(lifecycleEvent.ready, { scene: this });
@@ -50,12 +50,12 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   handleBattleEvent(type, payload) {
-    this.onBattleEvent(type, payload);
+    this.pgeOnBattleEvent(type, payload);
     this.lifecycle.emit('battleEvent', { scene: this, type, payload });
   }
 
   refresh() {
-    this.renderBattleState(this.battle.state);
+    this.pgeRenderBattleState(this.battle.state);
     this.lifecycle.emit('refresh', { scene: this, state: this.battle.state });
   }
 }

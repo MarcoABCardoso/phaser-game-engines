@@ -19,7 +19,7 @@ export class WorldScene extends TopDownScene {
 
   getLevel() { return world; }
 
-  onReady() {
+  pgeOnReady() {
     this.heading = this.add.text(16, 48, 'Top-down world', {
       fontFamily: 'sans-serif', fontSize: '24px', color: '#ffffff',
     }).setScrollFactor(0).setDepth(100);
@@ -40,7 +40,7 @@ export class WorldScene extends TopDownScene {
     this.scene.sleep();
   }
 
-  onTick() {
+  pgeOnTick() {
     if (Phaser.Input.Keyboard.JustDown(this.inventoryKey)) {
       this.player.body.setVelocity(0, 0);
       this.scene.launch('inventory');

@@ -23,14 +23,14 @@ export class GameScene extends TopDownScene {
   }
 
   // Toolkit lifecycle hook: cache the game-owned objective after entities spawn.
-  onEntitiesBuilt() {
+  pgeOnEntitiesBuilt() {
     const goal = this.entities?.get('signal');
     if (!goal) throw new Error('Level must contain the signal goal entity.');
     this.goal = goal;
   }
 
   // Toolkit lifecycle hook: install game-owned presentation for each scene run.
-  onReady() {
+  pgeOnReady() {
     this.stageFinished = false;
     this.hud = installHud(this, 'Objective: reach the gold signal');
     this.hud.setControls(controlsLabel);
@@ -38,7 +38,7 @@ export class GameScene extends TopDownScene {
   }
 
   // Game orchestration: gather runtime facts, ask the pure rule, then apply its outcome.
-  onTick(time, _delta) {
+  pgeOnTick(time, _delta) {
     updatePlayerPresentation(this, time);
     const playerPosition = this.player.body?.center ?? this.player;
     this.evaluateStageOutcome(playerPosition);

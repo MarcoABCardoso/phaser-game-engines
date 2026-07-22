@@ -27,9 +27,9 @@ export default class BattleScene extends Phaser.Scene {
     constructor(config?: {});
     getBattle(): void;
     getBattleRules(): void;
-    createBattleDisplay(): void;
-    onBattleEvent(): void;
-    renderBattleState(): void;
+    pgeCreateBattleDisplay(): void;
+    pgeOnBattleEvent(): void;
+    pgeRenderBattleState(): void;
     create(): void;
     update(time: any, delta: any): void;
     submitBattleCommand(command: any): void;

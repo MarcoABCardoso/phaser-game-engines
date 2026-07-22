@@ -16,8 +16,8 @@ export class GameScene extends BattleScene {
   }
   getTargetOptions() { return []; }
   chooseAiCommand(_state, actorId) { return { id: 'focus', actorId }; }
-  createBattleDisplay() { this.status = addHelp(this, 'Reduce the rival signal to zero.'); }
-  renderBattleState(state) {
+  pgeCreateBattleDisplay() { this.status = addHelp(this, 'Reduce the rival signal to zero.'); }
+  pgeRenderBattleState(state) {
     this.status.setText('Your signal: ' + state.game.playerResolve + '\nRival signal: ' + state.game.rivalResolve);
     if (state.machine.phase === 'finished') {  playCue(this, 'win'); this.time.delayedCall(250, () => this.scene.start('result', { won: state.machine.outcome?.kind === 'won' })); }
   }
