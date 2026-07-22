@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
 import { recommendedFiles, recommendedIndexHtml, recommendedRecipe } from './templates.js';
+export { addScene } from './add-scene.js';
 
 export const genres = Object.freeze(['platformer', 'top-down', 'battle']);
 export const languages = Object.freeze(['js', 'ts']);
@@ -19,6 +20,7 @@ export const packageVersion = JSON.parse(
 export const usage = `Usage:
   npm create @phaser-game-engines/game -- <directory> [options]
   create-phaser-game-engines <directory> [options]
+  create-phaser-game-engines add scene [directory] --genre <genre> [options]
 
 Options:
   --genre platformer|top-down|battle   Starter genre (default: platformer)
@@ -32,6 +34,8 @@ Options:
   --deploy none|github-pages|static    Add a deployment preset or guide
   --yes                                Accept defaults without prompts
   --package-source <repository>        Use packages from a local workspace
+  --name <SceneName>                   Added scene class (must end in Scene)
+  --key <scene-key>                    Added Phaser scene key
   --version                            Show the generator version
   --help                               Show this help`;
 

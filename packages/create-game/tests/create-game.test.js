@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  addScene,
   createProject,
   genres,
   inputAdapters,
@@ -258,6 +259,49 @@ describe('project generator', () => {
     writeFileSync(join(target, 'notes.txt'), 'keep me');
     expect(() => createProject({ targetDirectory: target })).toThrow(/not empty/);
     expect(readFileSync(join(target, 'notes.txt'), 'utf8')).toBe('keep me');
+  });
+
+  it('adds a recommended battle scene without changing existing project files', () => {
+    const target = join(temporaryRoot(), 'existing-game');
+    mkdirSync(join(target, 'src'), { recursive: true });
+    writeFileSync(join(target, 'package.json'), JSON.stringify({
+      type: 'module',
+      dependencies: { phaser: '^3.90.0', '@phaser-game-engines/toolkit': '^0.1.2' },
+    }));
+    writeFileSync(join(target, 'src', 'main.js'), 'export const existing = true;\n');
+
+    const result = addScene({ targetDirectory: target, genre: 'battle', name: 'EncounterScene' });
+
+    expect(result.files).toContain('src/scenes/EncounterScene.js');
+    expect(result.registration.import).toBe("import { EncounterScene } from './scenes/EncounterScene.js';");
+    expect(readFileSync(join(target, 'src', 'main.js'), 'utf8')).toBe('export const existing = true;\n');
+    expect(readFileSync(join(target, 'src', 'scenes', 'EncounterScene.js'), 'utf8')).toContain("key: 'encounter'");
+  });
+
+  it('infers TypeScript and refuses add-scene collisions', () => {
+    const target = join(temporaryRoot(), 'existing-ts-game');
+    mkdirSync(target, { recursive: true });
+    writeFileSync(join(target, 'package.json'), JSON.stringify({
+      dependencies: { phaser: '^3.90.0', '@phaser-game-engines/toolkit': '^0.1.2' },
+    }));
+    writeFileSync(join(target, 'tsconfig.json'), '{}');
+    const result = addScene({ targetDirectory: target, genre: 'top-down', name: 'WorldScene' });
+    expect(result.language).toBe('ts');
+    expect(result.files).toContain('src/scenes/WorldScene.ts');
+    expect(() => addScene({ targetDirectory: target, genre: 'top-down', name: 'WorldScene' })).toThrow(/Refusing to overwrite/);
+  });
+
+  it('supports the add scene CLI and prints manual registration guidance', () => {
+    const target = join(temporaryRoot(), 'cli-existing-game');
+    mkdirSync(target, { recursive: true });
+    writeFileSync(join(target, 'package.json'), JSON.stringify({
+      dependencies: { phaser: '^3.90.0', '@phaser-game-engines/toolkit': '^0.1.2' },
+    }));
+    const result = runCli('add', 'scene', target, '--genre', 'battle', '--name', 'CombatScene', '--yes');
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Added battle scene CombatScene (combat)');
+    expect(result.stdout).toContain('Register it in your Phaser entry point');
+    expect(result.stdout).toContain("import { CombatScene } from './scenes/CombatScene.js';");
   });
 });
 

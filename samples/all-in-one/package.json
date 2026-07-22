@@ -1,0 +1,20 @@
+{
+  "name": "all-in-one",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --force",
+    "build": "vite build",
+    "test": "vitest run",
+    "verify": "npm test && npm run build"
+  },
+  "dependencies": {
+    "@phaser-game-engines/toolkit": "file:../../packages/toolkit",
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
+  }
+}

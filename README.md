@@ -78,10 +78,8 @@ headless entry point.
 | --- | --- | --- |
 | Basic platformer | `npm run dev:platformer` | Platformer scene and traversal |
 | Basic top-down | `npm run dev:top-down` | Movement, walls, entities, and portals |
-| Non-combat top-down | `npm run dev:top-down-non-combat` | Contextual actions without health or combat |
+| All-in-one lab | `npm run dev:all-in-one` | Cross-engine scene flow and shared campaign state |
 | Basic battle | `npm run dev:battle` | Game-owned HP/MP rules |
-| PP battle | `npm run dev:battle-pp` | A different PP/type state schema |
-| Negotiation battle | `npm run dev:battle-negotiation` | A non-elimination outcome |
 
 Build every sample with `npm run build:samples`. The large-bundle warning from
 Vite reflects Phaser's baseline bundle and is currently expected.

@@ -1,4 +1,25 @@
 export type Genre = 'platformer' | 'top-down' | 'battle';
+export interface AddSceneOptions {
+  targetDirectory?: string;
+  genre: Genre;
+  name?: string;
+  key?: string;
+  language?: 'js' | 'ts';
+  template?: 'minimal' | 'recommended';
+  recipe?: string;
+}
+export interface AddSceneResult {
+  readonly targetDirectory: string;
+  readonly genre: Genre;
+  readonly language: 'js' | 'ts';
+  readonly template: 'minimal' | 'recommended';
+  readonly recipe: string;
+  readonly name: string;
+  readonly key: string;
+  readonly files: readonly string[];
+  readonly registration: Readonly<{ import: string; scene: string }>;
+}
+export function addScene(options: AddSceneOptions): AddSceneResult;
 export type Language = 'js' | 'ts';
 export type Template = 'minimal' | 'recommended';
 export type Recipe = 'minimal' | 'precision-platformer' | 'exploration' | 'action-adventure' | 'menu-presentation';

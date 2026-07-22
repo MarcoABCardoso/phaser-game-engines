@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
-import { createProject, packageVersion, recipes, usage } from '../src/index.js';
+import { addScene, createProject, packageVersion, recipes, usage } from '../src/index.js';
 
 try {
   let options = parseArguments(process.argv.slice(2));
@@ -13,11 +13,24 @@ try {
     console.log(packageVersion);
     process.exit(0);
   }
-  if (process.stdin.isTTY && process.stdout.isTTY && !options.yes) options = await promptForOptions(options);
+  if (process.stdin.isTTY && process.stdout.isTTY && !options.yes) {
+    options = options.command === 'add-scene'
+      ? await promptForSceneOptions(options)
+      : await promptForOptions(options);
+  }
   applyDefaults(options);
-  const result = createProject(options);
-  console.log(`Created ${result.genre} ${result.language.toUpperCase()} ${result.template} starter at ${result.targetDirectory}`);
-  console.log(`Next: cd ${result.targetDirectory}\n      npm install\n      npm run dev`);
+  if (options.command === 'add-scene') {
+    const result = addScene(options);
+    console.log(`Added ${result.genre} scene ${result.name} (${result.key}) at ${result.targetDirectory}`);
+    for (const file of result.files) console.log(`  ${file}`);
+    console.log('\nRegister it in your Phaser entry point:');
+    console.log(`  ${result.registration.import}`);
+    console.log(`  scene: [...existingScenes, ${result.registration.scene}]`);
+  } else {
+    const result = createProject(options);
+    console.log(`Created ${result.genre} ${result.language.toUpperCase()} ${result.template} starter at ${result.targetDirectory}`);
+    console.log(`Next: cd ${result.targetDirectory}\n      npm install\n      npm run dev`);
+  }
 } catch (error) {
   console.error(error.message);
   console.error(`\n${usage}`);
@@ -26,6 +39,11 @@ try {
 
 function parseArguments(args) {
   const options = {};
+  if (args[0] === 'add') {
+    if (args[1] !== 'scene') throw new Error(`Unknown add target: ${args[1] ?? '<missing>'}.`);
+    options.command = 'add-scene';
+    args = args.slice(2);
+  }
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === '--help' || argument === '-h') return { help: true };
@@ -41,20 +59,42 @@ function parseArguments(args) {
     else if (argument === '--deploy') options.deploy = requiredValue(args, ++index, argument);
     else if (argument === '--yes' || argument === '-y') options.yes = true;
     else if (argument === '--package-source') options.packageSource = resolve(requiredValue(args, ++index, argument));
+    else if (argument === '--name') options.name = requiredValue(args, ++index, argument);
+    else if (argument === '--key') options.key = requiredValue(args, ++index, argument);
     else if (argument.startsWith('-')) throw new Error(`Unknown option: ${argument}`);
     else if (!options.targetDirectory) options.targetDirectory = resolve(argument);
     else throw new Error(`Unexpected argument: ${argument}`);
   }
+  if (!options.targetDirectory && options.command === 'add-scene') options.targetDirectory = resolve('.');
   if (!options.targetDirectory && !(process.stdin.isTTY && process.stdout.isTTY)) throw new Error('A target directory is required.');
   return options;
 }
 
 function applyDefaults(options) {
+  if (options.command === 'add-scene') {
+    options.template ??= 'recommended';
+    return;
+  }
   options.genre ??= 'platformer';
   options.language ??= 'js';
   options.template ??= 'recommended';
   options.input ??= 'keyboard';
   options.deploy ??= 'none';
+}
+
+async function promptForSceneOptions(options) {
+  const terminal = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    options.targetDirectory ??= resolve(await ask(terminal, 'Existing project directory', '.'));
+    options.genre ??= await choose(terminal, 'Scene genre', ['platformer', 'top-down', 'battle'], 'top-down');
+    options.template ??= await choose(terminal, 'Template', ['recommended', 'minimal'], 'recommended');
+    const availableRecipes = recipes[options.genre];
+    options.recipe ??= await choose(terminal, 'Recipe', availableRecipes, options.template === 'minimal' ? 'minimal' : availableRecipes.find((name) => name !== 'minimal'));
+    options.name ??= await ask(terminal, 'Scene class name', `New${options.genre.split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join('')}Scene`);
+    return options;
+  } finally {
+    terminal.close();
+  }
 }
 
 async function promptForOptions(options) {

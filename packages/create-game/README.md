@@ -53,5 +53,21 @@ static-host build contract. Every generated project includes `npm run verify`.
 Repository contributors can add `--package-source <repository-root>` to generate
 a project using local workspace packages before they are published.
 
+## Add a scene to an existing game
+
+Use `add scene` to scaffold another engine scene without replacing or rewriting
+the existing project:
+
+```bash
+npx @phaser-game-engines/create-game add scene . --genre battle --name EncounterScene
+```
+
+The command inspects `package.json`, infers JavaScript or TypeScript, refuses to
+overwrite existing files, and prints the import and Phaser scene-registration
+entry to add. Registration is deliberately manual because Phaser entry points
+are game-owned code and do not have a single safe structure for the generator
+to rewrite. Recommended scenes include separate content, rules, and rule tests;
+use `--template minimal` for a single-file integration proof.
+
 See the [versioned documentation](https://marcoabcardoso.github.io/phaser-game-engines/)
 for genre selection, tutorials, support status, and toolkit extension points.

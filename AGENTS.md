@@ -67,6 +67,10 @@ retain inactive compatibility methods for recipe-owned behavior.
   timers, bodies, and display objects.
 - Improve sample presentation only in sample/recipe code; do not move domain
   rules into base scenes.
+- Use `samples/all-in-one` as the cross-engine integration lab. Once it covers
+  the useful behavior of the older specialized samples, consolidate samples
+  around the simple `basic-*` teaching projects and this lab rather than keeping
+  overlapping demonstrations.
 
 ## Verification
 
