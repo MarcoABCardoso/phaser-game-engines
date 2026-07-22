@@ -9,8 +9,10 @@ called out in `CHANGELOG.md` with a migration example.
 
 - Node.js 20.19 or newer for package tools, headless tests, and simulations.
   CI exercises Node 20.19, 22, and 24.
-- Phaser 3.90 for the optional scene adapters.
-- ESM projects and modern browsers supported by Phaser 3.90 and Vite 8.
+- Phaser 4.2.1 or newer within the Phaser 4 major line for the optional scene
+  adapters. Phaser 3 is not supported.
+- ESM projects and modern WebGL-capable browsers supported by Phaser 4 and
+  Vite 8. Generated projects and samples select the WebGL renderer explicitly.
 
 The toolkit's explicit genre `/headless` entry points are supported in Node and
 must not evaluate Phaser or require browser globals. The `/platformer`,

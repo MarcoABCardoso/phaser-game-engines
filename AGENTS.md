@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is an npm workspace for a small, reusable Phaser 3 toolkit. Public runtime
+This is an npm workspace for a small, reusable Phaser 4 toolkit. Public runtime
 surfaces are subpath exports of `@phaser-game-engines/toolkit`:
 
 - `@phaser-game-engines/toolkit/platformer`
@@ -18,7 +18,7 @@ demonstrate consuming toolkit subpaths. It is not a game-content layer.
 
 ## Working conventions
 
-- The repository uses ESM JavaScript (`"type": "module"`), Phaser 3, Vite, and Vitest.
+- The repository uses ESM JavaScript (`"type": "module"`), Phaser 4, Vite, and Vitest.
 - The toolkit exposes public APIs through its manifest and maintains subpath
   exports for intended extension points.
 - Keep engine behavior data-driven and extension-oriented: use subclass hooks, registries, providers, or rule adapters rather than imports from a particular game.

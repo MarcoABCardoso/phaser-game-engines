@@ -1,6 +1,6 @@
 # @phaser-game-engines/toolkit/platformer
 
-A reusable Phaser 3 platformer engine built on Arcade Physics. The base
+A reusable Phaser 4 platformer engine built on Arcade Physics. The base
 `PlatformerScene` provides world adaptation, a data-driven entity loop, floor
 and one-way platforms, traversal, portals, contextual actions, and lifecycle
 events. It does not activate health, combat, checkpoints, dialogue, persistence,

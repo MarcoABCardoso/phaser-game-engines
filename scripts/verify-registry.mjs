@@ -30,7 +30,7 @@ try {
     'install', '--save-exact', '--ignore-scripts', '--no-audit', '--no-fund',
     `@phaser-game-engines/toolkit@${version}`,
     `@phaser-game-engines/create-game@${version}`,
-    'phaser@3.90.0', 'vite@8.1.5', 'vitest@4.1.10', 'typescript@7.0.2',
+    'phaser@4.2.1', 'vite@8.1.5', 'vitest@4.1.10', 'typescript@7.0.2',
   ], consumerDirectory);
 
   assertInstalledVersion('@phaser-game-engines/toolkit');

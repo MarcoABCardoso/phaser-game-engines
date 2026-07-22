@@ -1,6 +1,6 @@
 {
   "name": "@phaser-game-engines/create-game",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Create playable, tested Phaser Game Engines starter projects.",
   "license": "MIT",
   "type": "module",

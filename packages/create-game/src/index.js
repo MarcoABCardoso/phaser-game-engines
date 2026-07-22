@@ -109,7 +109,7 @@ function starterFiles(options) {
   const { target, projectName, genre, language, extension, template, recipe, input, features, deploy, packageSource, packageVersion } = options;
   const dependencies = {
     '@phaser-game-engines/toolkit': toolkitDependency(packageSource, target, packageVersion),
-    phaser: '^3.90.0',
+    phaser: '^4.2.1',
   };
   const devDependencies = { vite: '^8.1.5', vitest: '^4.1.10' };
   if (language === 'ts') devDependencies.typescript = '^7.0.2';
@@ -213,7 +213,7 @@ ${adapter.method}  getLevel() { return { world: { width: 960, height: 540 }, spa
 }
 ${adapter.setup}const controls = document.querySelector('#controls');
 if (controls) controls.textContent = 'Move: arrows/A-D. Jump: Space/Up.';
-new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#12151d', physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 1000 } } }, scene: [GameScene] });`,
+new Phaser.Game({ type: Phaser.WEBGL, parent: 'game', width: 960, height: 540, backgroundColor: '#12151d', physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 1000 } } }, scene: [GameScene] });`,
     [`src/game.test.${ext}`]: `import { expect, test } from 'vitest';
 import { createTraversalController } from '@phaser-game-engines/toolkit/platformer/headless';
 test('traversal starts from deterministic state', () => expect(createTraversalController().snapshot().facingDir).toBe(1));`,
@@ -232,7 +232,7 @@ ${constructor}${adapter.method}  getLevel() { return { world: { width: 960, heig
 }
 ${adapter.setup}const controls = document.querySelector('#controls');
 if (controls) controls.textContent = 'Move: arrows/WASD. Interact: E.';
-new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#18212d', physics: { default: 'arcade' }, scene: [GameScene] });`,
+new Phaser.Game({ type: Phaser.WEBGL, parent: 'game', width: 960, height: 540, backgroundColor: '#18212d', physics: { default: 'arcade' }, scene: [GameScene] });`,
     [`src/game.test.${ext}`]: `import { expect, test } from 'vitest';
 import { movementFromIntent } from '@phaser-game-engines/toolkit/top-down/headless';
 test('movement is deterministic', () => expect(movementFromIntent({ x: 1, y: 0 }, 200)).toEqual({ x: 200, y: 0 }));`,
@@ -284,7 +284,7 @@ import { rules } from './rules.js';
 class GameScene extends BattleScene${sceneType} { constructor() { super({ recipes: [createBattlePresentationRecipe()] }); } getBattle() { return {}; } getBattleRules() { return rules; } isPlayerTurn() { return false; } chooseAiCommand(${actorParameters}) { return { id: 'wait', actorId }; } }
 const controls = document.querySelector('#controls');
 if (controls) controls.textContent = 'The sample resolves one game-owned command.';
-new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 760, height: 480, backgroundColor: '#171525', scene: [GameScene] });`,
+new Phaser.Game({ type: Phaser.WEBGL, parent: 'game', width: 760, height: 480, backgroundColor: '#171525', scene: [GameScene] });`,
     [`src/game.test.${ext}`]: `import { expect, test } from 'vitest';
 import { Battle } from '@phaser-game-engines/toolkit/battle/headless';
 import { rules } from './rules.js';

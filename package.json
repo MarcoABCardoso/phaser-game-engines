@@ -1,6 +1,6 @@
 {
   "name": "phaser-game-engines",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "type": "module",
   "private": true,
   "license": "MIT",
@@ -54,7 +54,7 @@
     "build:battle-sample": "vite build samples/basic-turn-based-battle"
   },
   "devDependencies": {
-    "phaser": "^3.90.0",
+    "phaser": "^4.2.1",
     "typescript": "^7.0.2",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"

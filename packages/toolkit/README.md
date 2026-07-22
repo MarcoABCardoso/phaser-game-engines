@@ -1,6 +1,6 @@
 # @phaser-game-engines/toolkit
 
-Composable foundations for small Phaser 3 games. Install one package and import
+Composable foundations for small Phaser 4 games. Install one package and import
 only the genre and runtime surfaces the game uses.
 
 ```bash

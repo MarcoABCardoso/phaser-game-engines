@@ -7,6 +7,19 @@ contain documented breaking changes.
 
 No changes yet.
 
+## [0.2.0] - 2026-07-22
+
+### Changed
+
+- Upgraded the toolkit, samples, generated projects, and release verification
+  from Phaser 3.90 to Phaser 4.2.1. Phaser 3 is no longer supported.
+- Samples and generated projects now select Phaser's WebGL renderer explicitly.
+
+### Migration
+
+- Consumers using Phaser-backed scene adapters must install `phaser@^4.2.1`.
+  Headless entry points remain Phaser-free.
+
 ## [0.1.2] - 2026-07-21
 
 ### Added

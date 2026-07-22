@@ -7,7 +7,7 @@ import { EncounterScene } from './scenes/EncounterScene.js';
 import { InventoryScene } from './scenes/InventoryScene.js';
 
 const game = new Phaser.Game({
-  type: Phaser.AUTO,
+  type: Phaser.WEBGL,
   parent: 'game',
   width: 960,
   height: 540,

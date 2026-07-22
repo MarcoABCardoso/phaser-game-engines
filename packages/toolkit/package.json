@@ -1,7 +1,7 @@
 {
   "name": "@phaser-game-engines/toolkit",
-  "version": "0.1.2",
-  "description": "Headless and Phaser 3 foundations for platformer, top-down, and turn-based games.",
+  "version": "0.2.0",
+  "description": "Headless and Phaser 4 foundations for platformer, top-down, and turn-based games.",
   "license": "MIT",
   "type": "module",
   "types": "./modules/core/types/index.d.ts",
@@ -182,7 +182,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "phaser": "^3.90.0"
+    "phaser": "^4.2.1"
   },
   "peerDependenciesMeta": {
     "phaser": {

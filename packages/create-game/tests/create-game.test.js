@@ -47,6 +47,9 @@ describe('project generator', () => {
       expect(result.files).toContain(`src/game.test.${extension}`);
       expect(readFileSync(join(target, 'index.html'), 'utf8')).toContain(`/src/main.${extension}`);
       expect(readFileSync(join(target, `src/game.test.${extension}`), 'utf8')).toContain('/headless');
+      expect(readFileSync(join(target, `src/main.${extension}`), 'utf8')).toContain('type: Phaser.WEBGL');
+      const manifest = JSON.parse(readFileSync(join(target, 'package.json'), 'utf8'));
+      expect(manifest.dependencies.phaser).toBe('^4.2.1');
       if (language === 'ts') expect(result.files).toContain('tsconfig.json');
     },
   );
@@ -275,7 +278,7 @@ describe('project generator', () => {
     mkdirSync(join(target, 'src'), { recursive: true });
     writeFileSync(join(target, 'package.json'), JSON.stringify({
       type: 'module',
-      dependencies: { phaser: '^3.90.0', '@phaser-game-engines/toolkit': '^0.1.2' },
+      dependencies: { phaser: '^4.2.1', '@phaser-game-engines/toolkit': '^0.1.2' },
     }));
     writeFileSync(join(target, 'src', 'main.js'), 'export const existing = true;\n');
 
@@ -291,7 +294,7 @@ describe('project generator', () => {
     const target = join(temporaryRoot(), 'existing-ts-game');
     mkdirSync(target, { recursive: true });
     writeFileSync(join(target, 'package.json'), JSON.stringify({
-      dependencies: { phaser: '^3.90.0', '@phaser-game-engines/toolkit': '^0.1.2' },
+      dependencies: { phaser: '^4.2.1', '@phaser-game-engines/toolkit': '^0.1.2' },
     }));
     writeFileSync(join(target, 'tsconfig.json'), '{}');
     const result = addScene({ targetDirectory: target, genre: 'top-down', name: 'WorldScene' });
@@ -304,7 +307,7 @@ describe('project generator', () => {
     const target = join(temporaryRoot(), 'cli-existing-game');
     mkdirSync(target, { recursive: true });
     writeFileSync(join(target, 'package.json'), JSON.stringify({
-      dependencies: { phaser: '^3.90.0', '@phaser-game-engines/toolkit': '^0.1.2' },
+      dependencies: { phaser: '^4.2.1', '@phaser-game-engines/toolkit': '^0.1.2' },
     }));
     const result = runCli('add', 'scene', target, '--genre', 'battle', '--name', 'CombatScene', '--yes');
     expect(result.status).toBe(0);

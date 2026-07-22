@@ -1,6 +1,6 @@
 # @phaser-game-engines/toolkit/top-down
 
-A reusable Phaser 3 / Arcade Physics top-down engine. `TopDownScene` handles
+A reusable Phaser 4 / Arcade Physics top-down engine. `TopDownScene` handles
 eight-direction movement, solid walls, camera following, generic entities,
 contextual interactions, and portals. Health, inventory, persistence, combat,
 pickups, and enemies are optional policy.

@@ -1,6 +1,6 @@
 # Phaser Game Engines
 
-Reusable foundations for building small Phaser 3 games without importing
+Reusable foundations for building small Phaser 4 games without importing
 game-specific rules into the engine. The workspace separates deterministic,
 headless logic from Phaser scenes, physics, input devices, and presentation.
 
