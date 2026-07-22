@@ -23,7 +23,7 @@ in [docs/DEVELOPER_TOOLS.md](./docs/DEVELOPER_TOOLS.md).
 
 | Package | Use it for |
 | --- | --- |
-| `@phaser-game-engines/toolkit` | Core contracts plus platformer, top-down, battle, and content-tooling subpaths |
+| `@phaser-game-engines/toolkit` | Core contracts plus platformer, top-down, battle, inventory, and content-tooling subpaths |
 | `@phaser-game-engines/create-game` | A minimal JavaScript/TypeScript starter generator for the three genres |
 
 Install the toolkit once, then import only the genre subpaths the game uses. Use
@@ -33,6 +33,7 @@ custom presentation layer:
 ```js
 import { createTraversalController } from '@phaser-game-engines/toolkit/platformer/headless';
 import { Battle } from '@phaser-game-engines/toolkit/battle/headless';
+import { Inventory } from '@phaser-game-engines/toolkit/inventory/headless';
 ```
 
 Importing a `/headless` entry point never evaluates Phaser or requires browser

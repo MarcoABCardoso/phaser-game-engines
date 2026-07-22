@@ -24,6 +24,8 @@ import {
   type BattleRules,
   type BattleCommand,
 } from '@phaser-game-engines/toolkit/battle/headless';
+import { InventoryScene, createInventoryDragDropRecipe } from '@phaser-game-engines/toolkit/inventory';
+import { Inventory, type InventoryRules } from '@phaser-game-engines/toolkit/inventory/headless';
 import { createProject, type Genre } from '@phaser-game-engines/create-game';
 import { validateContent, type ContentKind } from '@phaser-game-engines/toolkit/content';
 import { convertTiledMap, type TiledMap } from '@phaser-game-engines/toolkit/content/tiled';
@@ -51,10 +53,13 @@ const rules: BattleRules<{ participants: string[] }, GameState, { winner: string
   getOutcome: (state) => state.done ? { winner: state.participants[0] } : null,
 };
 const battle = new Battle({ participants: ['player'] }, { rules });
+type Item = { id: string; tags: string[] };
+const inventoryRules: InventoryRules<Item> = { canEquip: (item, slot) => item.tags.includes(`equip:${slot}`) };
+const inventory = new Inventory<Item>({ itemSlots: 8, equipmentSlots: ['hand'] }, { rules: inventoryRules });
 
 const genre: Genre = 'platformer';
 const kind: ContentKind = 'top-down';
 const assets: AssetManifest = { assets: [{ key: 'hero', type: 'image', url: 'hero.png' }] };
 const level: PlatformerLevel = { world: { width: 10, height: 10 }, spawn: { x: 1, y: 1 } };
-void [velocity, clock, traversal, runtime, precision, snapshot, saves, replay, battle, genre, kind, assets, level, validateAssetManifest, validateContent, convertTiledMap, createProject, createExplorationRecipe, createBattlePresentationRecipe, PlatformerScene, TopDownScene, BattleScene];
+void [velocity, clock, traversal, runtime, precision, snapshot, saves, replay, battle, inventory, genre, kind, assets, level, validateAssetManifest, validateContent, convertTiledMap, createProject, createExplorationRecipe, createBattlePresentationRecipe, createInventoryDragDropRecipe, PlatformerScene, TopDownScene, BattleScene, InventoryScene];
 void (null as TiledMap | null);

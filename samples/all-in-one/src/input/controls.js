@@ -34,12 +34,14 @@ export const controlsLabel = [
   'Explore: arrows/WASD',
   `Interact: ${explorationControls.getPrompt('interact')}`,
   'Battle: arrows + Z/Enter; X/Escape cancels',
+  'Inventory: I; drag items; S sorts',
   'Gamepad: D-pad/stick + A; B cancels',
 ].join(' · ');
 
-export function installBrowserControls({ action, restart }) {
+export function installBrowserControls({ action, inventory, restart }) {
   document.querySelector('#action-button')?.addEventListener('click', action);
   document.querySelector('#restart-button')?.addEventListener('click', restart);
+  document.querySelector('#inventory-button')?.addEventListener('click', inventory);
   const summary = document.querySelector('#controls-summary');
   if (summary) summary.textContent = controlsLabel;
 }

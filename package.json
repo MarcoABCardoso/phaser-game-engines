@@ -19,7 +19,7 @@
   "scripts": {
     "test": "vitest run",
     "test:headless": "vitest run packages/toolkit/modules/core/tests/headless-exports.test.js",
-    "build:types": "tsc -p packages/toolkit/modules/core/tsconfig.types.json && tsc -p packages/toolkit/modules/platformer/tsconfig.types.json && tsc -p packages/toolkit/modules/top-down/tsconfig.types.json && tsc -p packages/toolkit/modules/turn-based-battle/tsconfig.types.json",
+    "build:types": "tsc -p packages/toolkit/modules/core/tsconfig.types.json && tsc -p packages/toolkit/modules/platformer/tsconfig.types.json && tsc -p packages/toolkit/modules/top-down/tsconfig.types.json && tsc -p packages/toolkit/modules/turn-based-battle/tsconfig.types.json && tsc -p packages/toolkit/modules/inventory/tsconfig.types.json",
     "typecheck": "tsc -p tests/types/tsconfig.json",
     "check:repo": "node scripts/check-repository.mjs",
     "check:versions": "node scripts/version-packages.mjs --check",

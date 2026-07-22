@@ -9,7 +9,7 @@ details and may change without a migration path.
 ### Toolkit subpaths
 
 The toolkit root and `/core` are completely headless. The `/platformer`,
-`/top-down`, and `/battle` subpaths export optional Phaser scene adapters and
+`/top-down`, `/battle`, and `/inventory` subpaths export optional Phaser scene adapters and
 therefore evaluate Phaser.
 
 ### Headless entry points
@@ -21,6 +21,7 @@ does not evaluate Phaser:
 - `@phaser-game-engines/toolkit/platformer/headless`
 - `@phaser-game-engines/toolkit/top-down/headless`
 - `@phaser-game-engines/toolkit/battle/headless`
+- `@phaser-game-engines/toolkit/inventory/headless`
 
 They are the preferred imports for tests, simulations, developer tools, custom
 renderers, and server-side rule evaluation.
@@ -48,7 +49,7 @@ combat, dialogue, health, inventory, or menu policy.
 ## Type declarations
 
 Core, platformer, and top-down declarations are generated from their ESM source.
-The battle root has a curated generic declaration surface, while its individual
+The battle and inventory roots have curated generic declaration surfaces, while their individual
 subpaths also receive generated declarations. CI compiles a strict external
 consumer fixture and verifies that every exported runtime subpath has a matching
 declaration target.

@@ -15,7 +15,18 @@ export const world = defineLevel({
     x: 580,
     y: 270,
     label: 'Training drone',
-    playerResolve: 5,
-    rivalResolve: 5,
+    enemies: [
+      { id: 'drone-alpha', label: 'Drone Alpha', hp: 6, maxHp: 6, attack: 4, defense: 2, color: 0xef4444 },
+      { id: 'drone-beta', label: 'Drone Beta', hp: 6, maxHp: 6, attack: 4, defense: 1, color: 0xf97316 },
+    ],
+  }, {
+    schemaVersion: 1, type: 'collectible', id: 'field-tonic', item: 'tonic', label: 'Tonic',
+    x: 190, y: 150, color: 0x22c55e,
+  }, {
+    schemaVersion: 1, type: 'collectible', id: 'rusty-sword', item: 'sword', label: 'Rusty sword',
+    x: 420, y: 380, color: 0xf59e0b,
+  }, {
+    schemaVersion: 1, type: 'collectible', id: 'sky-charm', item: 'charm', label: 'Sky charm',
+    x: 820, y: 120, color: 0x38bdf8,
   }],
 });

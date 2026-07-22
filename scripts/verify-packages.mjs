@@ -38,11 +38,12 @@ try {
   }, null, 2));
 
   writeFileSync(join(consumerDirectory, 'smoke.mjs'), `
-const [core, platformer, topDown, battle, creator, contentTools, tiledTools, viteTools] = await Promise.all([
+const [core, platformer, topDown, battle, inventory, creator, contentTools, tiledTools, viteTools] = await Promise.all([
   import('@phaser-game-engines/toolkit/core/headless'),
   import('@phaser-game-engines/toolkit/platformer/headless'),
   import('@phaser-game-engines/toolkit/top-down/headless'),
   import('@phaser-game-engines/toolkit/battle/headless'),
+  import('@phaser-game-engines/toolkit/inventory/headless'),
   import('@phaser-game-engines/create-game'),
   import('@phaser-game-engines/toolkit/content'),
   import('@phaser-game-engines/toolkit/content/tiled'),
@@ -52,6 +53,7 @@ if (typeof core.createWorldRuntime !== 'function') throw new Error('core headles
 if (typeof platformer.createTraversalController !== 'function') throw new Error('platformer headless export failed');
 if (typeof topDown.movementFromIntent !== 'function') throw new Error('top-down headless export failed');
 if (typeof battle.Battle !== 'function') throw new Error('battle headless export failed');
+if (typeof inventory.Inventory !== 'function') throw new Error('inventory headless export failed');
 if (typeof creator.createProject !== 'function') throw new Error('project generator export failed');
 if (typeof contentTools.validateContent !== 'function') throw new Error('content tools export failed');
 if (typeof tiledTools.convertTiledMap !== 'function') throw new Error('Tiled adapter export failed');
@@ -64,14 +66,16 @@ console.log('Packed headless exports load from a clean consumer project.');
 import { PlatformerScene } from '@phaser-game-engines/toolkit/platformer';
 import { TopDownScene } from '@phaser-game-engines/toolkit/top-down';
 import { BattleScene } from '@phaser-game-engines/toolkit/battle';
+import { InventoryScene } from '@phaser-game-engines/toolkit/inventory';
 import { convertTiledMap } from '@phaser-game-engines/toolkit/content/tiled';
-console.log(PlatformerScene, TopDownScene, BattleScene, convertTiledMap);
+console.log(PlatformerScene, TopDownScene, BattleScene, InventoryScene, convertTiledMap);
 `);
   writeFileSync(join(consumerDirectory, 'consumer.ts'), `
 import { createWorldRuntime } from '@phaser-game-engines/toolkit/core/headless';
 import { createTraversalController } from '@phaser-game-engines/toolkit/platformer/headless';
 import { movementFromIntent } from '@phaser-game-engines/toolkit/top-down/headless';
 import { Battle, type BattleRules } from '@phaser-game-engines/toolkit/battle/headless';
+import { Inventory } from '@phaser-game-engines/toolkit/inventory/headless';
 import { createProject, type Genre } from '@phaser-game-engines/create-game';
 import { validateContent, type ContentKind } from '@phaser-game-engines/toolkit/content';
 import { convertTiledMap, type TiledMap } from '@phaser-game-engines/toolkit/content/tiled';
@@ -84,7 +88,7 @@ const rules: BattleRules<{}, { ids: string[] }, string> = {
 };
 const genre: Genre = 'platformer';
 const kind: ContentKind = 'world';
-void [createWorldRuntime(), createTraversalController(), movementFromIntent({}, 1), new Battle({}, { rules }), createProject, genre, validateContent, convertTiledMap, kind];
+void [createWorldRuntime(), createTraversalController(), movementFromIntent({}, 1), new Battle({}, { rules }), new Inventory({ itemSlots: 4 }), createProject, genre, validateContent, convertTiledMap, kind];
 void (null as TiledMap | null);
 `);
   writeFileSync(join(consumerDirectory, 'tsconfig.json'), JSON.stringify({

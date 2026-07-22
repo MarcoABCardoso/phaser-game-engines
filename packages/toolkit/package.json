@@ -105,6 +105,26 @@
       "types": "./modules/turn-based-battle/types/systems/*.d.ts",
       "default": "./modules/turn-based-battle/src/systems/*.js"
     },
+    "./inventory": {
+      "types": "./modules/inventory/types/index.d.ts",
+      "default": "./modules/inventory/src/index.js"
+    },
+    "./inventory/headless": {
+      "types": "./modules/inventory/types/headless.d.ts",
+      "default": "./modules/inventory/src/headless.js"
+    },
+    "./inventory/recipes/*.js": {
+      "types": "./modules/inventory/types/recipes/*.d.ts",
+      "default": "./modules/inventory/src/recipes/*.js"
+    },
+    "./inventory/scenes/*.js": {
+      "types": "./modules/inventory/types/scenes/*.d.ts",
+      "default": "./modules/inventory/src/scenes/*.js"
+    },
+    "./inventory/systems/*.js": {
+      "types": "./modules/inventory/types/systems/*.d.ts",
+      "default": "./modules/inventory/src/systems/*.js"
+    },
     "./content": {
       "types": "./modules/content-tools/src/index.d.ts",
       "default": "./modules/content-tools/src/index.js"
@@ -133,6 +153,9 @@
     "modules/top-down/schemas",
     "modules/turn-based-battle/src",
     "modules/turn-based-battle/types",
+    "modules/inventory/src",
+    "modules/inventory/types",
+    "modules/inventory/README.md",
     "modules/content-tools/bin",
     "modules/content-tools/src",
     "README.md",
@@ -145,6 +168,7 @@
     "platformer",
     "top-down",
     "turn-based",
+    "inventory",
     "headless"
   ],
   "homepage": "https://github.com/MarcoABCardoso/phaser-game-engines#readme",

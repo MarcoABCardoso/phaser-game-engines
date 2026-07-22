@@ -28,6 +28,8 @@ for (const { directory, requiredExports } of [
       './top-down/headless',
       './battle',
       './battle/headless',
+      './inventory',
+      './inventory/headless',
       './content',
       './content/tiled',
       './content/vite',

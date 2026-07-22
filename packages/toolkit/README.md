@@ -11,10 +11,11 @@ npm install @phaser-game-engines/toolkit phaser
 import { createInputIntent } from '@phaser-game-engines/toolkit/core';
 import { PlatformerScene } from '@phaser-game-engines/toolkit/platformer';
 import { Battle } from '@phaser-game-engines/toolkit/battle/headless';
+import { Inventory } from '@phaser-game-engines/toolkit/inventory/headless';
 ```
 
 Public subpaths are grouped under `core`, `platformer`, `top-down`, `battle`,
-and `content`. Headless imports do not evaluate Phaser. The `pge-content` binary
+`inventory`, and `content`. Headless imports do not evaluate Phaser. The `pge-content` binary
 provides offline content validation and migration.
 
 See the [versioned documentation](https://marcoabcardoso.github.io/phaser-game-engines/)
