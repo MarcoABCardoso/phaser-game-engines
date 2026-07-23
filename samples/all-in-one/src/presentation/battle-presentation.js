@@ -67,7 +67,15 @@ export function createBattleEnemy({ scene, model }) {
   return { root, update };
 }
 
+export function deferBattleEffect(scene, { onImpact, onComplete }) {
+  return scene.time.delayedCall(0, () => {
+    onImpact();
+    onComplete();
+  });
+}
+
 export function createBattleField({ scene, model }) {
+  let reducedMotion = model.settings?.reducedMotion ?? false;
   scene.cameras.main.setBackgroundColor('#172554');
   const background = scene.add.rectangle(480, 270, 960, 540, 0x172554);
   const enemyGround = scene.add.ellipse(760, 190, 360, 95, 0x334155, 0.65);
@@ -118,10 +126,11 @@ export function createBattleField({ scene, model }) {
   const playAttack = (effect, { onImpact, onComplete }) => {
     const attacker = getFighter(effect.actorId);
     const target = getFighter(effect.targetId);
+    if (reducedMotion) {
+      return deferBattleEffect(scene, { onImpact, onComplete });
+    }
     if (!attacker?.root || !target?.root) {
-      onImpact();
-      onComplete();
-      return;
+      return deferBattleEffect(scene, { onImpact, onComplete });
     }
     const originX = attacker.root.x;
     const direction = effect.actorId === 'player' ? 1 : -1;
@@ -151,10 +160,11 @@ export function createBattleField({ scene, model }) {
   };
   const playGuard = (effect, { onImpact, onComplete }) => {
     const defender = getFighter(effect.actorId);
+    if (reducedMotion) {
+      return deferBattleEffect(scene, { onImpact, onComplete });
+    }
     if (!defender?.root) {
-      onImpact();
-      onComplete();
-      return;
+      return deferBattleEffect(scene, { onImpact, onComplete });
     }
     const playerDefending = effect.actorId === 'player';
     const center = playerDefending ? { x: 113, y: 145 } : { x: 0, y: 22 };
@@ -195,10 +205,7 @@ export function createBattleField({ scene, model }) {
     play(effect, callbacks) {
       if (effect.type === 'all-in-one.attack') playAttack(effect, callbacks);
       else if (effect.type === 'all-in-one.guard') playGuard(effect, callbacks);
-      else {
-        callbacks.onImpact();
-        callbacks.onComplete();
-      }
+      else deferBattleEffect(scene, callbacks);
     },
   };
 
@@ -206,8 +213,11 @@ export function createBattleField({ scene, model }) {
     root: background,
     body: effects,
     update(next) {
+      reducedMotion = next.settings?.reducedMotion ?? reducedMotion;
       title.setText(`Battle: ${next.label}`);
       status.setText(next.status);
+      title.setScale(next.settings?.textScale ?? 1);
+      status.setScale(next.settings?.textScale ?? 1);
       player.update(next.state.game.player);
       for (const [id, view] of enemies) view.update(next.state.game.enemies[id]);
     },

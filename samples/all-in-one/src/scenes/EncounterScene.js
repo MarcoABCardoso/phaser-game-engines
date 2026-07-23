@@ -13,8 +13,14 @@ import {
   createBattleResult,
 } from '../presentation/battle-presentation.js';
 import { campaign } from '../state/campaign.js';
+import { audioDirector } from '../presentation/audio-director.js';
 
 const ANIMATED_EFFECTS = new Set(['all-in-one.attack', 'all-in-one.guard']);
+const battlePresentationOptions = {
+  ...battleControls,
+  x: 330,
+  y: 390,
+};
 
 export class EncounterScene extends BattleScene {
   returning = false;
@@ -23,12 +29,7 @@ export class EncounterScene extends BattleScene {
     super({
       key: 'encounter',
       recipes: [
-        createBattlePresentationRecipe({
-          ...battleControls,
-          x: 330,
-          y: 390,
-          reducedMotion: true,
-        }),
+        createBattlePresentationRecipe(battlePresentationOptions),
         createBattleResultPresentationRecipe({ getModel: battleResultModel }),
       ],
       presentation: {
@@ -45,6 +46,10 @@ export class EncounterScene extends BattleScene {
   }
 
   init(data) {
+    const settings = campaign.snapshot().settings;
+    battlePresentationOptions.reducedMotion = settings.reducedMotion;
+    battlePresentationOptions.textSize = Math.round(18 * settings.textScale);
+    audioDirector.transition('battle', { enabled: campaign.snapshot().settings.audio });
     this.encounter = data.encounter;
     this.returning = false;
     this.deferBattleRefresh = false;
@@ -98,7 +103,7 @@ export class EncounterScene extends BattleScene {
   }
 
   battleViewModel(state) {
-    return { label: this.encounter.label, state, status: this.lastEvent };
+    return { label: this.encounter.label, state, status: this.lastEvent, settings: campaign.snapshot().settings };
   }
 
   pgeOnBattleEvent(type, payload) {
@@ -125,9 +130,14 @@ export class EncounterScene extends BattleScene {
     if (type !== 'battleEnded' || this.returning) return;
     this.returning = true;
     campaign.completeEncounter(payload.outcome);
+    if (payload.outcome.kind === 'won') audioDirector.cue('reward', { enabled: campaign.snapshot().settings.audio });
     this.time.delayedCall(1600, () => {
-      this.scene.wake('world');
-      this.scene.stop();
+      if (payload.outcome.kind === 'won' && campaign.snapshot().fieldTrial.status === 'complete') {
+        this.scene.start('result');
+      } else {
+        this.scene.wake('world');
+        this.scene.stop();
+      }
     });
   }
 

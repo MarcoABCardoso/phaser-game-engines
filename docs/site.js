@@ -6,9 +6,10 @@ import semver from './VERSIONING.md?raw';
 import platformer from './tutorials/platformer.md?raw';
 import topDown from './tutorials/top-down.md?raw';
 import battle from './tutorials/battle.md?raw';
+import allInOne from './ALL_IN_ONE_SLICE.md?raw';
 import manifest from '../package.json';
 
-const pages = { 'Choosing a package': choosing, 'Public API': publicApi, Recipes: recipes, 'Developer tools': tools, Versioning: semver, 'Platformer tutorial': platformer, 'Top-down tutorial': topDown, 'Battle tutorial': battle };
+const pages = { 'Choosing a package': choosing, 'All-in-one RPG slice': allInOne, 'Public API': publicApi, Recipes: recipes, 'Developer tools': tools, Versioning: semver, 'Platformer tutorial': platformer, 'Top-down tutorial': topDown, 'Battle tutorial': battle };
 const navigation = document.querySelector('#navigation');
 const search = document.querySelector('#search');
 const title = document.querySelector('#title');

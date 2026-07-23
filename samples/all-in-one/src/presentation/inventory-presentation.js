@@ -13,17 +13,24 @@ export function createInventoryShell({ scene }) {
   const title = scene.add.text(32, 24, 'Inventory', {
     fontFamily: 'sans-serif', fontSize: '30px', color: '#ffffff',
   });
-  const help = scene.add.text(32, 66, 'Drag to equip · Double-click tonic to use · S: sort · I/Esc: close', {
+  const help = scene.add.text(32, 66, 'Drag/touch or arrows + Z/A to equip/use · S: sort · I/Esc/B: close', {
     fontFamily: 'sans-serif', fontSize: '16px', color: '#cbd5e1',
   });
   const stats = scene.add.text(690, 118, '', {
     fontFamily: 'monospace', fontSize: '17px', color: '#bae6fd', lineSpacing: 8,
     wordWrap: { width: 235 },
   });
+  const selectionMarker = scene.add.rectangle(74, 154, 78, 78)
+    .setStrokeStyle(3, 0xfde047).setFillStyle(0x000000, 0).setDepth(900);
 
   return {
     root: stats,
     update(model) {
+      selectionMarker.setPosition(
+        74 + ((model.selectedItemIndex ?? 0) % 4) * 82,
+        154 + Math.floor((model.selectedItemIndex ?? 0) / 4) * 82,
+      );
+      stats.setScale(model.settings?.textScale ?? 1);
       stats.setText([
         'Player data',
         `HP ${model.player.hp}/${model.player.maxHp}`,
@@ -34,6 +41,7 @@ export function createInventoryShell({ scene }) {
       ]);
     },
     destroy() {
+      selectionMarker.destroy();
       stats.destroy();
       help.destroy();
       title.destroy();

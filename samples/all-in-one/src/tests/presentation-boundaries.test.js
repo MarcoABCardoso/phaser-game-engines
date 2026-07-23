@@ -8,4 +8,9 @@ describe('all-in-one presentation boundaries', () => {
     const source = readFileSync(new URL(`../scenes/${file}`, import.meta.url), 'utf8');
     expect(source).not.toMatch(/\b(?:this|scene)\.add\./);
   });
+
+  it('uses only the normalized presentation-handle API from InventoryScene', () => {
+    const source = readFileSync(new URL('../scenes/InventoryScene.js', import.meta.url), 'utf8');
+    expect(source).not.toMatch(/inventoryShell\.(?!update\b|destroy\b|root\b|body\b|active\b)/);
+  });
 });

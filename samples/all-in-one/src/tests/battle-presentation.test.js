@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { createBattleField } from '../presentation/battle-presentation.js';
+import { createBattleField, deferBattleEffect } from '../presentation/battle-presentation.js';
 
 function createDisplayObject(properties = {}) {
   return {
@@ -98,5 +98,28 @@ describe('all-in-one battle presentation', () => {
     expect(tweens.map(({ delay }) => delay)).toEqual([0, 55, 110, 165, 220, 275, 330]);
     for (const tween of tweens) tween.onComplete();
     expect(complete).toHaveBeenCalledOnce();
+  });
+
+  test('animation-free effects complete outside the command-resolution stack', () => {
+    let scheduled;
+    const scene = {
+      time: {
+        delayedCall: vi.fn((_delay, callback) => {
+          scheduled = callback;
+          return { remove: vi.fn() };
+        }),
+      },
+    };
+    const calls = [];
+
+    deferBattleEffect(scene, {
+      onImpact: () => calls.push('impact'),
+      onComplete: () => calls.push('complete'),
+    });
+
+    expect(scene.time.delayedCall).toHaveBeenCalledWith(0, expect.any(Function));
+    expect(calls).toEqual([]);
+    scheduled();
+    expect(calls).toEqual(['impact', 'complete']);
   });
 });

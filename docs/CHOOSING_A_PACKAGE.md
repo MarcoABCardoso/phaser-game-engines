@@ -12,6 +12,9 @@ that owns the orchestration you need.
 | Overhead movement calculations without Phaser | `@phaser-game-engines/toolkit/top-down/headless` | It exports deterministic movement and geometry helpers |
 | Any phase/turn-driven contest, battle, negotiation, or puzzle | `@phaser-game-engines/toolkit/battle/headless` | `Battle` owns scheduling and lifecycle while the game owns all rules |
 | A Phaser menu around a turn-based controller | `@phaser-game-engines/toolkit/battle` | It adds the optional `BattleScene` adapter |
+| Persistent slot inventory and equipment rules without Phaser | `@phaser-game-engines/toolkit/inventory/headless` | It keeps items opaque and game-owned |
+| A Phaser drag-and-drop inventory screen | `@phaser-game-engines/toolkit/inventory` | It adds an optional scene and replaceable presentation recipe |
+| Level, asset-manifest, and Tiled object-layer validation | `@phaser-game-engines/toolkit/content` | It shares runtime validators with CLI and Vite authoring tools |
 | A new runnable project | `@phaser-game-engines/create-game` | It generates a minimal game and headless test |
 
 ## Scene, controller, mechanic, or recipe?

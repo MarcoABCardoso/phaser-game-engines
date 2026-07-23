@@ -5,7 +5,41 @@ contain documented breaking changes.
 
 ## Unreleased
 
-No changes yet.
+### Added
+
+- Began evolving the all-in-one sample into an RPG/exploration vertical slice
+  with a game-owned NPC conversation, visible quest objectives, collection
+  progress, encounter gating, and quest completion through battle results.
+- Added two rendered Tiled areas with named entries and persistent entities, a
+  branching NPC decision, campaign progression and rewards, three versioned
+  save slots, migration and recovery UI, title/pause/settings/journal/result
+  flows, game-owned audio, accessibility settings, and keyboard/gamepad/touch
+  paths.
+- Added a complete headless expedition journey and focused tests for authored
+  areas, dialogue input, progression, save migration/recovery, menu gamepads,
+  inventory actions, and audio transitions.
+
+### Changed
+
+- Replaced the completed release-milestone roadmap with credibility gates and
+  workstreams for a complete slice, content authoring, browser correctness,
+  adoption, external pilots, and the `1.0` support promise.
+- Updated package-selection and landing-page copy for the current Phaser 4,
+  inventory, and content-tooling surfaces.
+- Added a Pages build that embeds the all-in-one production artifact and a
+  guided code tour covering ownership and replacement seams.
+
+### Fixed
+
+- Closing Mira's dialogue now suppresses the originating interact press until
+  the key is released, preventing the conversation from immediately reopening.
+- Opening the all-in-one inventory no longer calls a presenter-only method on
+  the normalized presentation handle, which previously aborted scene creation
+  and left exploration asleep.
+- Reduced-motion battle effects now finish on the next scene tick, preventing
+  attack and guard resolution from re-entering and stalling the turn pipeline.
+- Full motion is now the campaign default. Version-2 sample saves migrate to
+  version 3 with animations restored; reduced motion remains opt-in in Settings.
 
 ## [0.2.0] - 2026-07-22
 

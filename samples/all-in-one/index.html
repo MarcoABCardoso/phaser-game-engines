@@ -3,15 +3,23 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>All-in-one toolkit lab</title>
+    <title>All-in-one RPG slice</title>
   </head>
   <body>
     <main>
-      <h1>All-in-one toolkit lab</h1>
+      <h1>All-in-one RPG slice</h1>
       <p id="controls-summary">Loading controls…</p>
       <div id="game"></div>
-      <button id="action-button">Trigger encounter / confirm Attack</button>
+      <div class="touch-pad" aria-label="Touch movement controls">
+        <button id="move-up" aria-label="Move up">↑</button>
+        <button id="move-left" aria-label="Move left">←</button>
+        <button id="move-down" aria-label="Move down">↓</button>
+        <button id="move-right" aria-label="Move right">→</button>
+      </div>
+      <button id="action-button">Interact / continue / confirm Attack</button>
+      <button id="alternate-button">Choice 2 / cancel</button>
       <button id="inventory-button">Open / close inventory</button>
+      <button id="menu-button">Pause / menu</button>
       <button id="restart-button">Restart lab</button>
     </main>
     <script type="module" src="/src/main.js"></script>

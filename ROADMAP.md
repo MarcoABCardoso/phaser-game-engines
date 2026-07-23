@@ -1,319 +1,175 @@
-# Phaser Game Engines Roadmap
+# Road to a credible game-building toolkit
 
-## Mission
+## The product we are trying to earn
 
-Help a Phaser developer move from an idea to a small, tested, deployable game
-without rebuilding genre plumbing or surrendering control of the game's rules.
+`@phaser-game-engines/toolkit` should be the layer a Phaser developer chooses
+when a game has grown beyond a rendering experiment but should remain ordinary
+JavaScript or TypeScript. It succeeds when it shortens the path from a new
+project to a content-heavy, tested, save-compatible game without taking
+ownership of the game's rules or presentation.
 
-This collection should provide a productive middle layer between Phaser and a
-game: more useful than a bag of utilities, much less prescriptive than a full
-game-making framework. Success means that developers spend their time on
-content, feel, rules, and presentation—not scene lifecycle, input normalization,
-content validation, save plumbing, or test harnesses.
+The toolkit is not credible because it has many primitives. It is credible when
+developers can see those primitives survive a complete game loop, understand
+where to extend them, upgrade without rewriting content, and remove any recipe
+that stops fitting.
 
-## Where the repository stands
+## Where we are now
 
-The previous roadmap successfully established the technical foundation. The
-workspace now contains:
+The repository has a sound technical base:
 
-- a Phaser-free core with input, lifecycle, recipe, content, determinism,
-  snapshot, replay, debug, and testing contracts;
-- one runtime toolkit with platformer, top-down, turn-based, content, and
-  explicit headless subpaths, plus a separate project generator;
-- JavaScript and TypeScript project generation;
-- content validation, migration, Tiled conversion, schemas, asset manifests,
-  and Vite integration;
-- six sample applications, three genre tutorials, package-selection and recipe
-  guides, and a hosted documentation landing page;
-- package-tarball consumer checks, declaration checks, sample builds, CI, and
-  196 passing tests across 36 files as of July 2026.
+- Phaser-free input, lifecycle, entity, recipe, persistence, replay, debug, and
+  test contracts;
+- Phaser 4 adapters for platformer, top-down, turn-based battle, and inventory;
+- replaceable mechanics and recipes with explicit ownership and cleanup;
+- content schemas, validation, migrations, a Tiled object-layer adapter, and
+  Vite integration;
+- generated JavaScript and TypeScript starters with working input, tests,
+  builds, optional developer tools, and deployment presets;
+- an all-in-one sample that carries campaign state through exploration,
+  inventory, and a turn-based encounter.
 
-The design is the repository's strongest asset. Headless logic is genuinely
-separated from Phaser, game-specific policy is mostly kept out of base scenes,
-and the turn-based package demonstrates schema independence with contrasting
-rulesets.
+The gap is product proof. The examples demonstrate APIs, but not yet the volume
+and interconnectedness of a real game. Browser lifecycle guarantees are not
+covered end to end, the public API is still prerelease, and independently
+maintained games have not demonstrated that the abstractions remain helpful as
+content and save data accumulate.
 
-The collection is now installable and testable from the public registry, but
-its product experience is not yet proven with outside developers:
+## Credibility gates
 
-- the examples prove APIs but do not yet provide polished, reusable vertical
-  slices of making and finishing a game;
-- browser scene lifecycle, cleanup, input, and end-to-end game loops are not
-  exercised in CI;
-- the hosted documentation site gives developers a clear entry point, but its
-  deeper pages still render raw Markdown and lack version selection;
-- powerful facilities such as saves, replay, debug inspection, content tooling,
-  and recipes exist as separate APIs, but generated projects do not make them
-  part of one coherent daily workflow;
-- no independently maintained game has established that the abstractions remain
-  helpful after the first demo.
+These are release gates, not aspirations. A `1.0` candidate must satisfy all of
+them with linked evidence.
 
-The current state is therefore **a strong engine foundation with an unproven
-product experience**. The next roadmap is about adoption and game completion,
-not adding more primitives.
-
-## Outcomes and measures
-
-The following measures replace feature count as the definition of progress.
-
-| Outcome | Target before 1.0 |
+| Gate | Evidence required |
 | --- | --- |
-| First run | A new user creates and runs a game from the public registry in 10 minutes or less |
-| First meaningful change | The user adds content and one game rule in 30 minutes without editing package source |
-| Complete loop | A starter demonstrates title/start, play, win or loss, restart, save where appropriate, and production build |
-| Diagnostics | Invalid content and common setup failures identify the file, field, likely cause, and relevant guide |
-| Browser confidence | Supported browsers run automated scene create/shutdown/restart, input, transition, and representative game-loop tests |
-| Upgrade confidence | Pilot games upgrade to the release candidate using documented migrations and no engine-source patches |
-| External proof | At least three games outside this workspace ship a playable build; at least one uses TypeScript and one is touch- or gamepad-first |
-| Maintenance | Every supported public API has a documented owner, compatibility category, test, and example or reference page |
+| First use | Four of five new users run a generated game in 10 minutes and make a game-owned change in 30 minutes |
+| Complete slice | The all-in-one sample demonstrates authored areas, NPC interaction, quests, inventory/equipment, battle, progression, save/load, and restart as one coherent loop |
+| Content workflow | Invalid files and cross-file references fail before play with a filename, property path, and useful next action |
+| Browser correctness | Automated Chromium, Firefox, and WebKit journeys cover create, play, transitions, shutdown, restart, resize, focus loss, and representative input |
+| Cleanup | Repeated scene and recipe lifecycles retain no toolkit-owned listeners, timers, bodies, display objects, or input handlers |
+| Upgrade safety | Versioned content and saves migrate through every promised prerelease format to the release candidate |
+| Real-game proof | Three independently maintained games publish playable builds and upgrade without package forks, monkey patches, or copied base scenes |
+| Supportability | Every stable export, schema, event, recipe policy, and CLI flag has a compatibility category, test, and discoverable documentation |
 
-Measure onboarding with fresh environments and people unfamiliar with the
-implementation. Do not count maintainer runs from a warm workspace as adoption
-evidence.
+## Workstream 1: Make the all-in-one sample the product proof
 
-## Release 0 — Make the toolkit genuinely installable
+The all-in-one sample is the integration lab and the main adoption artifact. It
+should become a compact RPG/exploration slice, not a catalogue of disconnected
+features. Domain rules stay in the sample; only repeated, contrasting needs may
+graduate into the toolkit.
 
-Priority: immediate. This is the gate for all useful external feedback.
+Build the slice in playable increments:
 
-- [x] Select a license and add it to the repository and every package tarball.
-  The project uses the MIT License.
-- [x] Confirm the npm scope and package names. The `phaser-game-engines` npm
-  organization is owned by `macardoso95`; the public packages are
-  `@phaser-game-engines/toolkit` and `@phaser-game-engines/create-game`.
-- [x] Publish aligned `0.1.0` packages for the toolkit and project generator.
-  Both public packages passed a clean registry install, representative headless
-  imports, and installed CLI checks; `next` now points to verified `0.1.1`.
-- [x] Configure trusted publishing from a supported cloud CI runner so future
-  prereleases carry npm provenance without a long-lived publishing token. Both
-  packages staged `0.1.1` through GitHub Actions OIDC as trusted automation,
-  with publishing restricted to the staged workflow and human 2FA approval.
-- [x] Audit manifests and release presentation: remove duplicate export entries,
-  reconcile the private root version with package versions, verify repository
-  links, and make prerelease status unambiguous.
-- [x] Test the oldest practical Node version for consumers and require newer
-  Node versions only where the tooling actually needs them. Browser runtime
-  packages should not inherit CLI-only constraints unnecessarily. Manifests,
-  documentation, and the pushed CI matrix cover Node 20.19, 22, and 24. The
-  iterator-helper incompatibility found by Node 20 was fixed before release.
-- [x] Make the generator runnable through one memorable public command and add
-  `--help`, version reporting, non-interactive operation, and actionable
-  install/network failure messages. The published
-  `npm create @phaser-game-engines/game` command and installed version entry
-  point have both been exercised from a clean consumer project.
-- [x] Automate prerelease tags, changelog generation, tarball inspection,
-  provenance, and a post-publish smoke test that installs from the registry.
-  Release preparation, staged tarball inspection, OIDC publishing, and the
-  exact-version smoke workflow were exercised on `0.1.1`; the registry run
-  passed all 14 generated starter variants and representative production
-  previews.
-- [x] Publish a minimal hosted landing page that gives the package choice,
-  install command, support status, and links to version-matched documentation.
-  The responsive page is deployed at
-  <https://marcoabcardoso.github.io/phaser-game-engines/> through GitHub Pages.
+- [x] Preserve campaign state across exploration, inventory, and battle scenes.
+- [x] Demonstrate equipment modifying game-owned battle rules.
+- [x] Demonstrate multi-target battle presentation and return to exploration.
+- [x] Add an NPC conversation and quest loop with visible objectives and battle
+  gating.
+- [x] Split exploration across two authored areas with named entries, return
+  positions, and persistent per-area entity state.
+- [x] Render a real Tiled map while using validated toolkit object roles for
+  spawns, solids, portals, and entities.
+- [x] Add a second NPC with a branching choice and a consequence visible in
+  exploration or battle.
+- [x] Add rewards and character progression without moving stat policy into a
+  base scene.
+- [x] Add save slots, load, version migration, corrupt-save recovery, and a UI
+  that makes those behaviors visible.
+- [x] Add title, pause/settings, quest journal, result, and restart flows.
+- [x] Add game-owned music and sound transitions, reduced motion, text scaling,
+  and keyboard/gamepad/touch paths through the whole slice.
+- [x] Produce a Pages-ready slice artifact and guided code tour explaining
+  ownership and replacement seams.
+- [ ] Publish the Pages artifact and verify the live slice URL.
 
-Exit criteria:
+Each increment needs a headless rule test, a browser-visible outcome, and an
+explicit answer to: “Could a game replace this without editing toolkit source?”
 
-- A clean machine with no repository checkout can generate, install, test,
-  build, and run each genre starter from published packages.
-- The exact published tarballs pass the existing JavaScript, TypeScript,
-  headless import, and sample smoke checks.
-- A failed release cannot leave workspace package versions or documentation out
-  of sync.
+## Workstream 2: Turn content into a daily authoring workflow
 
-Release 0 completed on July 19, 2026. The exact `0.1.1` registry packages pass
-automated export and installed-CLI checks, all 14 JavaScript and TypeScript
-starter variants, and a production preview for each genre. CI is green on Node
-20.19, 22, and 24; package versions, changelog entries, and documentation are
-prepared together; the release was staged through trusted GitHub Actions OIDC,
-approved with maintainer 2FA, and verified from the public registry. Release 1
-is now the active milestone.
+- [ ] Define and validate cross-file IDs for areas, entries, entities, items,
+  conversations, quests, encounters, and assets.
+- [ ] Add reference diagnostics and safe rename guidance rather than expanding
+  base scene schemas with RPG policy.
+- [ ] Show the supported boundary between Phaser-rendered Tiled layers and the
+  toolkit's validated object data.
+- [ ] Validate content in generated development, test, and production-build
+  commands with no manual setup.
+- [ ] Add hot-update examples and a campaign-state inspector suitable for
+  debugging authored content.
+- [ ] Publish migration examples that change content and save schemas together.
 
-## Release 1 — Turn starters into productive game slices
+## Workstream 3: Prove runtime behavior in browsers
 
-Priority: immediate after the first prerelease.
+- [ ] Add Playwright coverage for the supported Chromium, Firefox, and WebKit
+  versions.
+- [ ] Drive keyboard, pointer/touch, and gamepad mappings through visible game
+  behavior; keep deterministic rule permutations in headless tests.
+- [ ] Cover scene sleep/wake, start/stop, area replacement, inventory and battle
+  overlays, focus loss, resize, restart, and failed transitions.
+- [ ] Add lifecycle soaks that count toolkit-owned resources before and after
+  repeated scene and recipe teardown.
+- [ ] Publish representative browser performance scenarios for entity counts,
+  collisions, transitions, save size, and replay length, with environment and
+  toolkit/Phaser versions attached.
+- [ ] Measure toolkit-added bundle cost separately from Phaser and investigate
+  unexplained release-to-release growth.
 
-The generator should create a small game developers want to modify, not merely
-a scene that proves an import works.
+## Workstream 4: Make adoption and escape routes obvious
 
-- [x] Redesign each generated starter around a visible objective and a complete
-  loop: start, learn controls, play, reach a result, restart, test, and build.
-- [x] Keep a `minimal` template, and add one recommended template per genre that
-  demonstrates the normal project structure for scenes, content, rules,
-  presentation, tests, and assets.
-- [x] Generate content into separate validated files rather than embedding the
-  entire level in the scene. Include an example custom entity or rule owned by
-  the game.
-- [x] Offer recipes and input choices interactively while preserving stable CLI
-  flags for automation. Generated touch and gamepad projects must be playable,
-  not just wired to an adapter.
-- [x] Add opt-in save, debug, and replay choices to the generator. When selected,
-  they should already work in the starter and have one focused test.
-- [x] Provide copyable presentation seams for sprites, animation, audio, HUD,
-  menus, pause, and scene transitions without making placeholder art part of an
-  engine package.
-- [x] Add deployment presets or short verified guides for at least GitHub Pages
-  and one general static host, including correct Vite base-path handling.
-- [ ] Run five observed onboarding sessions and record time-to-run,
-  time-to-change, errors, abandoned steps, and copied engine code.
+- [ ] Organize documentation around jobs: start, add content, add a mechanic,
+  connect scenes, save, debug, test, upgrade, deploy, and replace an abstraction.
+- [ ] Publish a decision guide for scene adapters versus headless controllers
+  versus plain Phaser.
+- [ ] Give every recipe an assumptions section, replacement example, cleanup
+  guarantee, and minimal integration test.
+- [ ] Replace the raw-Markdown documentation viewer with rendered, linkable,
+  versioned guides and checked API references.
+- [ ] Run and record onboarding sessions using public packages and cold
+  environments; fix observed failure points before adding convenience APIs.
+- [ ] Keep npm descriptions, version badges, Phaser compatibility, examples,
+  and hosted documentation synchronized by release checks.
 
-The generator implementation for Release 1 landed in July 2026. Recommended
-starters now provide a game-owned signal objective, title/play/result/restart
-loop, separated scenes/content/rules/presentation/input/assets, interactive and
-flag-driven configuration, playable keyboard/gamepad/touch paths, optional
-save/debug/replay seams with focused tests, and GitHub Pages/static-host
-deployment paths. The verification matrix builds and tests 32 minimal and
-recommended JavaScript/TypeScript/input variants. The external onboarding study
-remains deliberately open; its protocol and evidence table are in
-`docs/ONBOARDING_SESSIONS.md`, and the milestone exit criteria must not be marked
-complete until those sessions and browser journeys provide actual evidence.
+## Workstream 5: Validate with games we do not control
 
-Exit criteria:
+- [ ] Recruit three pilot games with different genre, language, and input
+  constraints.
+- [ ] Review each at setup, first playable, first custom mechanic, content-scale
+  milestone, upgrade, and ship.
+- [ ] Track engine-source workarounds, unclear diagnostics, copied code,
+  extension cost, save migrations, browser failures, and abandoned APIs.
+- [ ] Promote a contract into the toolkit only after materially different games
+  need the same boundary. Keep one-off RPG behavior as sample/reference code.
+- [ ] Redesign APIs that pilots consistently bypass, even when their internal
+  implementation is elegant.
 
-- At least four of five new users reach a running game within 10 minutes and a
-  game-specific change within 30 minutes.
-- Every recommended starter has a clear game loop, headless rule test, browser
-  smoke test, production build, and deployment path.
-- A developer can replace placeholder presentation without overriding engine
-  internals or copying a base scene.
+## Workstream 6: Make the 1.0 support promise
 
-## Release 2 — Create one coherent authoring and debugging loop
+- [ ] Inventory every export, subpath, event payload, schema, snapshot, recipe
+  policy, CLI flag, and generated convention as stable, experimental, or
+  internal.
+- [ ] Remove overlapping public abstractions or deprecate them with migrations.
+- [ ] Freeze version-1 content and snapshot contracts and test all promised
+  upgrade paths.
+- [ ] Publish supported Node, Phaser, TypeScript, browser, and deployment ranges,
+  plus release cadence and deprecation windows.
+- [ ] Run package, browser, documentation, pilot-upgrade, and provenance checks
+  against the exact release-candidate tarballs.
 
-Priority: high. Existing capabilities should feel like one toolkit.
+## What waits
 
-- [ ] Replace the raw-Markdown viewer with a real documentation site containing
-  rendered code, deep links, navigation, version selection, and package API
-  reference generated or checked from public exports and declarations.
-- [ ] Organize documentation by developer task: create a game, add content, add
-  a mechanic, customize feel, save progress, debug a problem, test rules,
-  upgrade, and deploy.
-- [ ] Integrate content validation into generated development and CI commands.
-  Editor/schema setup should work without manual path discovery.
-- [ ] Add a development HUD entry point that can toggle lifecycle events,
-  entities, contextual actions, collision geometry, active recipes, controller
-  state, clock/RNG state, and content diagnostics.
-- [ ] Make recording a failing play session and replaying it in a headless test
-  a documented, end-to-end workflow with a small generated example.
-- [ ] Define project-level save composition helpers for a current area, game
-  state, installed recipe state, controllers, clock, and RNG, while keeping all
-  game-specific fields explicit.
-- [ ] Improve diagnostics at composition boundaries. Recipe conflicts, invalid
-  entities, unsupported snapshot versions, and missing assets should say what
-  the user can change next.
-- [ ] Add migration examples for content and saves to the recommended starters,
-  and test forward migration plus recovery from an invalid stored value.
+Until the credibility gates are met, do not prioritize additional genres, a
+custom renderer or editor, a universal ECS, networking, hosted services, or a
+large mechanic catalogue. Do not move quests, HP, damage, progression, item
+effects, or conversation schemas into generic base scenes merely to make the
+sample shorter.
 
-Exit criteria:
+## How to choose the next task
 
-- A developer can find the supported extension point for each starter task
-  without reading `src/` in an engine package.
-- A recorded starter failure can be attached to a bug report, replayed
-  headlessly, and reduced to the first divergent checkpoint.
-- Content validation, tests, production build, and documentation-link checks run
-  through one generated-project verification command.
+Prefer work that removes a visible break in this chain:
 
-## Release 3 — Prove runtime correctness in real browsers
+> install → author content → play a complete loop → diagnose a failure → save
+> and restore → upgrade → ship
 
-Priority: high and parallel with Release 2.
-
-- [ ] Add Playwright or an equivalent browser runner for Chromium, Firefox, and
-  WebKit at the versions the project commits to support.
-- [ ] Cover scene create, shutdown, restart, area replacement, focus loss,
-  resize, and repeated recipe installation/removal. Assert cleanup of event
-  listeners, timers, physics bodies, display objects, and input handlers.
-- [ ] Exercise keyboard, gamepad mapping, and touch/pointer controls through
-  browser-visible behavior. Keep deterministic rules tested headlessly.
-- [ ] Add one browser journey per recommended starter that reaches its win or
-  loss state and restarts.
-- [ ] Measure engine-added bundle cost separately from Phaser and publish the
-  numbers for each release. Treat an unexplained regression as a release issue.
-- [ ] Replace microbenchmark-only confidence with representative browser
-  scenarios for entity counts, collision-heavy scenes, transitions, debug
-  tooling, save size, and replay length on documented hardware profiles.
-- [ ] Add a leak/stability soak that repeats scene and area lifecycles and
-  reports retained engine-owned resources.
-
-Exit criteria:
-
-- Browser tests reproduce the lifecycle and cleanup guarantees documented by
-  recipes and base scenes.
-- Performance guidance states the tested scenario, browser, device class, Phaser
-  version, engine version, and acceptable range; it does not promise universal
-  frame rates from synthetic Node timings.
-- Debug-only tooling is proven absent from recommended production builds unless
-  explicitly enabled.
-
-## Release 4 — Validate the design in real games
-
-Priority: required before a 1.0 release candidate.
-
-- [ ] Recruit at least three independently maintained pilot games with different
-  constraints. Include JavaScript and TypeScript, keyboard and touch/gamepad,
-  and at least two of the three supported genres.
-- [ ] Establish a lightweight pilot cadence: setup interview, first playable,
-  mid-project extension review, upgrade rehearsal, and ship retrospective.
-- [ ] Track friction by developer outcome rather than requested feature. Record
-  setup time, engine-source workarounds, unclear errors, extension difficulty,
-  build size, browser defects, and upgrade cost.
-- [ ] Move code into shared infrastructure only when two materially different
-  pilot games need the same contract. Prefer a documented game-owned example
-  when only one game needs it.
-- [ ] Remove or redesign APIs that pilots consistently bypass, even if those
-  APIs are internally elegant.
-- [ ] Publish the pilot games or representative public reproductions and link
-  each supported workflow to evidence from one of them.
-- [ ] Rehearse upgrades through at least two prerelease versions without copying
-  or patching package source.
-
-Exit criteria:
-
-- Three pilot games have public playable builds and can upgrade to the release
-  candidate with documented steps.
-- No pilot carries a fork, monkey patch, or copied base scene required to use a
-  supported workflow.
-- The prioritized backlog is based on observed friction from pilots and
-  onboarding sessions.
-
-## Release 5 — Commit to 1.0
-
-Priority: only after Releases 0–4 meet their exit criteria.
-
-- [ ] Inventory every export, subpath, lifecycle event, recipe policy, schema,
-  snapshot, CLI flag, and generated-project convention. Mark each as stable,
-  experimental, or internal.
-- [ ] Reduce the stable surface where overlapping abstractions solve the same
-  task. Add deprecation warnings and migrations before removal.
-- [ ] Publish the semantic-versioning policy and compatibility matrix beside the
-  versioned API reference.
-- [ ] Freeze version-1 content and snapshot schemas and verify migrations from
-  every public prerelease format that promised persistence.
-- [ ] Define maintenance capacity: supported Node, Phaser, TypeScript, and
-  browser ranges; security process; release cadence; and deprecation window.
-- [ ] Run the complete external-consumer, browser, pilot-upgrade, documentation,
-  package, and provenance suite against the release-candidate tarballs.
-- [ ] Release `1.0` only when it represents a support commitment that can be
-  maintained, not simply the exhaustion of this checklist.
-
-## Work that waits
-
-Until the current genres are installable, learnable, browser-tested, and proven
-in real games, do not prioritize:
-
-- additional genres;
-- a custom renderer, physics engine, editor, asset store, or universal ECS;
-- networking, rollback multiplayer, or hosted backend services;
-- game-specific combat, health, inventory, quest, progression, or dialogue
-  schemas in base scenes;
-- a large catalog of mechanics without contrasting real-game consumers;
-- optimization of Phaser's baseline bundle at the expense of clear APIs.
-
-## Decision rule
-
-Choose the next work item by asking:
-
-> Will this measurably shorten the path from a fresh install to a tested,
-> playable, deployable game for current users?
-
-If the answer is unclear, improve a starter, observe a developer, or support a
-pilot before adding another abstraction. Repository samples prove that code can
-work; outside developers finishing games will prove that the collection is
-useful.
+When two tasks are otherwise equal, improve the all-in-one slice or unblock an
+external pilot. A repository test proves code works; a maintained game proves
+the toolkit is useful.

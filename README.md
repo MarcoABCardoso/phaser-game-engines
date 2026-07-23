@@ -1,6 +1,6 @@
 # Phaser Game Engines
 
-Reusable foundations for building small Phaser 4 games without importing
+Reusable foundations for building maintainable Phaser 4 games without importing
 game-specific rules into the engine. The workspace separates deterministic,
 headless logic from Phaser scenes, physics, input devices, and presentation.
 
@@ -79,7 +79,7 @@ headless entry point.
 | --- | --- | --- |
 | Basic platformer | `npm run dev:platformer` | Platformer scene and traversal |
 | Basic top-down | `npm run dev:top-down` | Movement, walls, entities, and portals |
-| All-in-one lab | `npm run dev:all-in-one` | Cross-engine scene flow and shared campaign state |
+| All-in-one RPG slice | `npm run dev:all-in-one` | Exploration, quests, inventory, battle, and shared campaign state |
 | Basic battle | `npm run dev:battle` | Game-owned HP/MP rules |
 
 Build every sample with `npm run build:samples`. The large-bundle warning from

@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - docs/**
+      - samples/all-in-one/**
+      - packages/toolkit/**
+      - scripts/build-pages.mjs
       - package.json
       - package-lock.json
       - .github/workflows/pages.yml
@@ -28,7 +31,7 @@ jobs:
           cache: npm
       - uses: actions/configure-pages@v5
       - run: npm ci
-      - run: npm run build:docs
+      - run: npm run build:pages
       - uses: actions/upload-pages-artifact@v4
         with:
           path: docs/dist

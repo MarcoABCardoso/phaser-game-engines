@@ -45,6 +45,7 @@
     "build:samples": "npm run build:platformer && npm run build:top-down && npm run build:battle && npm run build:all-in-one",
     "dev:docs": "vite docs --host 127.0.0.1",
     "build:docs": "vite build docs",
+    "build:pages": "node scripts/build-pages.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "dev:basic-platformer": "vite samples/basic-platformer --host 127.0.0.1 --force",
     "build:basic-platformer": "vite build samples/basic-platformer",
