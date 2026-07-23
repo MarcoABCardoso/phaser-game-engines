@@ -1,10 +1,16 @@
 import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/toolkit/battle';
 import { battleSpec } from '../content/level.js';
 import { rules } from '../rules/game-rules.js';
-import { addHelp, playCue } from '../presentation/presentation.js';
+import { gamePresentation, playCue } from '../presentation/game-presentation.js';
 
 export class GameScene extends BattleScene {
-  constructor() { super({ key: 'play', recipes: [createBattlePresentationRecipe({ reducedMotion: true })] }); }
+  constructor() {
+    super({
+      key: 'play',
+      recipes: [createBattlePresentationRecipe({ reducedMotion: true })],
+      presentation: gamePresentation,
+    });
+  }
   getBattle() { return battleSpec; }
   getBattleRules() { return rules; }
   isPlayerTurn(id) { return id === 'player'; }
@@ -16,9 +22,13 @@ export class GameScene extends BattleScene {
   }
   getTargetOptions() { return []; }
   chooseAiCommand(_state, actorId) { return { id: 'focus', actorId }; }
-  pgeCreateBattleDisplay() { this.status = addHelp(this, 'Reduce the rival signal to zero.'); }
+  pgeCreateBattleDisplay() {
+    this.battleStatus = this.present('battle.status', {
+      model: { playerResolve: 3, rivalResolve: 3 },
+    });
+  }
   pgeRenderBattleState(state) {
-    this.status.setText('Your signal: ' + state.game.playerResolve + '\nRival signal: ' + state.game.rivalResolve);
+    this.battleStatus.update(state.game);
     if (state.machine.phase === 'finished') {  playCue(this, 'win'); this.time.delayedCall(250, () => this.scene.start('result', { won: state.machine.outcome?.kind === 'won' })); }
   }
   performAction() { if (this.battle?.state.machine.phase === 'command-selection' && this.battle.state.machine.activeId === 'player') this.submitBattleCommand({ id: 'focus', actorId: 'player' }); }

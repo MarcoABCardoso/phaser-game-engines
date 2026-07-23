@@ -21,6 +21,7 @@ export {
 export { createLifecycle, lifecycleEvent } from './lifecycle.js';
 export { createCapabilities, getCapability, hasCapability } from './capabilities.js';
 export { createMechanicHost } from './mechanics.js';
+export { createPresentationHost } from './presentation.js';
 export { composeRecipes, defineRecipe, replaceRecipePolicy } from './recipes.js';
 export { pointInRect, boxesOverlap, entitiesInRect } from './geometry.js';
 export { createResourceScope, runCleanups } from './resources.js';
@@ -54,3 +55,9 @@ export {
   EntityStore,
   WorldEntity,
 } from './world.js';
+
+/** @typedef {import('./presentation.js').PresentationDescriptor} PresentationDescriptor */
+/** @typedef {import('./presentation.js').PresentationFactory} PresentationFactory */
+/** @typedef {import('./presentation.js').PresentationDefinitions} PresentationDefinitions */
+/** @typedef {import('./presentation.js').PresentationHandle} PresentationHandle */
+/** @typedef {import('./presentation.js').PresentationHost} PresentationHost */

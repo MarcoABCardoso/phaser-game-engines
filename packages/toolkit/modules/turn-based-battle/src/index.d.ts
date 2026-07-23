@@ -1,4 +1,9 @@
 import type Phaser from 'phaser';
+import type {
+  PresentationDefinitions,
+  PresentationFactory,
+  PresentationHandle,
+} from '@phaser-game-engines/toolkit/core/presentation.js';
 
 export type ParticipantId = string | number;
 export type BattleCommand = { id: string; actorId: ParticipantId; [key: string]: unknown };
@@ -129,7 +134,10 @@ export class Battle<Spec = unknown, GameState = unknown, Outcome = unknown> {
 }
 
 export class BattleScene<Spec = unknown, GameState = unknown, Outcome = unknown> extends Phaser.Scene {
-  constructor(config?: Phaser.Types.Scenes.SettingsConfig & { recipes?: unknown[] });
+  constructor(config?: Phaser.Types.Scenes.SettingsConfig & {
+    recipes?: unknown[];
+    presentation?: PresentationDefinitions;
+  });
   battle: Battle<Spec, GameState, Outcome>;
   getBattle(): Spec;
   getBattleRules(): BattleRules<Spec, GameState, Outcome>;
@@ -137,9 +145,29 @@ export class BattleScene<Spec = unknown, GameState = unknown, Outcome = unknown>
   pgeOnBattleEvent(type: string, payload: unknown): void;
   pgeRenderBattleState(state: BattleState<GameState, Outcome>): void;
   submitBattleCommand(command: BattleCommand): void;
+  createPrefab(name: string, props?: Record<string, unknown>, fallback?: PresentationFactory): PresentationHandle;
+  present(name: string, props?: Record<string, unknown>, fallback?: PresentationFactory): PresentationHandle;
 }
 
 export function createBattlePresentationRecipe(options?: Record<string, unknown>): {
+  id: string;
+  policies: Record<string, (scene: BattleScene) => void | (() => void)>;
+};
+export interface BattleResultPresentationOptions<Outcome = unknown, Model = Outcome> {
+  id?: string;
+  presenter?: string;
+  getModel?: (outcome: Outcome, scene: BattleScene, payload: unknown) => Model;
+  render?: PresentationFactory;
+  onPresented?: (view: PresentationHandle, context: {
+    outcome: Outcome;
+    model: Model;
+    scene: BattleScene;
+    payload: unknown;
+  }) => void;
+}
+export function createBattleResultPresentationRecipe<Outcome = unknown, Model = Outcome>(
+  options?: BattleResultPresentationOptions<Outcome, Model>,
+): {
   id: string;
   policies: Record<string, (scene: BattleScene) => void | (() => void)>;
 };

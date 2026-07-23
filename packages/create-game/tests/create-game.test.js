@@ -76,11 +76,14 @@ describe('project generator', () => {
     expect(result.files).toContain('src/scenes/ResultScene.js');
     expect(result.files).toContain('src/content/level.js');
     expect(result.files).toContain('src/rules/game-rules.js');
-    expect(result.files).toContain('src/presentation/presentation.js');
+    expect(result.files).toContain('src/presentation/game-presentation.js');
+    expect(result.files).toContain('src/presentation/screen-presentation.js');
     expect(result.files).toContain('src/presentation/styles.js');
     expect(result.files).toContain('public/assets/README.md');
     expect(readFileSync(join(target, 'README.md'), 'utf8')).toContain('title → controls → play → result → restart');
     const gameScene = readFileSync(join(target, 'src/scenes/GameScene.js'), 'utf8');
+    expect(gameScene).not.toMatch(/\.(?:add)\.(?:rectangle|text|star|ellipse|circle|container)/);
+    expect(gameScene).toContain('presentation: gamePresentation');
     if (genre === 'battle') {
       expect(gameScene).toContain('pgeCreateBattleDisplay()');
       expect(gameScene).toContain('pgeRenderBattleState(');
@@ -170,11 +173,14 @@ describe('project generator', () => {
   it('keeps Phaser text styles out of presentation behavior', () => {
     const target = join(temporaryRoot(), 'presentation-styles');
     createProject({ targetDirectory: target, genre: 'platformer', template: 'recommended' });
-    const presentation = readFileSync(join(target, 'src/presentation/presentation.js'), 'utf8');
+    const presentation = readFileSync(join(target, 'src/presentation/game-presentation.js'), 'utf8');
+    const screens = readFileSync(join(target, 'src/presentation/screen-presentation.js'), 'utf8');
     const styles = readFileSync(join(target, 'src/presentation/styles.js'), 'utf8');
 
     expect(presentation).toContain("from './styles.js'");
     expect(presentation).not.toContain('fontFamily');
+    expect(screens).toContain("from './styles.js'");
+    expect(screens).not.toContain('fontFamily');
     expect(styles).toContain('export const headingTextStyle');
     expect(styles).toContain('export const pauseTextStyle');
   });
@@ -182,7 +188,7 @@ describe('project generator', () => {
   it('derives top-down movement presentation from Arcade velocity', () => {
     const target = join(temporaryRoot(), 'top-down-moving-presentation');
     createProject({ targetDirectory: target, genre: 'top-down', template: 'recommended' });
-    const presentation = readFileSync(join(target, 'src/presentation/presentation.js'), 'utf8');
+    const presentation = readFileSync(join(target, 'src/presentation/game-presentation.js'), 'utf8');
     expect(presentation).toContain('scene.player?.body?.velocity');
     expect(presentation).toContain('Math.hypot');
   });
@@ -240,8 +246,10 @@ describe('project generator', () => {
     const target = join(temporaryRoot(), 'battle-state-shape');
     createProject({ targetDirectory: target, genre: 'battle', template: 'recommended' });
     const scene = readFileSync(join(target, 'src/scenes/GameScene.js'), 'utf8');
-    expect(scene).toContain('state.game.playerResolve');
-    expect(scene).toContain('state.game.rivalResolve');
+    const presentation = readFileSync(join(target, 'src/presentation/game-presentation.js'), 'utf8');
+    expect(scene).toContain('this.battleStatus.update(state.game)');
+    expect(presentation).toContain('state.playerResolve');
+    expect(presentation).toContain('state.rivalResolve');
     expect(scene).not.toContain('state.data');
   });
 

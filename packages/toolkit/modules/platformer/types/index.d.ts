@@ -11,5 +11,6 @@ export { createDialogueMechanic } from './mechanics/dialogue.js';
 export { createFailureMechanic } from './mechanics/failure.js';
 export { createTraversalTuningMechanic } from './mechanics/traversal-tuning.js';
 export { createPrecisionPlatformerRecipe } from './recipes/precision-platformer.js';
+export { createDialoguePresentationRecipe } from './recipes/dialogue-presentation.js';
 export { ACTION_PLATFORMER_ENTITY_TYPES, createActionPlatformerRecipe, } from './recipes/action-platformer.js';
 export { validatePlatformerLevel } from './systems/content.js';

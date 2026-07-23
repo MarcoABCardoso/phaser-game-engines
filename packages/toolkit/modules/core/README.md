@@ -73,6 +73,34 @@ Published JSON Schemas live under each package's `schemas/` export. JavaScript
 projects can use `defineLevel`, `defineEntity`, and `definePortal` for contextual
 TypeScript checking without changing their runtime data.
 
+## Prefabs and presenters
+
+`createPresentationHost(scene, definitions)` registers game-owned factories without
+introducing Phaser objects into headless state. Prefabs construct world objects;
+presenters construct composite UI. Factories receive `{ scene, ...props }` and may
+return a root object directly or `{ root, body, update, destroy }`. Handles are
+idempotently disposable and the Phaser scene adapters clear every remaining handle
+on shutdown.
+
+```js
+const presentation = {
+  prefabs: {
+    player: ({ scene, x, y }) => scene.add.sprite(x, y, 'hero'),
+  },
+  presenters: {
+    dialog: ({ scene, model }) => createDialogPanel(scene, model),
+  },
+};
+
+super({ presentation });
+scene.createPrefab('player', { x: 80, y: 120 });
+scene.present('dialog', { model });
+```
+
+When a factory supplies separate `root` and `body` values, `body` is the Phaser
+object used by physics while `root` owns the visible composition. A registered
+`update(model)` callback lets a mounted presenter respond to state changes.
+
 ## Capabilities and mechanics
 
 `createCapabilities()` is a schema-free bag for named entity abilities. Values

@@ -79,6 +79,28 @@ replacement)` from core to replace one decision without copying a recipe or
 subclassing a scene. Composition rejects duplicate IDs, conflicting entity
 registrations, and overlapping ownership claims before resources are created.
 
+`createDialoguePresentationRecipe()` mounts the existing presentation-neutral
+`platformerDialogue.view()` model through the scene's `dialog` presenter. The
+presenter owns layout, portraits, fonts, and animations while the dialogue mechanic
+continues to own input, typewriter timing, and simulation pausing:
+
+```js
+super({
+  recipes: [
+    createActionPlatformerRecipe({ dialogue: { conversations } }),
+    createDialoguePresentationRecipe(),
+  ],
+  presentation: {
+    presenters: {
+      dialog: ({ scene, model }) => createDialogPanel(scene, model),
+    },
+  },
+});
+```
+
+The presenter can return `{ root, update(model), destroy() }`; the recipe updates it
+as text is revealed and destroys it when the conversation ends.
+
 ## Input intents
 
 Pass a controls adapter to make input ownership explicit. The adapter needs a

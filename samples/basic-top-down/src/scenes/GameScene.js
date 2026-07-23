@@ -2,7 +2,7 @@ import { TopDownScene, createExplorationRecipe } from '@phaser-game-engines/tool
 import { level } from '../content/level.js';
 import { GoalEntity } from '../entities/GoalEntity.js';
 import { controls, controlsLabel } from '../input/controls.js';
-import { installHud, installPauseMenu, playCue, updatePlayerPresentation } from '../presentation/presentation.js';
+import { gamePresentation, installPauseMenu, playCue, updatePlayerPresentation } from '../presentation/game-presentation.js';
 import { getStageOutcome } from '../rules/game-rules.js';
 
 export class GameScene extends TopDownScene {
@@ -14,6 +14,7 @@ export class GameScene extends TopDownScene {
       recipes: [createExplorationRecipe()],
       controls,
       entityTypes: { 'signal-goal': GoalEntity },
+      presentation: gamePresentation,
     });
   }
 
@@ -32,8 +33,9 @@ export class GameScene extends TopDownScene {
   // Toolkit lifecycle hook: install game-owned presentation for each scene run.
   pgeOnReady() {
     this.stageFinished = false;
-    this.hud = installHud(this, 'Objective: reach the gold signal');
-    this.hud.setControls(controlsLabel);
+    this.hud = this.present('game.hud', {
+      model: { objective: 'Objective: reach the gold signal', controls: controlsLabel },
+    });
     installPauseMenu(this);
   }
 

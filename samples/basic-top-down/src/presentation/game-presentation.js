@@ -1,33 +1,29 @@
 import Phaser from 'phaser';
-import {
-  headingTextStyle,
-  helpTextStyle,
-  hudTextStyle,
-  pauseTextStyle,
-} from './styles.js';
+import { hudTextStyle, pauseTextStyle } from './styles.js';
 
-export function addHeading(scene, text) {
-  return scene.add.text(480, 170, text, headingTextStyle).setOrigin(0.5);
+export function createPlayer({ scene, x, y }) {
+  return scene.add.rectangle(x, y, 22, 22, 0x6bb8ff);
 }
 
-export function addHelp(scene, text) {
-  return scene.add.text(480, 270, text, helpTextStyle).setOrigin(0.5);
+export function createGoal({ scene, spec }) {
+  return scene.add.star(spec.x, spec.y, 6, 12, 28, 0xffd166).setDepth(5);
 }
 
-export function installHud(scene, objective) {
-  const text = scene.add.text(12, 12, objective, hudTextStyle)
+export function createHud({ scene, model }) {
+  const text = scene.add.text(12, 12, '', hudTextStyle)
     .setScrollFactor(0)
     .setDepth(1000);
-
-  return {
-    setControls(value) {
-      text.setText(objective + '\n' + value);
-    },
-    destroy() {
-      text.destroy();
-    },
+  const update = (next) => {
+    text.setText(next.objective + '\n' + next.controls);
   };
+  update(model);
+  return { root: text, update };
 }
+
+export const gamePresentation = {
+  prefabs: { player: createPlayer, goal: createGoal },
+  presenters: { 'game.hud': createHud },
+};
 
 export function updatePlayerPresentation(scene, _time) {
   const velocity = scene.player?.body?.velocity;

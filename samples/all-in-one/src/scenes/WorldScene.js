@@ -4,6 +4,7 @@ import { BattleEncounterEntity } from '../entities/BattleEncounterEntity.js';
 import { CollectibleEntity } from '../entities/CollectibleEntity.js';
 import Phaser from 'phaser';
 import { explorationControls } from '../input/controls.js';
+import { createWorldHud } from '../presentation/world-presentation.js';
 import { campaign } from '../state/campaign.js';
 
 export class WorldScene extends TopDownScene {
@@ -13,6 +14,7 @@ export class WorldScene extends TopDownScene {
       controls: explorationControls,
       recipes: [createExplorationRecipe({ statusText: 'Collect items, open inventory with I, or find the red encounter.' })],
       entityTypes: { 'battle-encounter': BattleEncounterEntity, collectible: CollectibleEntity },
+      presentation: { presenters: { 'world.hud': createWorldHud } },
     });
     this.campaign = campaign;
   }
@@ -20,9 +22,7 @@ export class WorldScene extends TopDownScene {
   getLevel() { return world; }
 
   pgeOnReady() {
-    this.heading = this.add.text(16, 48, 'Top-down world', {
-      fontFamily: 'sans-serif', fontSize: '24px', color: '#ffffff',
-    }).setScrollFactor(0).setDepth(100);
+    this.present('world.hud', { model: { heading: 'Top-down world' } });
     this.inventoryKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I);
   }
 

@@ -3,6 +3,7 @@ import {
   composeRecipes,
   createLifecycle,
   createMechanicHost,
+  createPresentationHost,
   lifecycleEvent,
   runCleanups,
 } from '@phaser-game-engines/toolkit/core';
@@ -15,6 +16,7 @@ export default class BattleScene extends Phaser.Scene {
     this.recipeComposition = composeRecipes(config.recipes ?? []);
     this.lifecycle = createLifecycle();
     this.mechanicHost = createMechanicHost(this);
+    this.presentation = createPresentationHost(this, config.presentation);
   }
 
   getBattle() { throw new Error('BattleScene subclasses must implement getBattle()'); }
@@ -27,6 +29,7 @@ export default class BattleScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => runCleanups([
       () => this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this }),
       () => this.mechanicHost.clear(),
+      () => this.presentation.clear(),
     ], 'Battle scene shutdown failed.'));
     this.battle = new BattleController(this.getBattle(), {
       rules: this.getBattleRules(),
@@ -48,6 +51,11 @@ export default class BattleScene extends Phaser.Scene {
     this.battle.submitCommand(command);
     this.refresh();
   }
+
+  /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+  createPrefab(name, props = {}, fallback = undefined) { return this.presentation.createPrefab(name, props, fallback); }
+  /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+  present(name, props = {}, fallback = undefined) { return this.presentation.present(name, props, fallback); }
 
   handleBattleEvent(type, payload) {
     this.pgeOnBattleEvent(type, payload);

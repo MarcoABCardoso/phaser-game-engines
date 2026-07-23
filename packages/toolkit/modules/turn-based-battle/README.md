@@ -44,6 +44,28 @@ class MyBattleScene extends BattleScene {
 }
 ```
 
+Register composite UI under the scene's `presentation.presenters` option.
+`createBattleResultPresentationRecipe()` listens for `battleEnded`, optionally maps
+the game-owned outcome to a view model, and mounts `battle.result`. The engine never
+interprets the outcome:
+
+```js
+super({
+  recipes: [createBattleResultPresentationRecipe({
+    getModel: (outcome) => ({ title: outcome.winner ? 'Victory' : 'Defeat' }),
+  })],
+  presentation: {
+    presenters: {
+      'battle.result': ({ scene, model }) => createResultPanel(scene, model),
+    },
+  },
+});
+```
+
+The returned presentation handle is removed automatically on scene shutdown. A
+presenter may instead return `{ root, update, destroy }` for explicit lifecycle
+control.
+
 ## Event contract and ordering
 
 Every payload contains `{ type, time, state }`. `state` is the current `{ machine, game }` object and `time` comes from the injected clock. Additional stable fields are:

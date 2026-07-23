@@ -155,7 +155,8 @@ function starterReadme({ genre, language, template, recipe, input, features, dep
 | ${genre === 'battle' ? 'Initial battle state' : 'Layout, spawn, or goal position'} | \`src/content/level.${language}\` | Your game content |
 | Victory or defeat conditions | \`src/rules/game-rules.${language}\` | Your pure game rules |
 | Applying an outcome, saving, or changing scenes | \`src/scenes/GameScene.${language}\` | Your game orchestration |
-${genre === 'battle' ? '' : `| Goal appearance | \`src/entities/GoalEntity.${language}\` | Your entity presentation |\n`}| HUD, audio, or visual feedback | \`src/presentation/presentation.${language}\` | Your presentation |
+${genre === 'battle' ? '' : `| Goal behavior | \`src/entities/GoalEntity.${language}\` | Your entity behavior |\n`}| World, HUD, and battle visuals | \`src/presentation/game-presentation.${language}\` | Your scene presentation |
+| Title and result visuals | \`src/presentation/screen-presentation.${language}\` | Your flow presentation |
 | Phaser text styles | \`src/presentation/styles.${language}\` | Your presentation theme |
 | Browser layout and controls | \`src/style.css\` | Your browser styles |
 | Controls | \`src/input/controls.${language}\` | Your input adapter |

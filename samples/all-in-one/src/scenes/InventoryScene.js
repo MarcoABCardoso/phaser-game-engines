@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { InventoryScene as ToolkitInventoryScene, createInventoryDragDropRecipe } from '@phaser-game-engines/toolkit/inventory';
+import { createInventoryShell, renderInventoryItem } from '../presentation/inventory-presentation.js';
 import { campaign } from '../state/campaign.js';
 
 export class InventoryScene extends ToolkitInventoryScene {
@@ -13,30 +14,17 @@ export class InventoryScene extends ToolkitInventoryScene {
         equipmentX: 520,
         equipmentY: 150,
         getItemLabel: (item) => item.label,
-        renderItem: (scene, item, { x, y, size }) => scene.add.container(x, y, [
-          scene.add.rectangle(0, 0, size, size, item.color).setStrokeStyle(2, 0xffffff, 0.6),
-          scene.add.text(0, 0, item.label, {
-            fontFamily: 'sans-serif', fontSize: '13px', color: '#08111f', align: 'center',
-            wordWrap: { width: size - 8 },
-          }).setOrigin(0.5),
-        ]),
+        renderItem: renderInventoryItem,
         onActivate: (scene, item, { location }) => scene.activateItem(item, location),
       })],
+      presentation: { presenters: { 'inventory.shell': createInventoryShell } },
     });
   }
 
   getInventory() { return campaign.inventory; }
 
   pgeCreateInventoryDisplay() {
-    this.cameras.main.setBackgroundColor('#0f172a');
-    this.add.text(32, 24, 'Inventory', { fontFamily: 'sans-serif', fontSize: '30px', color: '#ffffff' });
-    this.add.text(32, 66, 'Drag to equip · Double-click tonic to use · S: sort · I/Esc: close', {
-      fontFamily: 'sans-serif', fontSize: '16px', color: '#cbd5e1',
-    });
-    this.stats = this.add.text(690, 118, '', {
-      fontFamily: 'monospace', fontSize: '17px', color: '#bae6fd', lineSpacing: 8,
-      wordWrap: { width: 235 },
-    });
+    this.inventoryShell = this.present('inventory.shell');
     this.keys = this.input.keyboard.addKeys({
       close: Phaser.Input.Keyboard.KeyCodes.I,
       escape: Phaser.Input.Keyboard.KeyCodes.ESC,
@@ -47,14 +35,12 @@ export class InventoryScene extends ToolkitInventoryScene {
   pgeRenderInventoryState(state) {
     const player = campaign.snapshot().player;
     const stats = campaign.playerStats();
-    this.stats.setText([
-      'Player data',
-      `HP ${player.hp}/${player.maxHp}`,
-      `Attack ${stats.attack}`,
-      `Defense ${stats.defense}`,
-      '',
-      this.itemMessage ?? 'Equipment changes battle stats.',
-    ]);
+    this.inventoryShell.update({
+      state,
+      player,
+      stats,
+      message: this.itemMessage ?? 'Equipment changes battle stats.',
+    });
   }
 
   activateItem(item, location) {

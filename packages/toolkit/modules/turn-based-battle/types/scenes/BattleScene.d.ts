@@ -23,6 +23,14 @@ export default class BattleScene extends Phaser.Scene {
         has: (mechanic: any) => boolean;
         list: () => any[];
     }>;
+    presentation: Readonly<{
+        createPrefab(name: string, props?: Record<string, any>, fallback?: import("../../../core/types/presentation.js").PresentationFactory): import("../../../core/types/presentation.js").PresentationHandle;
+        present(name: string, props?: Record<string, any>, fallback?: import("../../../core/types/presentation.js").PresentationFactory): import("../../../core/types/presentation.js").PresentationHandle;
+        hasPrefab(name: string): boolean;
+        hasPresenter(name: string): boolean;
+        clear(): void;
+        readonly size: number;
+    }>;
     battle: BattleController | undefined;
     constructor(config?: {});
     getBattle(): void;
@@ -33,6 +41,22 @@ export default class BattleScene extends Phaser.Scene {
     create(): void;
     update(time: any, delta: any): void;
     submitBattleCommand(command: any): void;
+    /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+    createPrefab(name: string, props?: Record<string, any>, fallback?: import('@phaser-game-engines/toolkit/core').PresentationFactory): Readonly<{
+        root: any;
+        body: any;
+        update(model: any): boolean;
+        destroy(): boolean;
+        readonly active: boolean;
+    }>;
+    /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+    present(name: string, props?: Record<string, any>, fallback?: import('@phaser-game-engines/toolkit/core').PresentationFactory): Readonly<{
+        root: any;
+        body: any;
+        update(model: any): boolean;
+        destroy(): boolean;
+        readonly active: boolean;
+    }>;
     handleBattleEvent(type: any, payload: any): void;
     refresh(): void;
 }

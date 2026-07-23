@@ -3,22 +3,29 @@ import {
   createInputIntent,
   createMemoryStorage,
   createReplayViewer,
+  createPresentationHost,
   createSaveStore,
   createWorldRuntime,
   replaceRecipePolicy,
+  type PresentationDefinitions,
 } from '@phaser-game-engines/toolkit/core/headless';
 import { createManualClock } from '@phaser-game-engines/toolkit/core/determinism.js';
 import { validateAssetManifest, type AssetManifest } from '@phaser-game-engines/toolkit/core/assets.js';
 import {
   PlatformerScene,
   createHealthMechanic,
+  createDialoguePresentationRecipe,
   createPrecisionPlatformerRecipe,
 } from '@phaser-game-engines/toolkit/platformer';
 import { createTraversalController } from '@phaser-game-engines/toolkit/platformer/headless';
 import type { PlatformerLevel } from '@phaser-game-engines/toolkit/platformer/systems/content.js';
 import { TopDownScene, createExplorationRecipe } from '@phaser-game-engines/toolkit/top-down';
 import { movementFromIntent } from '@phaser-game-engines/toolkit/top-down/headless';
-import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/toolkit/battle';
+import {
+  BattleScene,
+  createBattlePresentationRecipe,
+  createBattleResultPresentationRecipe,
+} from '@phaser-game-engines/toolkit/battle';
 import {
   Battle,
   type BattleRules,
@@ -43,6 +50,14 @@ const precision = replaceRecipePolicy(
 const snapshot = captureSessionSnapshot({ clock: createManualClock() });
 const saves = createSaveStore({ storage: createMemoryStorage() });
 const replay = createReplayViewer({ version: 1, entries: [] });
+const presentationDefinitions: PresentationDefinitions = {
+  presenters: { dialog: ({ model }) => ({ root: null, update: () => void model }) },
+};
+const presentation = createPresentationHost({}, presentationDefinitions);
+const dialogRecipe = createDialoguePresentationRecipe();
+const resultRecipe = createBattleResultPresentationRecipe<{ winner: string }, { title: string }>({
+  getModel: (outcome) => ({ title: outcome.winner }),
+});
 
 type GameState = { participants: string[]; done: boolean };
 const rules: BattleRules<{ participants: string[] }, GameState, { winner: string }> = {
@@ -61,5 +76,5 @@ const genre: Genre = 'platformer';
 const kind: ContentKind = 'top-down';
 const assets: AssetManifest = { assets: [{ key: 'hero', type: 'image', url: 'hero.png' }] };
 const level: PlatformerLevel = { world: { width: 10, height: 10 }, spawn: { x: 1, y: 1 } };
-void [velocity, clock, traversal, runtime, precision, snapshot, saves, replay, battle, inventory, genre, kind, assets, level, validateAssetManifest, validateContent, convertTiledMap, createProject, createExplorationRecipe, createBattlePresentationRecipe, createInventoryDragDropRecipe, PlatformerScene, TopDownScene, BattleScene, InventoryScene];
+void [velocity, clock, traversal, runtime, precision, snapshot, saves, replay, presentation, dialogRecipe, resultRecipe, battle, inventory, genre, kind, assets, level, validateAssetManifest, validateContent, convertTiledMap, createProject, createExplorationRecipe, createBattlePresentationRecipe, createInventoryDragDropRecipe, PlatformerScene, TopDownScene, BattleScene, InventoryScene];
 void (null as TiledMap | null);

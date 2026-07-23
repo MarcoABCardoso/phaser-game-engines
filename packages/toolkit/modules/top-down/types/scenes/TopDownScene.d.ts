@@ -35,6 +35,14 @@ export default class TopDownScene extends Phaser.Scene {
         has: (mechanic: any) => boolean;
         list: () => any[];
     }>;
+    presentation: Readonly<{
+        createPrefab(name: string, props?: Record<string, any>, fallback?: import("../../../core/types/presentation.js").PresentationFactory): import("../../../core/types/presentation.js").PresentationHandle;
+        present(name: string, props?: Record<string, any>, fallback?: import("../../../core/types/presentation.js").PresentationFactory): import("../../../core/types/presentation.js").PresentationHandle;
+        hasPrefab(name: string): boolean;
+        hasPresenter(name: string): boolean;
+        clear(): void;
+        readonly size: number;
+    }>;
     level: void | undefined;
     transitioning: boolean | undefined;
     worldRuntime: Readonly<{
@@ -55,7 +63,14 @@ export default class TopDownScene extends Phaser.Scene {
         validateLevel: (level: any, options?: {}) => any;
     }> | undefined;
     solids: Phaser.Physics.Arcade.StaticGroup | undefined;
-    player: Phaser.GameObjects.Rectangle | undefined;
+    playerPresentation: Readonly<{
+        root: any;
+        body: any;
+        update(model: any): boolean;
+        destroy(): boolean;
+        readonly active: boolean;
+    }> | undefined;
+    player: any;
     keys: object | undefined;
     cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
     contextualActions: any[] | undefined;
@@ -90,6 +105,22 @@ export default class TopDownScene extends Phaser.Scene {
     pgeOnTick(_time: number, _delta: number): void;
     create(): void;
     addSolid(rect: any, color?: number): Phaser.GameObjects.Rectangle;
+    /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+    createPrefab(name: string, props?: Record<string, any>, fallback?: import('@phaser-game-engines/toolkit/core').PresentationFactory): Readonly<{
+        root: any;
+        body: any;
+        update(model: any): boolean;
+        destroy(): boolean;
+        readonly active: boolean;
+    }>;
+    /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+    present(name: string, props?: Record<string, any>, fallback?: import('@phaser-game-engines/toolkit/core').PresentationFactory): Readonly<{
+        root: any;
+        body: any;
+        update(model: any): boolean;
+        destroy(): boolean;
+        readonly active: boolean;
+    }>;
     /**
      * Phaser keyboard adapter for the engine's device-independent input contract.
      * Games may override this to provide gamepad, touch, AI, network, or replay input.

@@ -1,4 +1,9 @@
 import type Phaser from 'phaser';
+import type {
+  PresentationDefinitions,
+  PresentationFactory,
+  PresentationHandle,
+} from '@phaser-game-engines/toolkit/core';
 
 export type ItemLocation = { kind: 'item'; index: number };
 export type EquipmentLocation = { kind: 'equipment'; slot: string };
@@ -44,13 +49,18 @@ export class Inventory<Item = unknown, Context = unknown> {
 }
 
 export class InventoryScene<Item = unknown, Context = unknown> extends Phaser.Scene {
-  constructor(config?: Phaser.Types.Scenes.SettingsConfig & { recipes?: unknown[] });
+  constructor(config?: Phaser.Types.Scenes.SettingsConfig & {
+    recipes?: unknown[];
+    presentation?: PresentationDefinitions;
+  });
   inventory: Inventory<Item, Context>;
   getInventory(): Inventory<Item, Context>;
   pgeCreateInventoryDisplay(): void;
   pgeRenderInventoryState(state: InventoryState<Item>): void;
   moveInventoryItem(from: InventoryLocation, to: InventoryLocation): boolean;
   useInventoryItem(location: InventoryLocation, context?: Context): unknown;
+  createPrefab(name: string, props?: Record<string, unknown>, fallback?: PresentationFactory): PresentationHandle;
+  present(name: string, props?: Record<string, unknown>, fallback?: PresentationFactory): PresentationHandle;
   refresh(): void;
 }
 

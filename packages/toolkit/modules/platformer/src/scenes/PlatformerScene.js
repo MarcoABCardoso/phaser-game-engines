@@ -4,6 +4,7 @@ import {
   advanceActionActivation,
   createLifecycle,
   createMechanicHost,
+  createPresentationHost,
   composeRecipes,
   createWorldRuntime,
   createInputIntent,
@@ -78,6 +79,7 @@ export default class PlatformerScene extends Phaser.Scene {
     this.simulationGates = new Set();
     this.lifecycle = createLifecycle();
     this.mechanicHost = createMechanicHost(this);
+    this.presentation = createPresentationHost(this, config.presentation);
   }
 
   create() {
@@ -87,6 +89,7 @@ export default class PlatformerScene extends Phaser.Scene {
         () => this.controls?.reset?.(),
         () => this.mechanicHost.clear(),
         () => this.entities?.destroyAll(this),
+        () => this.presentation.clear(),
       ], 'Platformer scene shutdown failed.');
     });
     // The subclass initialises game-owned state before anything reads it.
@@ -204,10 +207,17 @@ export default class PlatformerScene extends Phaser.Scene {
   ledgeGrabConfig() { return null; } // null = no ledge grab; else {reach,band,cooldownMs}
   pgeUpdatePlayerVisual(/* time, onGround */) {}
   createPlayerObject(x, y) {
-    const r = this.add.rectangle(x, y, DEFAULT_BODY_W, DEFAULT_BODY_H, PAL.player);
-    this.physics.add.existing(r);
-    return r;
+    this.playerPresentation = this.createPrefab('player', { x, y }, ({ scene }) => {
+      return scene.add.rectangle(x, y, DEFAULT_BODY_W, DEFAULT_BODY_H, PAL.player);
+    });
+    const player = this.playerPresentation.body;
+    if (!player.body) this.physics.add.existing(player);
+    return player;
   }
+  /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+  createPrefab(name, props = {}, fallback = undefined) { return this.presentation.createPrefab(name, props, fallback); }
+  /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+  present(name, props = {}, fallback = undefined) { return this.presentation.present(name, props, fallback); }
   // Where the scene begins. A recipe may supply a game-owned respawn policy.
   spawnPoint() { return this.level.spawn; }
   // Escalation tier for spawners etc. (no danger model in the bare engine).
@@ -346,7 +356,8 @@ export default class PlatformerScene extends Phaser.Scene {
     body.setCollideWorldBounds(true);
     body.setMaxVelocity(this.moveMaxSpeed(), 2000);
     body.setDragX(this.groundDragX());
-    this.player.setDepth(50);
+    this.playerPresentation?.root?.setDepth?.(50);
+    this.player.setDepth?.(50);
   }
 
   // --- transient reset ------------------------------------------------------

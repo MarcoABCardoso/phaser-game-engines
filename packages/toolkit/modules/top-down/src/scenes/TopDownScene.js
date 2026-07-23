@@ -4,6 +4,7 @@ import {
   advanceActionActivation,
   createLifecycle,
   createMechanicHost,
+  createPresentationHost,
   composeRecipes,
   createWorldRuntime,
   createInputIntent,
@@ -37,6 +38,7 @@ export default class TopDownScene extends Phaser.Scene {
     this.worldRuntimeOptions = config.worldRuntime ?? {};
     this.lifecycle = createLifecycle();
     this.mechanicHost = createMechanicHost(this);
+    this.presentation = createPresentationHost(this, config.presentation);
   }
 
   getLevel() { throw new Error('TopDownScene subclasses must implement getLevel()'); }
@@ -55,6 +57,7 @@ export default class TopDownScene extends Phaser.Scene {
         () => this.controls?.reset?.(),
         () => this.mechanicHost.clear(),
         () => this.entities?.destroyAll(this),
+        () => this.presentation.clear(),
       ], 'Top-down scene shutdown failed.');
     });
     this.level = this.getLevel();
@@ -80,11 +83,13 @@ export default class TopDownScene extends Phaser.Scene {
     this.solids = this.physics.add.staticGroup();
     for (const wall of this.level.walls ?? []) this.addSolid(wall, wall.color ?? 0x374151);
 
-    // A native rectangle keeps the player body independent from game textures.
-    this.player = this.add
-      .rectangle(this.level.spawn.x, this.level.spawn.y, 22, 22, 0x6bb8ff)
-      .setDepth(10);
-    this.physics.add.existing(this.player);
+    // A native rectangle remains the no-art fallback; games can register a player prefab.
+    this.playerPresentation = this.createPrefab('player', this.level.spawn, ({ scene, x, y }) => {
+      return scene.add.rectangle(x, y, 22, 22, 0x6bb8ff).setDepth(10);
+    });
+    this.player = this.playerPresentation.body;
+    if (!this.player.body) this.physics.add.existing(this.player);
+    this.playerPresentation.root?.setDepth?.(10);
     this.player.body.setCircle(11);
     this.player.body.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.solids);
@@ -141,6 +146,11 @@ export default class TopDownScene extends Phaser.Scene {
     this.solids.add(block);
     return block;
   }
+
+  /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+  createPrefab(name, props = {}, fallback = undefined) { return this.presentation.createPrefab(name, props, fallback); }
+  /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+  present(name, props = {}, fallback = undefined) { return this.presentation.present(name, props, fallback); }
 
   /**
    * Phaser keyboard adapter for the engine's device-independent input contract.

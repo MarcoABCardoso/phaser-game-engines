@@ -35,6 +35,14 @@ export default class PlatformerScene extends Phaser.Scene {
         has: (mechanic: any) => boolean;
         list: () => any[];
     }>;
+    presentation: Readonly<{
+        createPrefab(name: string, props?: Record<string, any>, fallback?: import("../../../core/types/presentation.js").PresentationFactory): import("../../../core/types/presentation.js").PresentationHandle;
+        present(name: string, props?: Record<string, any>, fallback?: import("../../../core/types/presentation.js").PresentationFactory): import("../../../core/types/presentation.js").PresentationHandle;
+        hasPrefab(name: string): boolean;
+        hasPresenter(name: string): boolean;
+        clear(): void;
+        readonly size: number;
+    }>;
     level: void | undefined;
     worldRuntime: Readonly<{
         registry: {};
@@ -97,12 +105,19 @@ export default class PlatformerScene extends Phaser.Scene {
         readonly request: any;
     }> | undefined;
     keys: object | undefined;
+    playerPresentation: Readonly<{
+        root: any;
+        body: any;
+        update(model: any): boolean;
+        destroy(): boolean;
+        readonly active: boolean;
+    }> | undefined;
     platformRects: {} | undefined;
     _onOneWayContact: boolean | undefined;
-    player: Phaser.GameObjects.Rectangle | undefined;
+    player: any;
     onOneWay: boolean | undefined;
     stunUntil: number | undefined;
-    prevPlayerX: number | undefined;
+    prevPlayerX: any;
     contextualActions: any[] | undefined;
     currentContextualAction: any;
     contextualActionActivation: {
@@ -180,7 +195,23 @@ export default class PlatformerScene extends Phaser.Scene {
     wallSlideConfig(): null;
     ledgeGrabConfig(): null;
     pgeUpdatePlayerVisual(): void;
-    createPlayerObject(x: any, y: any): Phaser.GameObjects.Rectangle;
+    createPlayerObject(x: any, y: any): any;
+    /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+    createPrefab(name: string, props?: Record<string, any>, fallback?: import('@phaser-game-engines/toolkit/core').PresentationFactory): Readonly<{
+        root: any;
+        body: any;
+        update(model: any): boolean;
+        destroy(): boolean;
+        readonly active: boolean;
+    }>;
+    /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+    present(name: string, props?: Record<string, any>, fallback?: import('@phaser-game-engines/toolkit/core').PresentationFactory): Readonly<{
+        root: any;
+        body: any;
+        update(model: any): boolean;
+        destroy(): boolean;
+        readonly active: boolean;
+    }>;
     spawnPoint(): any;
     currentDangerTier(): number;
     validateLevelContent(level: any, path?: string): import("../systems/content.js").PlatformerLevel;
@@ -230,16 +261,16 @@ export default class PlatformerScene extends Phaser.Scene {
         ledge: null;
     };
     traversalBodyState(onGround: any): {
-        x: number;
-        y: number;
+        x: any;
+        y: any;
         top: any;
         bottom: any;
         left: any;
         right: any;
         halfWidth: any;
         halfHeight: any;
-        velocityX: number;
-        velocityY: number;
+        velocityX: any;
+        velocityY: any;
         onGround: any;
         blockedLeft: any;
         blockedRight: any;

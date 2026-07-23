@@ -13,7 +13,8 @@ The game loop is title → controls → play → result → restart. Content, ru
 | Initial battle state | `src/content/level.js` | Your game content |
 | Victory or defeat conditions | `src/rules/game-rules.js` | Your pure game rules |
 | Applying an outcome, saving, or changing scenes | `src/scenes/GameScene.js` | Your game orchestration |
-| HUD, audio, or visual feedback | `src/presentation/presentation.js` | Your presentation |
+| World, HUD, and battle visuals | `src/presentation/game-presentation.js` | Your scene presentation |
+| Title and result visuals | `src/presentation/screen-presentation.js` | Your flow presentation |
 | Phaser text styles | `src/presentation/styles.js` | Your presentation theme |
 | Browser layout and controls | `src/style.css` | Your browser styles |
 | Controls | `src/input/controls.js` | Your input adapter |

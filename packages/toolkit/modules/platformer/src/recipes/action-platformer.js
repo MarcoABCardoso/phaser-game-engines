@@ -30,7 +30,7 @@ export function createActionPlatformerRecipe(options = {}) {
       'player.health',
       'player.primary-action',
       'world.checkpoints',
-      'presentation.dialogue',
+      'dialogue.flow',
       'session.failure',
     ],
     entityTypes: ACTION_PLATFORMER_ENTITY_TYPES,

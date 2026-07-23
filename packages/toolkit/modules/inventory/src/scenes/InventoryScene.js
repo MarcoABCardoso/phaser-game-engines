@@ -3,6 +3,7 @@ import {
   composeRecipes,
   createLifecycle,
   createMechanicHost,
+  createPresentationHost,
   lifecycleEvent,
   runCleanups,
 } from '@phaser-game-engines/toolkit/core';
@@ -14,6 +15,7 @@ export default class InventoryScene extends Phaser.Scene {
     this.recipeComposition = composeRecipes(config.recipes ?? []);
     this.lifecycle = createLifecycle();
     this.mechanicHost = createMechanicHost(this);
+    this.presentation = createPresentationHost(this, config.presentation);
   }
 
   getInventory() { throw new Error('InventoryScene subclasses must implement getInventory()'); }
@@ -25,6 +27,7 @@ export default class InventoryScene extends Phaser.Scene {
       () => this.lifecycle.emit(lifecycleEvent.shutdown, { scene: this }),
       () => this.unsubscribeInventory?.(),
       () => this.mechanicHost.clear(),
+      () => this.presentation.clear(),
     ], 'Inventory scene shutdown failed.'));
     this.inventory = this.getInventory();
     if (!this.inventory || typeof this.inventory.move !== 'function') {
@@ -41,6 +44,10 @@ export default class InventoryScene extends Phaser.Scene {
 
   moveInventoryItem(from, to) { return this.inventory.move(from, to); }
   useInventoryItem(location, context) { return this.inventory.use(location, context ?? { scene: this }); }
+  /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+  createPrefab(name, props = {}, fallback = undefined) { return this.presentation.createPrefab(name, props, fallback); }
+  /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
+  present(name, props = {}, fallback = undefined) { return this.presentation.present(name, props, fallback); }
 
   refresh() {
     const state = this.inventory.snapshot();
@@ -48,4 +55,3 @@ export default class InventoryScene extends Phaser.Scene {
     this.lifecycle.emit('refresh', { scene: this, state });
   }
 }
-

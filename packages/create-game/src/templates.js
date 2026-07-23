@@ -16,7 +16,8 @@ export function recommendedFiles({ genre, extension: ext, input, recipe, feature
     [`src/scenes/GameScene.${ext}`]: gameSceneSource(genre, ext, input, recipe, features),
     [`src/content/level.${ext}`]: levelSource(genre),
     [`src/rules/game-rules.${ext}`]: rulesSource(genre, ext),
-    [`src/presentation/presentation.${ext}`]: presentationSource(ext),
+    [`src/presentation/game-presentation.${ext}`]: gamePresentationSource(genre, ext),
+    [`src/presentation/screen-presentation.${ext}`]: screenPresentationSource(ext),
     [`src/presentation/styles.${ext}`]: presentationStylesSource(ext),
     [`src/input/controls.${ext}`]: controlsSource(input, genre, ext),
     [`src/tests/rules.test.${ext}`]: rulesTestSource(genre, ext),
@@ -67,7 +68,7 @@ installBrowserControls({
 
 function titleSceneSource(ext) {
   return `import Phaser from 'phaser';
-import { addHeading, addHelp } from '../presentation/presentation.js';
+import { addHeading, addHelp } from '../presentation/screen-presentation.js';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -89,7 +90,7 @@ export class TitleScene extends Phaser.Scene {
 
 function resultSceneSource(ext) {
   return `import Phaser from 'phaser';
-import { addHeading, addHelp } from '../presentation/presentation.js';
+import { addHeading, addHelp } from '../presentation/screen-presentation.js';
 
 export class ResultScene extends Phaser.Scene {
   constructor() {
@@ -180,15 +181,17 @@ function goalEntitySource(genre, ext) {
       () => scene.onGoalContact?.(this),
     );` : '';
   const topDownDestroy = genre === 'top-down' ? '\n    this.overlap?.destroy();' : '';
-  return `${ext === 'ts' ? `import type Phaser from 'phaser';\n` : ''}import { Entity } from '@phaser-game-engines/toolkit/${pkg}';
+  return `${ext === 'ts' ? `import type Phaser from 'phaser';\nimport type { PresentationHandle } from '@phaser-game-engines/toolkit/core';\n` : ''}import { Entity } from '@phaser-game-engines/toolkit/${pkg}';
 
 export class GoalEntity extends ${ext === 'ts' ? '(Entity as any)' : 'Entity'} {
-${ext === 'ts' ? `  marker?: Phaser.GameObjects.Star;${topDownTypeFields}\n  declare spec: { id: string, x: number, y: number };\n` : ''}  spawn(scene${type(ext, ': any')}) {
-    this.marker = scene.add.star(this.spec.x, this.spec.y, 6, 12, 28, 0xffd166).setDepth(5);${topDownSpawn}
+${ext === 'ts' ? `  marker?: Phaser.GameObjects.Star;\n  view?: PresentationHandle;${topDownTypeFields}\n  declare spec: { id: string, x: number, y: number };\n` : ''}  spawn(scene${type(ext, ': any')}) {
+    const view = scene.createPrefab('goal', { spec: this.spec });
+    this.view = view;
+    this.marker = view.body;${topDownSpawn}
   }
 
   destroy() {
-    this.marker?.destroy();${topDownDestroy}
+    this.view?.destroy();${topDownDestroy}
   }
 }
 `;
@@ -209,21 +212,22 @@ function gameSceneSource(genre, ext, input, recipe, features) {
       : recipe === 'exploration' ? 'createExplorationRecipe' : null;
   const imports = recipeName ? `, ${recipeName}` : '';
   const recipes = recipeName ? `\n      recipes: [${recipeName}()],` : '';
-  return `import { ${EngineScene}${imports} } from '@phaser-game-engines/toolkit/${pkg}';
+  return `${ext === 'ts' ? `import type { PresentationHandle } from '@phaser-game-engines/toolkit/core';\n` : ''}import { ${EngineScene}${imports} } from '@phaser-game-engines/toolkit/${pkg}';
 import { level } from '../content/level.js';
 import { GoalEntity } from '../entities/GoalEntity.js';
 import { controls, controlsLabel } from '../input/controls.js';
-import { installHud, installPauseMenu, playCue, updatePlayerPresentation } from '../presentation/presentation.js';
+import { gamePresentation, installPauseMenu, playCue, updatePlayerPresentation } from '../presentation/game-presentation.js';
 import { getStageOutcome } from '../rules/game-rules.js';
 ${sessionImport}
 export class GameScene extends ${EngineScene} {
-${ext === 'ts' ? '  hud!: ReturnType<typeof installHud>;\n  goal!: GoalEntity;\n' : ''}  stageFinished = false;
+${ext === 'ts' ? '  hud!: PresentationHandle;\n  goal!: GoalEntity;\n' : ''}  stageFinished = false;
 
   constructor() {
     super({
       key: 'play',${recipes}
       controls,
       entityTypes: { 'signal-goal': GoalEntity },${debugMechanic}
+      presentation: gamePresentation,
     });
   }
 
@@ -242,8 +246,9 @@ ${ext === 'ts' ? '  hud!: ReturnType<typeof installHud>;\n  goal!: GoalEntity;\n
   // Toolkit lifecycle hook: install game-owned presentation for each scene run.
   pgeOnReady() {
     this.stageFinished = false;
-    this.hud = installHud(this, 'Objective: reach the gold signal');
-    this.hud.setControls(controlsLabel);
+    this.hud = this.present('game.hud', {
+      model: { objective: 'Objective: reach the gold signal', controls: controlsLabel },
+    });
     installPauseMenu(this);
   }
 
@@ -282,13 +287,19 @@ ${save ? `    ${save}\n` : ''}    playCue(this, 'win');
 }
 
 function battleSceneSource(ext, input, sessionImport, save) {
-  return `${ext === 'ts' ? `import type Phaser from 'phaser';\n` : ''}import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/toolkit/battle';
+  return `${ext === 'ts' ? `import type { PresentationHandle } from '@phaser-game-engines/toolkit/core';\n` : ''}import { BattleScene, createBattlePresentationRecipe } from '@phaser-game-engines/toolkit/battle';
 import { battleSpec } from '../content/level.js';
 import { rules } from '../rules/game-rules.js';
-import { addHelp, playCue } from '../presentation/presentation.js';
+import { gamePresentation, playCue } from '../presentation/game-presentation.js';
 ${sessionImport}
 export class GameScene extends BattleScene${type(ext, '<{ playerResolve: number, rivalResolve: number, turn: number }, { playerResolve: number, rivalResolve: number, turn: number }, { kind: string }>')} {
-${ext === 'ts' ? '  status!: Phaser.GameObjects.Text;\n' : ''}  constructor() { super({ key: 'play', recipes: [createBattlePresentationRecipe({ reducedMotion: true })] }); }
+${ext === 'ts' ? '  battleStatus!: PresentationHandle;\n' : ''}  constructor() {
+    super({
+      key: 'play',
+      recipes: [createBattlePresentationRecipe({ reducedMotion: true })],
+      presentation: gamePresentation,
+    });
+  }
   getBattle() { return battleSpec; }
   getBattleRules() { return rules; }
   isPlayerTurn(id${type(ext, ': string | number')}) { return id === 'player'; }
@@ -300,9 +311,13 @@ ${ext === 'ts' ? '  status!: Phaser.GameObjects.Text;\n' : ''}  constructor() { 
   }
   getTargetOptions() { return []; }
   chooseAiCommand(_state${type(ext, ': unknown')}, actorId${type(ext, ': string | number')}) { return { id: 'focus', actorId }; }
-  pgeCreateBattleDisplay() { this.status = addHelp(this, 'Reduce the rival signal to zero.'); }
+  pgeCreateBattleDisplay() {
+    this.battleStatus = this.present('battle.status', {
+      model: { playerResolve: 3, rivalResolve: 3 },
+    });
+  }
   pgeRenderBattleState(state${type(ext, ': any')}) {
-    this.status.setText('Your signal: ' + state.game.playerResolve + '\\nRival signal: ' + state.game.rivalResolve);
+    this.battleStatus.update(state.game);
     if (state.machine.phase === 'finished') { ${save} playCue(this, 'win'); this.time.delayedCall(250, () => this.scene.start('result', { won: state.machine.outcome?.kind === 'won' })); }
   }
   performAction() { if (this.battle?.state.machine.phase === 'command-selection' && this.battle.state.machine.activeId === 'player') this.submitBattleCommand({ id: 'focus', actorId: 'player' }); }
@@ -425,37 +440,55 @@ export function installBrowserControls(actions${type(ext, ': { start: () => void
 `;
 }
 
-function presentationSource(ext) {
+function gamePresentationSource(genre, ext) {
+  if (genre === 'battle') return `${ext === 'ts' ? "import type Phaser from 'phaser';\n" : ''}import { helpTextStyle } from './styles.js';
+
+export function createBattleStatus({ scene, model }${type(ext, ': { scene: Phaser.Scene, model: { playerResolve: number, rivalResolve: number } }')}) {
+  const text = scene.add.text(480, 270, '', helpTextStyle).setOrigin(0.5);
+  const update = (state${type(ext, ': { playerResolve: number, rivalResolve: number }')}) => {
+    text.setText('Your signal: ' + state.playerResolve + '\\nRival signal: ' + state.rivalResolve);
+  };
+  update(model);
+  return { root: text, update };
+}
+
+export const gamePresentation = {
+  presenters: { 'battle.status': createBattleStatus },
+};
+
+export function playCue(_scene${type(ext, ': Phaser.Scene')}, name${type(ext, ': string')}) {
+  console.info('[audio seam]', name);
+}
+`;
+
+  const playerWidth = genre === 'platformer' ? 26 : 22;
+  const playerHeight = genre === 'platformer' ? 40 : 22;
   return `import Phaser from 'phaser';
-import {
-  headingTextStyle,
-  helpTextStyle,
-  hudTextStyle,
-  pauseTextStyle,
-} from './styles.js';
+import { hudTextStyle, pauseTextStyle } from './styles.js';
 
-export function addHeading(scene${type(ext, ': Phaser.Scene')}, text${type(ext, ': string')}) {
-  return scene.add.text(480, 170, text, headingTextStyle).setOrigin(0.5);
+export function createPlayer({ scene, x, y }${type(ext, ': { scene: Phaser.Scene, x: number, y: number }')}) {
+  return scene.add.rectangle(x, y, ${playerWidth}, ${playerHeight}, 0x6bb8ff);
 }
 
-export function addHelp(scene${type(ext, ': Phaser.Scene')}, text${type(ext, ': string')}) {
-  return scene.add.text(480, 270, text, helpTextStyle).setOrigin(0.5);
+export function createGoal({ scene, spec }${type(ext, ': { scene: Phaser.Scene, spec: { x: number, y: number } }')}) {
+  return scene.add.star(spec.x, spec.y, 6, 12, 28, 0xffd166).setDepth(5);
 }
 
-export function installHud(scene${type(ext, ': Phaser.Scene')}, objective${type(ext, ': string')}) {
-  const text = scene.add.text(12, 12, objective, hudTextStyle)
+export function createHud({ scene, model }${type(ext, ': { scene: Phaser.Scene, model: { objective: string, controls: string } }')}) {
+  const text = scene.add.text(12, 12, '', hudTextStyle)
     .setScrollFactor(0)
     .setDepth(1000);
-
-  return {
-    setControls(value${type(ext, ': string')}) {
-      text.setText(objective + '\\n' + value);
-    },
-    destroy() {
-      text.destroy();
-    },
+  const update = (next${type(ext, ': { objective: string, controls: string }')}) => {
+    text.setText(next.objective + '\\n' + next.controls);
   };
+  update(model);
+  return { root: text, update };
 }
+
+export const gamePresentation = {
+  prefabs: { player: createPlayer, goal: createGoal },
+  presenters: { 'game.hud': createHud },
+};
 
 export function updatePlayerPresentation(scene${type(ext, ': any')}, _time${type(ext, ': number')}) {
   const velocity = scene.player?.body?.velocity;
@@ -488,6 +521,22 @@ export function installPauseMenu(scene${type(ext, ': Phaser.Scene')}) {
     scene.input.keyboard?.off('keydown-P', togglePause);
   });
   return label;
+}
+`;
+}
+
+function screenPresentationSource(ext) {
+  return `${ext === 'ts' ? "import type Phaser from 'phaser';\n" : ''}import {
+  headingTextStyle,
+  helpTextStyle,
+} from './styles.js';
+
+export function addHeading(scene${type(ext, ': Phaser.Scene')}, text${type(ext, ': string')}) {
+  return scene.add.text(480, 170, text, headingTextStyle).setOrigin(0.5);
+}
+
+export function addHelp(scene${type(ext, ': Phaser.Scene')}, text${type(ext, ': string')}) {
+  return scene.add.text(480, 270, text, helpTextStyle).setOrigin(0.5);
 }
 `;
 }
@@ -573,7 +622,7 @@ function saveTestSource() { return `import { expect, test } from 'vitest'; impor
 function debugTestSource() { return `import { expect, test } from 'vitest'; import { createDebugEventLog } from '@phaser-game-engines/toolkit/core'; test('debug events stay inspectable', () => { const log = createDebugEventLog(); log.emit('won', { score: 1 }); expect(log.snapshot()).toEqual([{ type: 'won', payload: { score: 1 } }]); });`; }
 function replayTestSource(ext) { return `import { expect, test } from 'vitest'; import { createManualClock, createSessionRecorder, replaySession } from '@phaser-game-engines/toolkit/core'; test('recorded input replays headlessly', () => { const clock = createManualClock(); const recorder = createSessionRecorder({ clock: clock${type(ext, ' as any')} }); recorder.recordIntent({ move: { x: 1, y: 0 } }); const seen${type(ext, ': number[]')} = []; replaySession(recorder.snapshot(), { onIntent: (intent${type(ext, ': any')}) => seen.push(intent.move.x) }); expect(seen).toEqual([1]); });`; }
 
-function assetsReadme() { return `# Presentation assets\n\nPut game-owned sprites, animation sheets, and audio here. Replace the shape/text hooks in \`src/presentation/presentation.*\`; no engine subclass or package source edit is required.\n`; }
+function assetsReadme() { return `# Presentation assets\n\nPut game-owned sprites, animation sheets, and audio here. Replace the prefab and presenter factories in \`src/presentation/*-presentation.*\`; no engine subclass or package source edit is required.\n`; }
 function browserStyles() {
   return `:root {
   font-family: system-ui;

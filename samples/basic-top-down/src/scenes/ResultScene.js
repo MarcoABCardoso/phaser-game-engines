@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { addHeading, addHelp } from '../presentation/presentation.js';
+import { addHeading, addHelp } from '../presentation/screen-presentation.js';
 
 export class ResultScene extends Phaser.Scene {
   constructor() {
