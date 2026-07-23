@@ -16,8 +16,7 @@ samples; the lab can favor breadth and explicit architecture over minimalism.
 
 Run `npm run dev:all-in-one` from the repository root. Verify it with
 `npm run build:all-in-one` and `npm test`.
-The documentation Pages artifact embeds the production build at `/all-in-one/`;
-the link becomes public when the Pages workflow publishes this revision.
+The published documentation site embeds the production build at `/all-in-one/`.
 See `docs/ALL_IN_ONE_SLICE.md` for a guided ownership and replacement tour.
 
 Talk to Mira with **E** to begin the field trial. Find the rusty sword, cross

@@ -5,9 +5,8 @@ NPC conversations, a permanent choice, inventory preparation, turn-based
 battle, progression, saving, and a result screen. It is an integration proof,
 not a new RPG schema hidden inside the toolkit.
 
-Run it locally with `npm run dev:all-in-one`. After the Pages workflow publishes
-this revision, the documentation landing page serves the same production build
-at `/all-in-one/`.
+Run it locally with `npm run dev:all-in-one`, or play the same production build
+from the documentation landing page at `/all-in-one/`.
 
 ## Follow the playable loop
 

@@ -79,7 +79,8 @@ Build the slice in playable increments:
   and keyboard/gamepad/touch paths through the whole slice.
 - [x] Produce a Pages-ready slice artifact and guided code tour explaining
   ownership and replacement seams.
-- [ ] Publish the Pages artifact and verify the live slice URL.
+- [x] Publish the Pages artifact and verify the live slice at
+  `https://marcoabcardoso.github.io/phaser-game-engines/all-in-one/`.
 
 Each increment needs a headless rule test, a browser-visible outcome, and an
 explicit answer to: “Could a game replace this without editing toolkit source?”
