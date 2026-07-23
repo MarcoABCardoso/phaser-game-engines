@@ -52,6 +52,12 @@ export default class BattleScene extends Phaser.Scene {
     this.refresh();
   }
 
+  completeBattleEffect() {
+    const nextEffect = this.battle.completeEffect();
+    this.refresh();
+    return nextEffect;
+  }
+
   /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
   createPrefab(name, props = {}, fallback = undefined) { return this.presentation.createPrefab(name, props, fallback); }
   /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */

@@ -30,6 +30,10 @@ export class InventoryScene extends ToolkitInventoryScene {
       escape: Phaser.Input.Keyboard.KeyCodes.ESC,
       sort: Phaser.Input.Keyboard.KeyCodes.S,
     });
+    this.keys.escape.on('down', this.close, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.keys.escape.off('down', this.close, this);
+    });
   }
 
   pgeRenderInventoryState(state) {
@@ -56,7 +60,7 @@ export class InventoryScene extends ToolkitInventoryScene {
   update(time, delta) {
     super.update(time, delta);
     if (Phaser.Input.Keyboard.JustDown(this.keys.sort)) campaign.sortInventory();
-    if (Phaser.Input.Keyboard.JustDown(this.keys.close) || Phaser.Input.Keyboard.JustDown(this.keys.escape)) this.close();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.close)) this.close();
   }
 
   close() {

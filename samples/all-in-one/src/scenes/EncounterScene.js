@@ -14,6 +14,8 @@ import {
 } from '../presentation/battle-presentation.js';
 import { campaign } from '../state/campaign.js';
 
+const ANIMATED_EFFECTS = new Set(['all-in-one.attack', 'all-in-one.guard']);
+
 export class EncounterScene extends BattleScene {
   returning = false;
 
@@ -45,6 +47,7 @@ export class EncounterScene extends BattleScene {
   init(data) {
     this.encounter = data.encounter;
     this.returning = false;
+    this.deferBattleRefresh = false;
     this.lastEvent = 'Damage is rolled when an attack lands.';
   }
 
@@ -90,6 +93,7 @@ export class EncounterScene extends BattleScene {
   }
 
   pgeRenderBattleState(state) {
+    if (this.deferBattleRefresh) return;
     this.battleField.update(this.battleViewModel(state));
   }
 
@@ -98,7 +102,19 @@ export class EncounterScene extends BattleScene {
   }
 
   pgeOnBattleEvent(type, payload) {
-    if (type === 'damageDealt') {
+    if (type === 'effectQueued' && ANIMATED_EFFECTS.has(payload.effect.type)) {
+      this.deferBattleRefresh = true;
+    } else if (type === 'effectRequested' && ANIMATED_EFFECTS.has(payload.effect.type)) {
+      this.battleField.body.play(payload.effect, {
+        onImpact: () => {
+          this.deferBattleRefresh = false;
+          this.refresh();
+        },
+        onComplete: () => {
+          if (this.battle?.state.machine.phase === 'presentation') this.completeBattleEffect();
+        },
+      });
+    } else if (type === 'damageDealt') {
       const attacker = payload.actorId === 'player' ? 'You' : this.battle.state.game.enemies[payload.actorId]?.label;
       const target = payload.targetId === 'player' ? 'you' : this.battle.state.game.enemies[payload.targetId]?.label;
       this.lastEvent = `${attacker} dealt ${payload.damage} damage to ${target}${payload.guarded ? ' through guard' : ''}.${payload.defeated ? ` ${target} was defeated!` : ''}`;

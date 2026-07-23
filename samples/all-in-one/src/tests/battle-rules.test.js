@@ -7,6 +7,10 @@ const enemies = [
   { id: 'beta', label: 'Beta', hp: 6, maxHp: 6, attack: 4, defense: 1 },
 ];
 
+function completePresentation(battle) {
+  if (battle.state.machine.phase === 'presentation') battle.completeEffect();
+}
+
 describe('all-in-one battle rules', () => {
   test('damage uses attack, defense, guard, and a hidden random roll', () => {
     const attacker = { attack: 5 };
@@ -28,6 +32,7 @@ describe('all-in-one battle rules', () => {
         ? Object.values(battle.state.game.enemies).find((enemy) => enemy.hp > 0).id
         : 'player';
       battle.submitCommand({ id: 'attack', actorId, targetId });
+      completePresentation(battle);
     }
     expect(battle.state.machine.outcome.kind).toBe('lost');
   });
@@ -46,6 +51,7 @@ describe('all-in-one battle rules', () => {
         ? Object.values(battle.state.game.enemies).find((enemy) => enemy.hp > 0).id
         : 'player';
       battle.submitCommand({ id, actorId, ...(id === 'attack' ? { targetId } : {}) });
+      completePresentation(battle);
       if (actorId === 'player') playerTurns += 1;
     }
     expect(battle.state.machine.outcome.kind).toBe('won');
@@ -61,7 +67,16 @@ describe('all-in-one battle rules', () => {
     battle.start();
     battle.submitCommand({ id: 'attack', actorId: 'player', targetId: 'alpha' });
     expect(battle.state.game.enemies.alpha.hp).toBe(0);
+    expect(battle.state.machine.phase).toBe('presentation');
+    expect(events.some(({ type, payload }) => type === 'effectRequested'
+      && payload.effect.type === 'all-in-one.attack')).toBe(true);
     expect(battle.state.machine.queue).not.toContain('alpha');
     expect(events.some(({ type, payload }) => type === 'scheduleChanged' && !payload.schedule.includes('alpha'))).toBe(true);
+    battle.completeEffect();
+    expect(battle.state.machine.activeId).toBe('beta');
+    battle.submitCommand({ id: 'attack', actorId: 'beta', targetId: 'player' });
+    battle.completeEffect();
+    expect(battle.state.machine.activeId).toBe('player');
+    expect(battle.state.machine.round).toBe(2);
   });
 });

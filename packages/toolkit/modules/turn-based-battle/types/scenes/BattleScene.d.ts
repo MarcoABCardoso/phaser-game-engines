@@ -41,6 +41,7 @@ export default class BattleScene extends Phaser.Scene {
     create(): void;
     update(time: any, delta: any): void;
     submitBattleCommand(command: any): void;
+    completeBattleEffect(): any;
     /** @param {string} name @param {Record<string, any>} [props] @param {import('@phaser-game-engines/toolkit/core').PresentationFactory} [fallback] */
     createPrefab(name: string, props?: Record<string, any>, fallback?: import('@phaser-game-engines/toolkit/core').PresentationFactory): Readonly<{
         root: any;

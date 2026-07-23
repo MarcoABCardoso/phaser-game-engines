@@ -145,6 +145,7 @@ export class BattleScene<Spec = unknown, GameState = unknown, Outcome = unknown>
   pgeOnBattleEvent(type: string, payload: unknown): void;
   pgeRenderBattleState(state: BattleState<GameState, Outcome>): void;
   submitBattleCommand(command: BattleCommand): void;
+  completeBattleEffect(): unknown;
   createPrefab(name: string, props?: Record<string, unknown>, fallback?: PresentationFactory): PresentationHandle;
   present(name: string, props?: Record<string, unknown>, fallback?: PresentationFactory): PresentationHandle;
 }

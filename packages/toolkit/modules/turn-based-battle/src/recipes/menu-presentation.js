@@ -61,6 +61,7 @@ function installPresentation(scene, options) {
     ?? { ...option.command, targetId: target?.id };
 
   const runAi = () => {
+    if (state.timer) return;
     const { activeId, phase } = scene.battle.state.machine;
     if (phase !== COMMAND_PHASE || isPlayerTurn(activeId)) return;
     const execute = () => {
@@ -142,7 +143,10 @@ function installPresentation(scene, options) {
     }
     render();
   });
-  const stopRefresh = scene.lifecycle.on('refresh', render);
+  const stopRefresh = scene.lifecycle.on('refresh', () => {
+    render();
+    runAi();
+  });
   const stopReady = scene.lifecycle.on('ready', runAi);
   scene.battlePresentation = state;
   return () => {

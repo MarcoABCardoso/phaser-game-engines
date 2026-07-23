@@ -116,7 +116,7 @@ return {
 };
 ```
 
-Interrupts resolve before reactions. Logical state resolves synchronously; opaque effects then pause the pipeline in `presentation`. A presenter handles `effectRequested` and calls `completeEffect()` after its animation, audio, or UI work. No presentation concept enters game state or the rules adapter.
+Interrupts resolve before reactions. Logical state resolves synchronously; opaque effects then pause the pipeline in `presentation`. A presenter handles `effectRequested` and calls `completeEffect()` after its animation, audio, or UI work. In a `BattleScene`, call `completeBattleEffect()` instead so the scene refreshes and menu/AI presentation resumes automatically. No presentation concept enters game state or the rules adapter.
 
 For multi-stage selection, rules return `getCommandStages()` entries with game-defined options and implement `createCommand(state, draft, context)`. Call `submitSelection(value)` for each stage. A complete command may still be submitted directly with `submitCommand()`.
 

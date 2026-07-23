@@ -12,12 +12,21 @@ export function createBattlePlayer({ scene, model }) {
     fontFamily: 'monospace', fontSize: '16px', color: '#ffffff',
   });
   const root = scene.add.container(42, 244, [shadow, head, body, label, hpBack, hpFill, hpText]);
+  let wasAlive = model.hp > 0;
 
   const update = (player) => {
     const ratio = player.maxHp ? player.hp / player.maxHp : 0;
     hpFill.displayWidth = 240 * ratio;
     hpFill.setFillStyle(ratio > 0.35 ? 0x22c55e : 0xef4444);
     hpText.setText(`HP ${player.hp}/${player.maxHp}   ATK ${player.attack}   DEF ${player.defense}${player.guarding ? '   GUARDING' : ''}`);
+    const alive = player.hp > 0;
+    if (!alive) {
+      if (!wasAlive) root.setVisible(false);
+      wasAlive = false;
+      return;
+    }
+    wasAlive = true;
+    root.setVisible(true);
   };
   update(model);
   return { root, update };
@@ -40,13 +49,19 @@ export function createBattleEnemy({ scene, model }) {
     fontFamily: 'monospace', fontSize: '13px', color: '#ffffff',
   });
   const root = scene.add.container(x, y, [shadow, head, body, label, hpBack, hpFill, hpText]);
+  let wasAlive = enemy.hp > 0;
 
   const update = (nextEnemy) => {
-    const alive = nextEnemy.hp > 0;
-    root.setVisible(alive);
-    if (!alive) return;
     hpFill.displayWidth = 124 * (nextEnemy.hp / nextEnemy.maxHp);
     hpText.setText(`${nextEnemy.hp}/${nextEnemy.maxHp}`);
+    const alive = nextEnemy.hp > 0;
+    if (!alive) {
+      if (!wasAlive) root.setVisible(false);
+      wasAlive = false;
+      return;
+    }
+    wasAlive = true;
+    root.setVisible(true);
   };
   update(enemy);
   return { root, update };
@@ -70,8 +85,126 @@ export function createBattleField({ scene, model }) {
     scene.createPrefab('battle.enemy', { model: { enemy, index } }),
   ]));
 
+  const getFighter = (id) => id === 'player' ? player : enemies.get(id);
+  const phaseOut = (view, onComplete) => {
+    scene.tweens.add({
+      targets: view.root,
+      alpha: 0,
+      scaleX: 0.12,
+      scaleY: 1.35,
+      y: view.root.y - 18,
+      duration: 360,
+      ease: 'Sine.easeIn',
+      onComplete: () => {
+        view.root.setVisible(false);
+        onComplete();
+      },
+    });
+  };
+  const flashDamage = (view, defeated, onComplete) => {
+    scene.tweens.add({
+      targets: view.root,
+      alpha: 0.12,
+      duration: 65,
+      yoyo: true,
+      repeat: 2,
+      onComplete: () => {
+        view.root.setAlpha(1);
+        if (defeated) phaseOut(view, onComplete);
+        else onComplete();
+      },
+    });
+  };
+  const playAttack = (effect, { onImpact, onComplete }) => {
+    const attacker = getFighter(effect.actorId);
+    const target = getFighter(effect.targetId);
+    if (!attacker?.root || !target?.root) {
+      onImpact();
+      onComplete();
+      return;
+    }
+    const originX = attacker.root.x;
+    const direction = effect.actorId === 'player' ? 1 : -1;
+    scene.tweens.add({
+      targets: attacker.root,
+      x: originX - direction * 20,
+      duration: 260,
+      ease: 'Sine.easeOut',
+      onComplete: () => scene.tweens.add({
+        targets: attacker.root,
+        x: originX + direction * 72,
+        duration: 110,
+        ease: 'Quad.easeIn',
+        onComplete: () => {
+          onImpact();
+          scene.cameras.main.shake(140, 0.006);
+          flashDamage(target, effect.defeated, onComplete);
+          scene.tweens.add({
+            targets: attacker.root,
+            x: originX,
+            duration: 190,
+            ease: 'Sine.easeOut',
+          });
+        },
+      }),
+    });
+  };
+  const playGuard = (effect, { onImpact, onComplete }) => {
+    const defender = getFighter(effect.actorId);
+    if (!defender?.root) {
+      onImpact();
+      onComplete();
+      return;
+    }
+    const playerDefending = effect.actorId === 'player';
+    const center = playerDefending ? { x: 113, y: 145 } : { x: 0, y: 22 };
+    const offsets = [
+      [0, 0], [-34, 0], [34, 0], [-17, -29], [17, -29], [-17, 29], [17, 29],
+    ];
+    const radius = playerDefending ? 24 : 20;
+    const points = Array.from({ length: 6 }, (_, index) => {
+      const angle = (60 * index - 30) * (Math.PI / 180);
+      return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+    });
+    const hexagons = offsets.map(([x, y]) => {
+      const hexagon = scene.add.polygon(center.x + x, center.y + y, points, 0x67e8f9, 0.18)
+        .setStrokeStyle(3, 0xcffafe, 0.85)
+        .setAlpha(0.08);
+      defender.root.add(hexagon);
+      return hexagon;
+    });
+    let completed = 0;
+    onImpact();
+    hexagons.forEach((hexagon, index) => scene.tweens.add({
+      targets: hexagon,
+      alpha: 0.78,
+      duration: 135,
+      delay: index * 55,
+      yoyo: true,
+      repeat: 1,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        completed += 1;
+        if (completed !== hexagons.length) return;
+        for (const item of hexagons) item.destroy();
+        onComplete();
+      },
+    }));
+  };
+  const effects = {
+    play(effect, callbacks) {
+      if (effect.type === 'all-in-one.attack') playAttack(effect, callbacks);
+      else if (effect.type === 'all-in-one.guard') playGuard(effect, callbacks);
+      else {
+        callbacks.onImpact();
+        callbacks.onComplete();
+      }
+    },
+  };
+
   return {
     root: background,
+    body: effects,
     update(next) {
       title.setText(`Battle: ${next.label}`);
       status.setText(next.status);

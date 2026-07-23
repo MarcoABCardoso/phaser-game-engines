@@ -50,6 +50,7 @@ export const battleRules = {
       actor.guarding = true;
       return {
         state: next,
+        effects: [{ type: 'all-in-one.guard', actorId: command.actorId }],
         events: [{ type: 'guardRaised', detail: { actorId: command.actorId } }],
       };
     }
@@ -63,6 +64,12 @@ export const battleRules = {
     return {
       state: next,
       schedule: defeated && targetId !== 'player' ? { remove: [targetId] } : undefined,
+      effects: [{
+        type: 'all-in-one.attack',
+        actorId: command.actorId,
+        targetId,
+        defeated,
+      }],
       events: [{
         type: 'damageDealt',
         detail: { actorId: command.actorId, targetId, damage, guarded: target.guarding, defeated },
